@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/components/breadcrumb/breadcrumb.component';
-import { CustomFilterApplyEvent, CustomFilterComponent } from '../../shared/components/custom-filter/custom-filter.component';
+import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../shared/components/custom-filter/custom-filter.component';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { CreateDocumentComponent, CreateDocumentField, CreateDocumentSelection } from '../../shared/ui/create-document/create-document.component';
 import { DocumentHistoryPanelComponent, DocumentHistorySummary } from '../../shared/ui/document-history-panel/document-history-panel.component';
@@ -34,6 +34,14 @@ type RecordRow = {
   adjustmentDetailCode: string;
   totalDebit: string;
   totalCredit: string;
+};
+
+type AppliedCustomFilter = {
+  id: string;
+  campo: keyof DocumentRow;
+  campoLabel: string;
+  condicion: string;
+  valor: string;
 };
 
 @Component({
@@ -155,12 +163,61 @@ type RecordRow = {
                 </label>
 
                 <div class="flex shrink-0 items-center justify-end gap-siaf-xs">
-                  <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Capas">
-                    <siaf-icon name="layers" [size]="24" />
-                  </button>
-                  <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Favorito">
-                    <siaf-icon name="star_border" [size]="24" />
-                  </button>
+                  <div class="relative">
+                    <button
+                      class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]"
+                      type="button"
+                      aria-label="Campos"
+                      [class.bg-surface-muted]="fieldsMenuOpen"
+                      (click)="toggleFieldsMenu()"
+                    >
+                      <siaf-icon name="layers" [size]="24" />
+                    </button>
+
+                    @if (fieldsMenuOpen) {
+                      <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar campos" (click)="closeFieldsMenu()"></button>
+                      <div
+                        class="absolute right-0 top-12 z-30 w-[248px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]"
+                        (click)="$event.stopPropagation()"
+                      >
+                        @for (option of fieldsMenuOptions; track option.label) {
+                          <button class="flex min-h-8 w-full items-center gap-siaf-md px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium,#353537)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFieldsMenuOption(option.label)">
+                            <span class="min-w-0 flex-1">{{ option.label }}</span>
+                            @if (option.hasChildren) {
+                              <siaf-icon name="chevron_right" [size]="24" />
+                            }
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <div class="relative">
+                    <button
+                      class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]"
+                      type="button"
+                      aria-label="Favorito"
+                      [class.bg-surface-muted]="favoriteMenuOpen"
+                      (click)="toggleFavoriteMenu()"
+                    >
+                      <siaf-icon name="star_border" [size]="24" />
+                    </button>
+
+                    @if (favoriteMenuOpen) {
+                      <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar favoritos" (click)="closeFavoriteMenu()"></button>
+                      <div
+                        class="absolute right-0 top-12 z-30 w-[248px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]"
+                        (click)="$event.stopPropagation()"
+                      >
+                        <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium,#353537)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFavoriteOption('observed')">
+                          Solicitudes observadas
+                        </button>
+                        <div class="h-px w-full bg-[var(--sys-color-divider-default,rgba(32,32,32,0.12))]"></div>
+                        <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium,#353537)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFavoriteOption('save-search')">
+                          Guardar b&uacute;squeda actual
+                        </button>
+                      </div>
+                    }
+                  </div>
                   <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Mas opciones">
                     <siaf-icon name="more_vert" [size]="24" />
                   </button>
@@ -168,20 +225,108 @@ type RecordRow = {
               </div>
 
               <div class="flex flex-wrap items-center gap-siaf-xs">
-                <button class="inline-flex h-8 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-sm text-xs text-text transition hover:bg-surface-muted" type="button">
-                  Estado
-                  <siaf-icon name="expand_more" [size]="18" />
-                </button>
-                <button class="inline-flex h-8 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-sm text-xs text-text transition hover:bg-surface-muted" type="button">
-                  Tipo de acción
-                  <siaf-icon name="expand_more" [size]="18" />
-                </button>
+                <div class="relative">
+                  @if (selectedStatusFilter) {
+                    <button
+                      class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active,#014899)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm font-normal leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated,#014899)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]"
+                      type="button"
+                      aria-label="Filtro de estado seleccionado"
+                      (click)="toggleStatusFilterMenu()"
+                    >
+                      <siaf-icon name="check" [size]="20" />
+                      Estado: {{ selectedStatusFilter }}
+                      <span class="inline-flex size-5 items-center justify-center rounded-siaf-sm" role="button" tabindex="0" aria-label="Quitar filtro de estado" (click)="clearStatusFilter($event)" (keydown.enter)="clearStatusFilter($event)" (keydown.space)="clearStatusFilter($event)">
+                        <siaf-icon name="close" [size]="20" />
+                      </span>
+                    </button>
+                  } @else {
+                    <button
+                      class="inline-flex h-8 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-sm text-sm font-normal leading-normal tracking-[0.025px] text-text transition hover:bg-surface-muted"
+                      type="button"
+                      aria-label="Seleccionar estado"
+                      [class.bg-surface-muted]="statusFilterMenuOpen"
+                      (click)="toggleStatusFilterMenu()"
+                    >
+                      Estado
+                      <siaf-icon [name]="statusFilterMenuOpen ? 'expand_less' : 'expand_more'" [size]="20" />
+                    </button>
+                  }
+
+                  @if (statusFilterMenuOpen) {
+                    <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar estados" (click)="closeStatusFilterMenu()"></button>
+                    <div
+                      class="absolute left-0 top-10 z-30 w-[220px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]"
+                      (click)="$event.stopPropagation()"
+                    >
+                      @for (option of statusFilterOptions; track option) {
+                        <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium,#353537)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectStatusFilter(option)">
+                          {{ option }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+                <div class="relative">
+                  @if (selectedActionTypeFilter) {
+                    <button
+                      class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active,#014899)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm font-normal leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated,#014899)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]"
+                      type="button"
+                      aria-label="Filtro de tipo de accion seleccionado"
+                      (click)="toggleActionTypeFilterMenu()"
+                    >
+                      <siaf-icon name="check" [size]="20" />
+                      Tipo de acci&oacute;n: {{ selectedActionTypeFilter }}
+                      <span class="inline-flex size-5 items-center justify-center rounded-siaf-sm" role="button" tabindex="0" aria-label="Quitar filtro de tipo de accion" (click)="clearActionTypeFilter($event)" (keydown.enter)="clearActionTypeFilter($event)" (keydown.space)="clearActionTypeFilter($event)">
+                        <siaf-icon name="close" [size]="20" />
+                      </span>
+                    </button>
+                  } @else {
+                    <button
+                      class="inline-flex h-8 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-sm text-sm font-normal leading-normal tracking-[0.025px] text-text transition hover:bg-surface-muted"
+                      type="button"
+                      aria-label="Seleccionar tipo de accion"
+                      [class.bg-surface-muted]="actionTypeFilterMenuOpen"
+                      (click)="toggleActionTypeFilterMenu()"
+                    >
+                      Tipo de acci&oacute;n
+                      <siaf-icon [name]="actionTypeFilterMenuOpen ? 'expand_less' : 'expand_more'" [size]="20" />
+                    </button>
+                  }
+
+                  @if (actionTypeFilterMenuOpen) {
+                    <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar tipos de accion" (click)="closeActionTypeFilterMenu()"></button>
+                    <div
+                      class="absolute left-0 top-10 z-30 w-[220px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]"
+                      (click)="$event.stopPropagation()"
+                    >
+                      @for (option of actionTypeFilterOptions; track option) {
+                        <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium,#353537)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectActionTypeFilter(option)">
+                          {{ option }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+                @for (filter of appliedCustomFilters; track filter.id) {
+                  <button
+                    class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active,#014899)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm font-normal leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated,#014899)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]"
+                    type="button"
+                    aria-label="Filtro personalizado aplicado"
+                    (click)="editCustomAppliedFilter(filter)"
+                  >
+                    <siaf-icon name="bolt" [size]="20" />
+                    {{ filter.campoLabel }}: {{ filter.valor }}
+                    <span class="inline-flex size-5 items-center justify-center rounded-siaf-sm" role="button" tabindex="0" aria-label="Quitar filtro personalizado" (click)="clearCustomAppliedFilter(filter.id, $event)" (keydown.enter)="clearCustomAppliedFilter(filter.id, $event)" (keydown.space)="clearCustomAppliedFilter(filter.id, $event)">
+                      <siaf-icon name="close" [size]="20" />
+                    </span>
+                  </button>
+                }
                 <button
                   class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]"
                   type="button"
                   aria-label="Agregar filtro"
                   [class.bg-surface-muted]="customFilterOpen"
-                  (click)="toggleCustomFilter()"
+                  (click)="openCustomFilterForCreate()"
                 >
                   <siaf-icon name="add" [size]="20" />
                 </button>
@@ -194,7 +339,7 @@ type RecordRow = {
               </label>
 
               <div class="hidden w-full max-w-[220px] md:block">
-                <siaf-pagination navigation="Activate" position="Top" [page]="page" [pageSize]="rowsPerPage" [totalItems]="totalItems" [totalPages]="totalPages" />
+                <siaf-pagination navigation="Activate" position="Top" [page]="page" [pageSize]="rowsPerPage" [totalItems]="activeTab === 'documents' ? filteredRows.length : recordRows.length" [totalPages]="totalPages" />
               </div>
             </div>
 
@@ -215,7 +360,7 @@ type RecordRow = {
                     </tr>
                   </thead>
                   <tbody>
-                    @for (row of rows; track row.number) {
+                    @for (row of filteredRows; track row.number) {
                       <tr class="border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-surface hover:bg-[rgba(1,72,153,0.04)]">
                         <td class="h-[58px] px-siaf-sm py-siaf-xs"><input class="size-4 accent-brand-primary" type="checkbox" [checked]="row.selected" /></td>
                         <td class="max-w-[260px] px-siaf-md py-siaf-sm">
@@ -289,7 +434,7 @@ type RecordRow = {
               [rowPage]="true"
               [page]="page"
               [pageSize]="rowsPerPage"
-              [totalItems]="activeTab === 'documents' ? rows.length : recordRows.length"
+              [totalItems]="activeTab === 'documents' ? filteredRows.length : recordRows.length"
               [totalPages]="1"
               [rowsPerPage]="rowsPerPage"
               [rowsPerPageOptions]="rowsPerPageOptions"
@@ -304,6 +449,7 @@ type RecordRow = {
                 [campoOptions]="filterCampoOptions"
                 [condicionOptions]="filterCondicionOptions"
                 [valorOptions]="filterValorOptions"
+                [initialRows]="customFilterInitialRows"
                 (aplicar)="onCustomFilterApply($event)"
                 (cancelar)="closeCustomFilter()"
               />
@@ -320,6 +466,16 @@ export class AdjustmentSeatDocumentsComponent {
   activeTab: ActiveTab = 'documents';
   createDocumentPopoverOpen = false;
   customFilterOpen = false;
+  fieldsMenuOpen = false;
+  favoriteMenuOpen = false;
+  statusFilterMenuOpen = false;
+  selectedStatusFilter = '';
+  actionTypeFilterMenuOpen = false;
+  selectedActionTypeFilter = '';
+  appliedCustomFilters: AppliedCustomFilter[] = [];
+  customFilterInitialRows: FilterRow[] = [];
+  editingCustomFilterId = '';
+  private customFilterSequence = 0;
   processMenuOpen = false;
   sidebarCreateDocumentOpen = false;
   documentHistoryOpen = false;
@@ -358,6 +514,15 @@ export class AdjustmentSeatDocumentsComponent {
     { label: 'Tesoreria', value: 'Tesoreria' }
   ];
 
+  readonly fieldsMenuOptions = [
+    { label: 'Documento' },
+    { label: 'Tipo de acción' },
+    { label: 'Estado' },
+    { label: 'Sistema' },
+    { label: 'Fecha de registro', hasChildren: true },
+    { label: 'Entidad' }
+  ];
+
   constructor(private readonly router: Router) {}
 
   readonly breadcrumbs: BreadcrumbItem[] = [
@@ -374,6 +539,9 @@ export class AdjustmentSeatDocumentsComponent {
     { document: 'Solicitud de registro de asiento de ajuste', number: '0001', actionType: 'Creación', status: 'Elaborado', system: 'Tesorería', date: '20/11/2023', entity: '009 - Ministerio de Economía y Finanzas' }
   ];
 
+  readonly statusFilterOptions: DocumentRow['status'][] = ['Elaborado', 'Verificado'];
+  readonly actionTypeFilterOptions = ['Creación', 'Reversión'];
+
   readonly recordRows: RecordRow[] = [
     { status: 'Activo', accountingDocument: '093-2026-05', institutionalScope: 'EPP', adjustmentClassCode: 'CLASE DE AJUSTE', adjustmentDetailCode: 'DETALLE DE AJUSTE', totalDebit: '237,000', totalCredit: '237,000' },
     { status: 'Activo', accountingDocument: '093-2026-04', institutionalScope: 'EPP', adjustmentClassCode: 'CLASE DE AJUSTE', adjustmentDetailCode: 'DETALLE DE AJUSTE', totalDebit: '237,000', totalCredit: '237,000' },
@@ -387,8 +555,19 @@ export class AdjustmentSeatDocumentsComponent {
   page = 1;
   totalItems = 800;
 
+  get filteredRows(): DocumentRow[] {
+    return this.rows.filter((row) => {
+      const matchesStatus = !this.selectedStatusFilter || row.status === this.selectedStatusFilter;
+      const matchesActionType = !this.selectedActionTypeFilter || row.actionType === this.selectedActionTypeFilter;
+      const matchesCustomFilters = this.appliedCustomFilters.every((filter) => this.matchesCustomFilter(row, filter));
+
+      return matchesStatus && matchesActionType && matchesCustomFilters;
+    });
+  }
+
   get totalPages(): number {
-    return Math.ceil(this.totalItems / this.rowsPerPage);
+    const itemCount = this.activeTab === 'documents' ? this.filteredRows.length : this.recordRows.length;
+    return Math.max(1, Math.ceil(itemCount / this.rowsPerPage));
   }
 
   get createDocumentFields(): CreateDocumentField[] {
@@ -420,6 +599,11 @@ export class AdjustmentSeatDocumentsComponent {
   }
 
   toggleCreateDocumentPopover(): void {
+    this.customFilterOpen = false;
+    this.fieldsMenuOpen = false;
+    this.favoriteMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
     this.createDocumentPopoverOpen = !this.createDocumentPopoverOpen;
   }
 
@@ -427,14 +611,135 @@ export class AdjustmentSeatDocumentsComponent {
     this.createDocumentPopoverOpen = false;
   }
 
-  toggleCustomFilter(): void {
+  openCustomFilterForCreate(): void {
     this.closeFloatingPanels();
     this.createDocumentPopoverOpen = false;
-    this.customFilterOpen = !this.customFilterOpen;
+    this.fieldsMenuOpen = false;
+    this.favoriteMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
+    this.editingCustomFilterId = '';
+    this.customFilterInitialRows = [];
+    this.customFilterOpen = true;
+  }
+
+  editCustomAppliedFilter(filter: AppliedCustomFilter): void {
+    this.closeFloatingPanels();
+    this.createDocumentPopoverOpen = false;
+    this.fieldsMenuOpen = false;
+    this.favoriteMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
+    this.editingCustomFilterId = filter.id;
+    this.customFilterInitialRows = [
+      {
+        campo: filter.campo,
+        condicion: filter.condicion,
+        valor: filter.valor
+      }
+    ];
+    this.customFilterOpen = true;
   }
 
   closeCustomFilter(): void {
     this.customFilterOpen = false;
+    this.editingCustomFilterId = '';
+    this.customFilterInitialRows = [];
+  }
+
+  toggleStatusFilterMenu(): void {
+    this.closeFloatingPanels();
+    this.createDocumentPopoverOpen = false;
+    this.customFilterOpen = false;
+    this.fieldsMenuOpen = false;
+    this.favoriteMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
+    this.statusFilterMenuOpen = !this.statusFilterMenuOpen;
+  }
+
+  closeStatusFilterMenu(): void {
+    this.statusFilterMenuOpen = false;
+  }
+
+  selectStatusFilter(status: DocumentRow['status']): void {
+    this.selectedStatusFilter = status;
+    this.page = 1;
+    this.closeStatusFilterMenu();
+  }
+
+  clearStatusFilter(event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.selectedStatusFilter = '';
+    this.page = 1;
+    this.closeStatusFilterMenu();
+  }
+
+  toggleActionTypeFilterMenu(): void {
+    this.closeFloatingPanels();
+    this.createDocumentPopoverOpen = false;
+    this.customFilterOpen = false;
+    this.fieldsMenuOpen = false;
+    this.favoriteMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = !this.actionTypeFilterMenuOpen;
+  }
+
+  closeActionTypeFilterMenu(): void {
+    this.actionTypeFilterMenuOpen = false;
+  }
+
+  selectActionTypeFilter(actionType: string): void {
+    this.selectedActionTypeFilter = actionType;
+    this.page = 1;
+    this.closeActionTypeFilterMenu();
+  }
+
+  clearActionTypeFilter(event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.selectedActionTypeFilter = '';
+    this.page = 1;
+    this.closeActionTypeFilterMenu();
+  }
+
+  toggleFavoriteMenu(): void {
+    this.closeFloatingPanels();
+    this.createDocumentPopoverOpen = false;
+    this.customFilterOpen = false;
+    this.fieldsMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
+    this.favoriteMenuOpen = !this.favoriteMenuOpen;
+  }
+
+  toggleFieldsMenu(): void {
+    this.closeFloatingPanels();
+    this.createDocumentPopoverOpen = false;
+    this.customFilterOpen = false;
+    this.fieldsMenuOpen = false;
+    this.favoriteMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
+    this.fieldsMenuOpen = !this.fieldsMenuOpen;
+  }
+
+  closeFieldsMenu(): void {
+    this.fieldsMenuOpen = false;
+  }
+
+  selectFieldsMenuOption(option: string): void {
+    console.log('Campo seleccionado:', option);
+    this.closeFieldsMenu();
+  }
+
+  closeFavoriteMenu(): void {
+    this.favoriteMenuOpen = false;
+  }
+
+  selectFavoriteOption(option: 'observed' | 'save-search'): void {
+    console.log('Opcion de favoritos:', option);
+    this.closeFavoriteMenu();
   }
 
   onCreateDocumentAccepted(): void {
@@ -447,6 +752,10 @@ export class AdjustmentSeatDocumentsComponent {
     this.closeFloatingPanels();
     this.createDocumentPopoverOpen = false;
     this.customFilterOpen = false;
+    this.fieldsMenuOpen = false;
+    this.favoriteMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
     this.selectedHistorySummary = {
       document: row.document,
       number: row.number,
@@ -459,6 +768,9 @@ export class AdjustmentSeatDocumentsComponent {
     this.closeFloatingPanels();
     this.createDocumentPopoverOpen = false;
     this.customFilterOpen = false;
+    this.favoriteMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
     this.selectedHistorySummary = {
       document: 'Solicitud de registro de asiento de ajuste',
       number: row.accountingDocument,
@@ -474,6 +786,10 @@ export class AdjustmentSeatDocumentsComponent {
   openSidebarCreateDocument(): void {
     this.createDocumentPopoverOpen = false;
     this.customFilterOpen = false;
+    this.fieldsMenuOpen = false;
+    this.favoriteMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
     this.processMenuOpen = false;
     this.sidebarCreateDocumentOpen = true;
   }
@@ -484,6 +800,10 @@ export class AdjustmentSeatDocumentsComponent {
       this.closeFloatingPanels();
       this.createDocumentPopoverOpen = false;
       this.customFilterOpen = false;
+      this.fieldsMenuOpen = false;
+      this.favoriteMenuOpen = false;
+      this.statusFilterMenuOpen = false;
+      this.actionTypeFilterMenuOpen = false;
       void this.router.navigate(['/panel']);
       return;
     }
@@ -531,7 +851,77 @@ export class AdjustmentSeatDocumentsComponent {
   }
 
   onCustomFilterApply(event: CustomFilterApplyEvent): void {
-    console.log('Filtros aplicados:', event.filters);
+    const nextFilters = event.filters.map((filter, index) => ({
+      id: this.editingCustomFilterId && index === 0 ? this.editingCustomFilterId : this.createCustomFilterId(),
+      campo: filter.campo as keyof DocumentRow,
+      campoLabel: this.getFilterCampoLabel(filter.campo),
+      condicion: filter.condicion,
+      valor: filter.valor
+    }));
+
+    if (this.editingCustomFilterId) {
+      const updatedFilters = this.appliedCustomFilters.map((filter) =>
+        filter.id === this.editingCustomFilterId ? nextFilters[0] : filter
+      );
+      this.appliedCustomFilters = [...updatedFilters, ...nextFilters.slice(1)];
+    } else {
+      this.appliedCustomFilters = [...this.appliedCustomFilters, ...nextFilters];
+    }
+
+    this.page = 1;
     this.closeCustomFilter();
+  }
+
+  clearCustomAppliedFilter(id: string, event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+    this.appliedCustomFilters = this.appliedCustomFilters.filter((filter) => filter.id !== id);
+    this.page = 1;
+  }
+
+  deleteEditingCustomFilter(): void {
+    if (!this.editingCustomFilterId) {
+      return;
+    }
+
+    this.appliedCustomFilters = this.appliedCustomFilters.filter((filter) => filter.id !== this.editingCustomFilterId);
+    this.page = 1;
+    this.closeCustomFilter();
+  }
+
+  private getFilterCampoLabel(campo: string): string {
+    return this.filterCampoOptions.find((option) => option.value === campo)?.label ?? campo;
+  }
+
+  private createCustomFilterId(): string {
+    this.customFilterSequence += 1;
+    return `custom-filter-${this.customFilterSequence}`;
+  }
+
+  private matchesCustomFilter(row: DocumentRow, filter: AppliedCustomFilter): boolean {
+    const rowValue = String(row[filter.campo] ?? '').toLocaleLowerCase();
+    const filterValue = filter.valor.toLocaleLowerCase();
+
+    if (filter.condicion === 'neq') {
+      return rowValue !== filterValue;
+    }
+
+    if (filter.condicion === 'contains') {
+      return rowValue.includes(filterValue);
+    }
+
+    if (filter.condicion === 'not_contains') {
+      return !rowValue.includes(filterValue);
+    }
+
+    if (filter.condicion === 'starts_with') {
+      return rowValue.startsWith(filterValue);
+    }
+
+    if (filter.condicion === 'ends_with') {
+      return rowValue.endsWith(filterValue);
+    }
+
+    return rowValue === filterValue;
   }
 }

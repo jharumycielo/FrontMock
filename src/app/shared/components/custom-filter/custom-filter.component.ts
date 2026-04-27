@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
 import { ButtonComponent } from '../../ui/button/button.component';
 import { IconComponent } from '../../ui/icon/icon.component';
@@ -58,7 +58,6 @@ export interface CustomFilterApplyEvent {
               class="inline-flex size-8 items-center justify-center rounded-siaf-md p-siaf-xxs text-text-muted transition hover:bg-surface-muted hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-40"
               type="button"
               aria-label="Eliminar condicion"
-              [disabled]="rows.length === 1"
               (click)="removeRow(i)"
             >
               <siaf-icon name="delete_outline" [size]="20" />
@@ -99,15 +98,24 @@ export interface CustomFilterApplyEvent {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CustomFilterComponent {
+export class CustomFilterComponent implements OnChanges {
   @Input() campoOptions: TextFieldOption[] = [];
   @Input() condicionOptions: TextFieldOption[] = [];
   @Input() valorOptions: TextFieldOption[] = [];
+  @Input() initialRows: FilterRow[] = [];
 
   @Output() aplicar = new EventEmitter<CustomFilterApplyEvent>();
   @Output() cancelar = new EventEmitter<void>();
 
   rows: FilterRow[] = [{ campo: '', condicion: '', valor: '' }];
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['initialRows']) {
+      this.rows = this.initialRows.length > 0
+        ? this.initialRows.map((row) => ({ ...row }))
+        : [{ campo: '', condicion: '', valor: '' }];
+    }
+  }
 
   get canApply(): boolean {
     return this.rows.some((r) => r.campo && r.condicion && r.valor);
@@ -118,7 +126,8 @@ export class CustomFilterComponent {
   }
 
   removeRow(index: number): void {
-    this.rows = this.rows.filter((_, i) => i !== index);
+    const updated = this.rows.filter((_, i) => i !== index);
+    this.rows = updated.length > 0 ? updated : [{ campo: '', condicion: '', valor: '' }];
   }
 
   onCampoChange(index: number, value: string | number | string[]): void {

@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 
 type LoginField = 'user' | 'password';
+type LoginTab = 'entidades' | 'proveedores';
 
 @Component({
   selector: 'siaf-login',
@@ -18,20 +19,64 @@ type LoginField = 'user' | 'password';
 
       <section class="flex min-h-screen flex-1 items-center justify-center overflow-y-auto px-siaf-lg py-siaf-xxl lg:h-screen lg:min-h-0 lg:flex-[0_0_50%]">
         <div class="flex w-full max-w-[360px] flex-col items-center gap-12">
+
+          <!-- Logos -->
           <header class="flex w-full flex-col items-center gap-siaf-lg">
             <img class="h-[53px] w-[250px] object-contain" src="assets/figma/login/mef-logo.png" alt="Ministerio de Economia y Finanzas" />
             <img class="h-[54px] w-[174px] object-contain" src="assets/figma/login/siaf-logo-vector.svg" alt="SIAF-RP" />
           </header>
 
           <section class="flex w-full flex-col items-center gap-siaf-lg">
-            <div class="flex flex-col items-center gap-siaf-xs whitespace-nowrap">
-              <h1 class="m-0 text-[30px] font-bold leading-none tracking-[-0.63px] text-[#004899]">Bienvenido</h1>
-              <p class="m-0 text-sm font-medium leading-normal text-[var(--sys-color-text-neutral-high,#202020)]">
-                Ingresa tus datos para continuar
+
+            <!-- Título + Tabs -->
+            <div class="flex w-full flex-col items-center gap-siaf-xs">
+              <h1 class="m-0 text-[30px] font-bold leading-none tracking-[-0.63px] text-[#014899]">Bienvenido</h1>
+              <p class="m-0 text-sm font-medium leading-normal text-[var(--sys-color-bg-on-surfaces-medium,rgba(32,32,32,0.8))]">
+                Ingresa tus datos para Iniciar sesión
               </p>
+
+              <!-- Tabs -->
+              <div class="mt-siaf-xs flex w-full border-b-2 border-[rgba(32,32,32,0.24)]" role="tablist">
+                <button
+                  class="flex flex-1 items-center justify-center min-h-10 px-siaf-md py-siaf-xs text-sm transition relative whitespace-nowrap"
+                  role="tab"
+                  [attr.aria-selected]="activeTab() === 'entidades'"
+                  [class.font-bold]="activeTab() === 'entidades'"
+                  [class.text-[#014899]]="activeTab() === 'entidades'"
+                  [class.font-medium]="activeTab() !== 'entidades'"
+                  [class.text-[var(--sys-color-text-neutral-low,#6f6f71)]]="activeTab() !== 'entidades'"
+                  type="button"
+                  (click)="activeTab.set('entidades')"
+                >
+                  Entidades del Estado
+                  @if (activeTab() === 'entidades') {
+                    <span class="absolute bottom-[-2px] left-0 right-0 h-0.5 rounded-t bg-[#014899]"></span>
+                  }
+                </button>
+                <button
+                  class="flex flex-1 items-center justify-center min-h-10 px-siaf-md py-siaf-xs text-sm transition relative whitespace-nowrap"
+                  role="tab"
+                  [attr.aria-selected]="activeTab() === 'proveedores'"
+                  [class.font-bold]="activeTab() === 'proveedores'"
+                  [class.text-[#014899]]="activeTab() === 'proveedores'"
+                  [class.font-medium]="activeTab() !== 'proveedores'"
+                  [class.text-[var(--sys-color-text-neutral-low,#6f6f71)]]="activeTab() !== 'proveedores'"
+                  type="button"
+                  (click)="activeTab.set('proveedores')"
+                >
+                  Proveedores y Externos
+                  @if (activeTab() === 'proveedores') {
+                    <span class="absolute bottom-[-2px] left-0 right-0 h-0.5 rounded-t bg-[#014899]"></span>
+                  }
+                </button>
+              </div>
             </div>
 
+            <!-- Formulario: Entidades del Estado -->
+            @if (activeTab() === 'entidades') {
             <form class="flex w-full flex-col items-center gap-5" aria-label="Inicio de sesión">
+
+              <!-- Input Usuario -->
               <label class="relative block w-full">
                 @if (isFieldFloating('user')) {
                   <span class="absolute left-3 top-[-10px] z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal text-[var(--sys-color-text-neutral-low,#6f6f71)]">
@@ -39,10 +84,10 @@ type LoginField = 'user' | 'password';
                   </span>
                 }
                 <span
-                  class="flex min-h-10 items-center gap-siaf-xs rounded-siaf-md border bg-surface px-siaf-md py-siaf-xs transition hover:border-2 hover:border-[rgba(1,72,153,0.56)] focus-within:border-2 focus-within:border-[rgba(1,72,153,0.8)]"
+                  class="flex min-h-10 items-center gap-siaf-xs rounded-siaf-md border bg-surface px-siaf-md py-siaf-xs transition focus-within:border-2 focus-within:border-[rgba(1,72,153,0.8)]"
+                  [class.border-[#818181]]="!isFieldSuccess('user')"
                   [class.border-[#20635e]]="isFieldSuccess('user')"
                   [class.border-2]="isFieldSuccess('user')"
-                  [class.border-[rgba(32,32,32,0.4)]]="!isFieldSuccess('user')"
                 >
                   <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium,#29292a)]" name="mail" [size]="24" />
                   <input
@@ -58,61 +103,132 @@ type LoginField = 'user' | 'password';
                 </span>
               </label>
 
-              <div class="flex w-full flex-col gap-siaf-xs">
-                <label class="relative block w-full">
-                  @if (isFieldFloating('password')) {
-                    <span class="absolute left-3 top-[-10px] z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal text-[var(--sys-color-text-neutral-low,#6f6f71)]">
-                      Contraseña
-                    </span>
-                  }
-                  <span
-                    class="flex min-h-10 items-center gap-siaf-xs rounded-siaf-md border bg-surface px-siaf-md py-siaf-xs transition hover:border-2 hover:border-[rgba(1,72,153,0.56)] focus-within:border-2 focus-within:border-[rgba(1,72,153,0.8)]"
-                    [class.border-[#20635e]]="isFieldSuccess('password')"
-                    [class.border-2]="isFieldSuccess('password')"
-                    [class.border-[rgba(32,32,32,0.4)]]="!isFieldSuccess('password')"
-                  >
-                    <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium,#29292a)]" name="lock" [size]="24" />
-                    <input
-                      class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium,#29292a)] outline-none placeholder:text-[var(--sys-color-text-neutral-low,#6f6f71)]"
-                      type="password"
-                      [placeholder]="isFieldFloating('password') ? '' : 'Contraseña'"
-                      [value]="passwordValue"
-                      autocomplete="current-password"
-                      (focus)="focusedField = 'password'"
-                      (blur)="focusedField = ''"
-                      (input)="passwordValue = inputValue($event)"
-                    />
-                    <button
-                      class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-[rgba(32,32,32,0.08)] active:bg-[rgba(32,32,32,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
-                      type="button"
-                      aria-label="Mostrar contraseña"
-                    >
-                      <siaf-icon name="visibility" [size]="24" />
-                    </button>
+              <!-- Input Contraseña -->
+              <label class="relative block w-full">
+                @if (isFieldFloating('password')) {
+                  <span class="absolute left-3 top-[-10px] z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal text-[var(--sys-color-text-neutral-low,#6f6f71)]">
+                    Contraseña
                   </span>
-                </label>
+                }
+                <span
+                  class="flex min-h-10 items-center gap-siaf-xs rounded-siaf-md border bg-surface px-siaf-md py-siaf-xs transition focus-within:border-2 focus-within:border-[rgba(1,72,153,0.8)]"
+                  [class.border-[rgba(32,32,32,0.4)]]="!isFieldSuccess('password')"
+                  [class.border-[#20635e]]="isFieldSuccess('password')"
+                  [class.border-2]="isFieldSuccess('password')"
+                >
+                  <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium,#29292a)]" name="lock" [size]="24" />
+                  <input
+                    class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium,#29292a)] outline-none placeholder:text-[var(--sys-color-text-neutral-low,#6f6f71)]"
+                    [type]="showPassword() ? 'text' : 'password'"
+                    [placeholder]="isFieldFloating('password') ? '' : 'Contraseña'"
+                    [value]="passwordValue"
+                    autocomplete="current-password"
+                    (focus)="focusedField = 'password'"
+                    (blur)="focusedField = ''"
+                    (input)="passwordValue = inputValue($event)"
+                  />
+                  <button
+                    class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-[rgba(32,32,32,0.08)] active:bg-[rgba(32,32,32,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                    type="button"
+                    [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                    (click)="togglePassword()"
+                  >
+                    <siaf-icon [name]="showPassword() ? 'visibility_off' : 'visibility'" [size]="24" />
+                  </button>
+                </span>
+              </label>
 
-                <div class="flex justify-end">
-                  <a class="text-xs leading-5 text-brand-primary hover:underline active:text-[#00366f]" href="#">
-                    Olvidé mi contraseña
-                  </a>
-                </div>
-              </div>
-
+              <!-- Botón Iniciar sesión -->
               <a class="block w-full" routerLink="/panel">
-                <siaf-button class="block w-full" variant="accent" type="button">Iniciar sesión</siaf-button>
+                <siaf-button class="block w-full" variant="primary" type="button">Iniciar sesión</siaf-button>
               </a>
 
-              <div class="flex w-full justify-center sm:justify-end">
+              <!-- Links inferiores -->
+              <div class="flex w-full items-center justify-between">
                 <a
-                  class="inline-flex min-h-10 items-center justify-center gap-siaf-xs rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                  class="inline-flex min-h-10 items-center justify-center rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[#014899] transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
                   href="#"
                 >
-                  <siaf-icon name="home" [size]="24" />
+                  Ir a inicio
+                </a>
+                <button
+                  class="inline-flex min-h-10 items-center justify-center rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[#014899] transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                  type="button"
+                  (click)="goToRecuperarContrasena()"
+                >
+                  Olvidé mi contraseña
+                </button>
+              </div>
+            </form>
+            } <!-- fin @if entidades -->
+
+            <!-- Formulario: Proveedores y Externos -->
+            @if (activeTab() === 'proveedores') {
+            <div class="flex w-full flex-col gap-5">
+
+              <!-- ID Peru -->
+              <button
+                class="flex w-full items-center justify-center gap-siaf-xs rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                type="button"
+              >
+                <!-- ID Peru: fondo rojo, dos vectores posicionados (24×24px base) -->
+                <span style="position:relative;display:inline-block;width:24px;height:24px;flex-shrink:0;overflow:hidden;border-radius:4px;background:#d63026;">
+                  <img src="assets/figma/login/id-peru-v1.svg" style="position:absolute;left:7.74px;top:4.65px;width:12.36px;height:14.7px;" alt="" />
+                  <img src="assets/figma/login/id-peru-v2.svg" style="position:absolute;left:4.05px;top:9.35px;width:6.87px;height:7.45px;" alt="" />
+                </span>
+                ID Peru
+              </button>
+
+              <!-- Sunat -->
+              <button
+                class="flex w-full items-center justify-center gap-siaf-xs rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                type="button"
+              >
+                <!-- Sunat: fondo blanco, dos vectores posicionados -->
+                <span style="position:relative;display:inline-block;width:24px;height:24px;flex-shrink:0;overflow:hidden;border-radius:4px;background:#fff;border:1px solid rgba(32,32,32,0.08);">
+                  <img src="assets/figma/login/sunat-v1.svg" style="position:absolute;left:8.1px;top:3.6px;width:11.55px;height:11.25px;" alt="" />
+                  <img src="assets/figma/login/sunat-v2.svg" style="position:absolute;left:4.35px;top:9.3px;width:11.55px;height:11.1px;" alt="" />
+                </span>
+                Sunat
+              </button>
+
+              <!-- JNE -->
+              <div class="relative w-full">
+                <button
+                  class="flex w-full items-center justify-center gap-siaf-xs rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                  type="button"
+                  (mouseenter)="jnePopover.set(true)"
+                  (mouseleave)="jnePopover.set(false)"
+                >
+                  <!-- JNE: fondo blanco, dos vectores posicionados -->
+                  <span style="position:relative;display:inline-block;width:24px;height:24px;flex-shrink:0;overflow:hidden;border-radius:4px;background:#fff;border:1px solid rgba(32,32,32,0.08);">
+                    <img src="assets/figma/login/jne-v1.svg" style="position:absolute;left:3.9px;top:3.9px;width:16.35px;height:10.95px;" alt="" />
+                    <img src="assets/figma/login/jne-v2.svg" style="position:absolute;left:3.9px;top:8.4px;width:16.35px;height:11.7px;" alt="" />
+                  </span>
+                  JNE
+                </button>
+
+                @if (jnePopover()) {
+                  <div class="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-[4px] bg-surface px-siaf-md py-siaf-sm shadow-[0px_6px_5px_rgba(0,0,0,0.14),0px_1px_9px_rgba(0,0,0,0.12),0px_3px_3px_rgba(0,0,0,0.2)]">
+                    <p class="m-0 text-sm leading-normal text-[var(--sys-color-text-neutral-medium,#29292a)]">
+                      Exclusivo para autoridades electas.<br />
+                      Se registra automáticamente al ingresar por primera vez.
+                    </p>
+                  </div>
+                }
+              </div>
+
+              <!-- Ir a inicio -->
+              <div class="flex w-full items-center">
+                <a
+                  class="inline-flex min-h-10 items-center justify-center rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[#014899] transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                  href="#"
+                >
                   Ir a inicio
                 </a>
               </div>
-            </form>
+            </div>
+            } <!-- fin @if proveedores -->
           </section>
         </div>
       </section>
@@ -124,6 +240,15 @@ export class LoginComponent {
   focusedField: LoginField | '' = '';
   userValue = '';
   passwordValue = '';
+  readonly activeTab = signal<LoginTab>('entidades');
+  readonly showPassword = signal(false);
+  readonly jnePopover = signal(false);
+
+  constructor(private readonly router: Router) {}
+
+  goToRecuperarContrasena(): void {
+    void this.router.navigate(['/login/recuperar-contrasena']);
+  }
 
   isFieldFloating(field: LoginField): boolean {
     return this.focusedField === field || Boolean(field === 'user' ? this.userValue : this.passwordValue);
@@ -132,6 +257,10 @@ export class LoginComponent {
   isFieldSuccess(field: LoginField): boolean {
     const value = field === 'user' ? this.userValue : this.passwordValue;
     return this.focusedField !== field && Boolean(value);
+  }
+
+  togglePassword(): void {
+    this.showPassword.update((v) => !v);
   }
 
   inputValue(event: Event): string {
