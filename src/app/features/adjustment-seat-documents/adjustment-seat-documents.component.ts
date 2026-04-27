@@ -8,10 +8,12 @@ import { CreateDocumentComponent, CreateDocumentField, CreateDocumentSelection }
 import { DocumentHistoryPanelComponent, DocumentHistorySummary } from '../../shared/ui/document-history-panel/document-history-panel.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation-menu/mobile-navigation-menu.component';
+import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
+import { SnackbarComponent } from '../../shared/ui/snackbar/snackbar.component';
 import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
 import { TrayMenuComponent } from '../../shared/ui/tray-menu/tray-menu.component';
 
@@ -50,7 +52,7 @@ type AppliedCustomFilter = {
 @Component({
   selector: 'siaf-adjustment-seat-documents',
   standalone: true,
-  imports: [BreadcrumbComponent, ButtonComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, IconComponent, MobileNavigationMenuComponent, NavbarComponent, PaginationComponent, ProcessMenuTreeComponent, RouterLink, SidebarComponent, TrayDocumentsViewComponent, TrayMenuComponent],
+  imports: [BreadcrumbComponent, ButtonComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, IconComponent, MobileNavigationMenuComponent, ModalComponent, NavbarComponent, PaginationComponent, ProcessMenuTreeComponent, RouterLink, SidebarComponent, SnackbarComponent, TrayDocumentsViewComponent, TrayMenuComponent],
   template: `
     <main class="min-h-screen bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
       <siaf-navbar class="sticky top-0 z-30 block" userName="Usuario rol creador" officeName="ENTIDAD ESTADO" (menuClicked)="onNavbarMenuClicked()" />
@@ -97,6 +99,30 @@ type AppliedCustomFilter = {
         [summary]="selectedHistorySummary"
         (closed)="closeDocumentHistory()"
       />
+
+      <siaf-modal
+        [open]="verifyModalOpen"
+        variant="custom"
+        title="¿Deseas aprobar múltiples solicitudes?"
+        [description]="verifyModalDescription"
+        illustrationSrc="assets/figma/modals/approve-multiple.svg"
+        confirmVariant="primary"
+        confirmLabel="Aceptar"
+        [showIllustration]="true"
+        (canceled)="closeVerifyModal()"
+        (closed)="closeVerifyModal()"
+        (confirmed)="confirmVerifyModal()"
+      />
+
+      <div class="fixed bottom-siaf-lg left-1/2 z-50 w-[min(430px,calc(100vw-32px))] -translate-x-1/2">
+        <siaf-snackbar [open]="approvalSnackbarOpen" (closed)="closeApprovalSnackbar()">
+          <span>Las solicitudes de tipo creaci&oacute;n n&uacute;mero </span>
+          <strong class="font-bold">{{ approvalSnackbarNumbers }}</strong>
+          <span> se han </span>
+          <strong class="font-bold">aprobado</strong>
+          <span> con &eacute;xito.</span>
+        </siaf-snackbar>
+      </div>
 
       @if (trayContentOpen) {
         <section class="min-w-0 transition-[padding] duration-200 lg:pl-16" [class.lg:pl-[364px]]="trayMenuOpen" [class.lg:pl-[434px]]="processMenuOpen || sidebarCreateDocumentOpen">
@@ -171,7 +197,7 @@ type AppliedCustomFilter = {
                 {{ activeTab === 'documents' ? 'Documentos existentes' : 'Registros existentes' }}
               </h2>
               @if (activeTab === 'documents') {
-                <siaf-button variant="secondary" icon="task_alt" [disabled]="true">Verificar</siaf-button>
+                <siaf-button variant="primary" icon="task_alt" [disabled]="!canVerifySelectedDocuments" (click)="openVerifyModal()">Verificar</siaf-button>
               }
             </header>
 
@@ -382,7 +408,14 @@ type AppliedCustomFilter = {
                   <tbody>
                     @for (row of filteredRows; track row.number) {
                       <tr class="border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-surface hover:bg-[rgba(1,72,153,0.04)]">
-                        <td class="h-[58px] px-siaf-sm py-siaf-xs"><input class="size-4 accent-brand-primary" type="checkbox" [checked]="row.selected" /></td>
+                        <td class="h-[58px] px-siaf-sm py-siaf-xs">
+                          <input
+                            class="size-4 accent-brand-primary"
+                            type="checkbox"
+                            [checked]="row.selected"
+                            (change)="toggleDocumentSelection(row, $event)"
+                          />
+                        </td>
                         <td class="max-w-[260px] px-siaf-md py-siaf-sm">
                           <a class="line-clamp-2 text-sm leading-normal text-text hover:text-brand-primary" routerLink="/procesos/registro-asiento-ajuste/formulario">{{ row.document }}</a>
                         </td>
@@ -506,6 +539,9 @@ export class AdjustmentSeatDocumentsComponent {
   selectedTrayItem = 'Borradores';
   sidebarCreateDocumentOpen = false;
   documentHistoryOpen = false;
+  verifyModalOpen = false;
+  approvalSnackbarOpen = false;
+  approvalSnackbarNumbers = '';
   selectedHistorySummary: DocumentHistorySummary = {
     document: 'Solicitud de registro de asiento de ajuste',
     number: '0004',
@@ -597,6 +633,22 @@ export class AdjustmentSeatDocumentsComponent {
     return Math.max(1, Math.ceil(itemCount / this.rowsPerPage));
   }
 
+  get canVerifySelectedDocuments(): boolean {
+    return this.rows.some((row) => row.selected && row.status === 'Elaborado');
+  }
+
+  get selectedElaboradoDocumentsCount(): number {
+    return this.selectedElaboradoDocuments.length;
+  }
+
+  get verifyModalDescription(): string {
+    return `Estás a punto de aprobar ${this.selectedElaboradoDocumentsCount} solicitudes en simultáneo.`;
+  }
+
+  private get selectedElaboradoDocuments(): DocumentRow[] {
+    return this.rows.filter((row) => row.selected && row.status === 'Elaborado');
+  }
+
   get createDocumentFields(): CreateDocumentField[] {
     return [
       {
@@ -623,6 +675,46 @@ export class AdjustmentSeatDocumentsComponent {
   selectTab(tab: ActiveTab): void {
     this.activeTab = tab;
     this.page = 1;
+  }
+
+  toggleDocumentSelection(row: DocumentRow, event: Event): void {
+    row.selected = (event.target as HTMLInputElement).checked;
+  }
+
+  openVerifyModal(): void {
+    if (!this.canVerifySelectedDocuments) {
+      return;
+    }
+
+    this.closeFloatingPanels();
+    this.createDocumentPopoverOpen = false;
+    this.customFilterOpen = false;
+    this.fieldsMenuOpen = false;
+    this.favoriteMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
+    this.verifyModalOpen = true;
+  }
+
+  closeVerifyModal(): void {
+    this.verifyModalOpen = false;
+  }
+
+  confirmVerifyModal(): void {
+    const selectedRows = this.selectedElaboradoDocuments;
+    this.approvalSnackbarNumbers = this.formatDocumentNumbers(selectedRows.map((row) => row.number));
+
+    selectedRows.forEach((row) => {
+      row.status = 'Verificado';
+      row.selected = false;
+    });
+
+    this.verifyModalOpen = false;
+    this.approvalSnackbarOpen = selectedRows.length > 0;
+  }
+
+  closeApprovalSnackbar(): void {
+    this.approvalSnackbarOpen = false;
   }
 
   toggleCreateDocumentPopover(): void {
@@ -956,6 +1048,18 @@ export class AdjustmentSeatDocumentsComponent {
   private createCustomFilterId(): string {
     this.customFilterSequence += 1;
     return `custom-filter-${this.customFilterSequence}`;
+  }
+
+  private formatDocumentNumbers(numbers: string[]): string {
+    if (numbers.length <= 1) {
+      return numbers[0] ?? '';
+    }
+
+    if (numbers.length === 2) {
+      return `${numbers[0]} y ${numbers[1]}`;
+    }
+
+    return `${numbers.slice(0, -1).join(', ')} y ${numbers[numbers.length - 1]}`;
   }
 
   private matchesCustomFilter(row: DocumentRow, filter: AppliedCustomFilter): boolean {
