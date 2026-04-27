@@ -1,0 +1,66 @@
+/**
+ * DARK THEME - Tema oscuro para la aplicación
+ * Sobrescribe variables CSS para el tema oscuro
+ */
+
+[data-theme="dark"] {
+  --sys-color-bg-surfaces-surface: #121212;
+  --sys-color-bg-surfaces-surface-high: #1E1E1E;
+  --sys-color-bg-surfaces-surface-muted: #2A2A2A;
+  --sys-color-text-neutral-high: #F5F5F5;
+  --sys-color-text-neutral-medium: #E0E0E0;
+  --sys-color-text-neutral-low: #9E9E9E;
+  --sys-color-text-neutral-disabled: #616161;
+  --sys-color-border-states-enabled: rgba(255, 255, 255, 0.2);
+  --sys-color-border-states-hover: rgba(255, 255, 255, 0.4);
+  --sys-color-border-states-focused: rgba(1, 176, 255, 0.8);
+  --sys-color-bg-states-light-enabled: rgba(255, 255, 255, 0.08);
+  --sys-color-bg-states-light-hover: rgba(1, 176, 255, 0.2);
+  --sys-color-bg-states-light-pressed: rgba(255, 255, 255, 0.12);
+  --sys-color-bg-states-light-disabled: rgba(255, 255, 255, 0.08);
+  --sys-color-bg-states-dark-hover: rgba(0, 0, 0, 0.2);
+  --sys-color-bg-states-dark-pressed: rgba(0, 0, 0, 0.3);
+  --sys-color-bg-states-dark-disabled: rgba(255, 255, 255, 0.08);
+  --sys-color-bg-brand-primary: #4A9EFF;
+  --sys-color-bg-brand-primary-hover: #2B7FD4;
+  --sys-color-bg-brand-secondary: #4DADA8;
+  --sys-color-bg-brand-accent: #FF6B8A;
+  --sys-color-text-brand-white: #FFFFFF;
+  --sys-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --sys-shadow-md: 0 8px 24px rgb(0 0 0 / 0.4);
+  --sys-shadow-lg: 0 12px 32px rgb(0 0 0 / 0.5);
+  --sys-shadow-elevation-1: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 1px rgb(0 0 0 / 0.25), 0 1px 3px rgb(0 0 0 / 0.35);
+  --sys-shadow-elevation-2: 0 2px 1px rgb(0 0 0 / 0.3), 0 3px 1px rgb(0 0 0 / 0.25), 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sys-color-bg-surfaces-surface: #121212;
+    --sys-color-bg-surfaces-surface-high: #1E1E1E;
+    --sys-color-bg-surfaces-surface-muted: #2A2A2A;
+    --sys-color-text-neutral-high: #F5F5F5;
+    --sys-color-text-neutral-medium: #E0E0E0;
+    --sys-color-text-neutral-low: #9E9E9E;
+    --sys-color-text-neutral-disabled: #616161;
+    --sys-color-border-states-enabled: rgba(255, 255, 255, 0.2);
+    --sys-color-border-states-hover: rgba(255, 255, 255, 0.4);
+    --sys-color-border-states-focused: rgba(1, 176, 255, 0.8);
+    --sys-color-bg-states-light-enabled: rgba(255, 255, 255, 0.08);
+    --sys-color-bg-states-light-hover: rgba(1, 176, 255, 0.2);
+    --sys-color-bg-states-light-pressed: rgba(255, 255, 255, 0.12);
+    --sys-color-bg-states-light-disabled: rgba(255, 255, 255, 0.08);
+    --sys-color-bg-states-dark-hover: rgba(0, 0, 0, 0.2);
+    --sys-color-bg-states-dark-pressed: rgba(0, 0, 0, 0.3);
+    --sys-color-bg-states-dark-disabled: rgba(255, 255, 255, 0.08);
+    --sys-color-bg-brand-primary: #4A9EFF;
+    --sys-color-bg-brand-primary-hover: #2B7FD4;
+    --sys-color-bg-brand-secondary: #4DADA8;
+    --sys-color-bg-brand-accent: #FF6B8A;
+    --sys-color-text-brand-white: #FFFFFF;
+    --sys-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+    --sys-shadow-md: 0 8px 24px rgb(0 0 0 / 0.4);
+    --sys-shadow-lg: 0 12px 32px rgb(0 0 0 / 0.5);
+    --sys-shadow-elevation-1: 0 1px 2px rgb(0 0 0 / 0.3), 0 2px 1px rgb(0 0 0 / 0.25), 0 1px 3px rgb(0 0 0 / 0.35);
+    --sys-shadow-elevation-2: 0 2px 1px rgb(0 0 0 / 0.3), 0 3px 1px rgb(0 0 0 / 0.25), 0 1px 3px rgb(0 0 0 / 0.35);
+  }
+}

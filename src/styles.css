@@ -1,0 +1,136 @@
+@import "tailwindcss";
+@import "material-icons/iconfont/material-icons.css";
+@import "./styles/tokens/index.css";
+@import "./styles/tokens/generated/tokens.css";
+@import "./styles/tokens/generated/tailwind.tokens.css";
+@import "./styles/figma-tokens.css";
+
+@theme {
+  --font-sans: var(--sys-typography-font-family-base);
+
+  --color-brand-primary: var(--sys-color-bg-brand-primary);
+  --color-brand-secondary: var(--sys-color-bg-brand-secondary);
+  --color-brand-contrast: var(--sys-color-text-brand-white);
+  --color-accent: var(--sys-color-bg-brand-accent);
+  --color-surface: var(--sys-color-bg-surfaces-surface);
+  --color-surface-muted: var(--sys-color-bg-surfaces-surface-high);
+  --color-border: var(--sys-color-border-states-enabled);
+  --color-text: var(--sys-color-text-neutral-high);
+  --color-text-muted: var(--sys-color-text-neutral-low);
+
+  --radius-siaf-sm: var(--sys-radius-sm);
+  --radius-siaf-md: var(--sys-radius-md);
+  --radius-siaf-lg: var(--sys-radius-lg);
+  --radius-siaf-full: var(--sys-radius-full);
+
+  --spacing-siaf-none: var(--sys-gap-base-none);
+  --spacing-siaf-xxs: var(--sys-gap-base-xxs);
+  --spacing-siaf-xs: var(--sys-gap-base-xs);
+  --spacing-siaf-sm: var(--sys-gap-base-sm);
+  --spacing-siaf-md: var(--sys-gap-base-md);
+  --spacing-siaf-lg: var(--sys-gap-base-lg);
+  --spacing-siaf-xl: var(--sys-gap-base-xl);
+  --spacing-siaf-xxl: var(--sys-gap-base-xxl);
+
+  --shadow-siaf-sm: 0 1px 2px rgb(16 24 40 / 0.06);
+  --shadow-siaf-elevation-1: 0 1px 2px rgb(0 0 0 / 0.14), 0 2px 1px rgb(0 0 0 / 0.12), 0 1px 3px rgb(0 0 0 / 0.2);
+  --shadow-siaf-md: 0 8px 24px rgb(16 24 40 / 0.08);
+  --shadow-siaf-elevation-2: 0 2px 1px rgb(0 0 0 / 0.14), 0 3px 1px rgb(0 0 0 / 0.12), 0 1px 3px rgb(0 0 0 / 0.2);
+}
+
+:root {
+  --sys-gap-base-none: var(--figma-device-sys-gap-base-none);
+  --sys-gap-base-xxs: var(--figma-device-sys-gap-base-xxs);
+  --sys-gap-base-xs: var(--figma-device-sys-gap-base-xs);
+  --sys-gap-base-sm: var(--figma-device-sys-gap-base-sm);
+  --sys-gap-base-md: var(--figma-device-sys-gap-base-md);
+  --sys-gap-base-lg: var(--figma-device-sys-gap-base-lg);
+  --sys-gap-base-xl: var(--figma-device-sys-gap-base-xl);
+  --sys-gap-base-xxl: var(--figma-device-sys-gap-base-xxl);
+
+  --sys-space-1: var(--sys-gap-base-xxs);
+  --sys-space-2: var(--sys-gap-base-xs);
+  --sys-space-3: var(--sys-gap-base-sm);
+  --sys-space-4: var(--sys-gap-base-md);
+  --sys-space-5: 20px;
+  --sys-space-6: var(--sys-gap-base-lg);
+  --sys-space-8: var(--sys-gap-base-xl);
+  --sys-padding-base-none: var(--figma-device-sys-padding-base-none);
+  --sys-padding-base-xxs: var(--figma-device-sys-padding-base-xxs);
+  --sys-padding-base-xs: var(--figma-device-sys-padding-base-xs);
+  --sys-padding-base-sm: var(--figma-device-sys-padding-base-sm);
+  --sys-padding-base-md: var(--figma-device-sys-padding-base-md);
+  --sys-padding-base-lg: var(--figma-device-sys-padding-base-lg);
+  --sys-padding-base-xl: var(--figma-device-sys-padding-base-xl);
+  --sys-padding-base-xxl: var(--figma-device-sys-padding-base-xxl);
+
+  --sys-radius-sm: var(--figma-device-sys-border-radius-small);
+  --sys-radius-md: var(--figma-device-sys-border-radius-medium);
+  --sys-radius-lg: var(--figma-device-sys-border-radius-large);
+  --sys-radius-full: var(--figma-device-sys-border-radius-full);
+  --sys-border-linear-thin: var(--figma-device-sys-border-linear-thin);
+  --sys-border-linear-medium: var(--figma-device-sys-border-linear-medium);
+  --sys-border-radius-medium: var(--sys-radius-md);
+
+  --sys-typography-font-family-base: var(--figma-device-sys-typography-font-family-base), ui-sans-serif, system-ui, sans-serif;
+  --sys-typography-weight-light: var(--figma-device-sys-typography-weight-light);
+  --sys-typography-weight-regular: var(--figma-device-sys-typography-weight-regular);
+  --sys-typography-weight-medium: var(--figma-device-sys-typography-weight-medium);
+  --sys-typography-weight-semibold: 600;
+  --sys-typography-weight-bold: var(--figma-device-sys-typography-weight-bold);
+  --sys-typography-size-heading-1: var(--figma-device-sys-typography-size-heading-1);
+  --sys-typography-size-heading-2: var(--figma-device-sys-typography-size-heading-2);
+  --sys-typography-size-heading-3: var(--figma-device-sys-typography-size-heading-3);
+  --sys-typography-size-heading-4: var(--figma-device-sys-typography-size-heading-4);
+  --sys-typography-size-heading-5: var(--figma-device-sys-typography-size-heading-5);
+  --sys-typography-size-heading-6: var(--figma-device-sys-typography-size-heading-6);
+  --sys-typography-size-subtitle-1: var(--figma-device-sys-typography-size-subtitle-1);
+  --sys-typography-size-subtitle-2: var(--figma-device-sys-typography-size-subtitle-2);
+  --sys-typography-size-body: var(--figma-device-sys-typography-size-body-2);
+  --sys-typography-size-body-1: var(--figma-device-sys-typography-size-body-1);
+  --sys-typography-size-body-2: var(--figma-device-sys-typography-size-body-2);
+  --sys-typography-size-button-1: var(--figma-device-sys-typography-size-button-1);
+  --sys-typography-size-button-2: var(--figma-device-sys-typography-size-button-2);
+  --sys-typography-size-caption-1: var(--figma-device-sys-typography-size-caption-1);
+  --sys-typography-size-caption-2: var(--figma-device-sys-typography-size-caption-2);
+  --sys-typography-size-overline-1: var(--figma-device-sys-typography-size-overline-1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--sys-color-bg-surfaces-surface);
+  color: var(--sys-color-text-neutral-high);
+  font-family: var(--sys-typography-font-family-base);
+  font-size: var(--sys-typography-size-body);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.material-icons {
+  direction: ltr;
+  display: inline-block;
+  font-family: "Material Icons";
+  font-feature-settings: "liga";
+  font-style: normal;
+  font-weight: normal;
+  letter-spacing: normal;
+  line-height: 1;
+  overflow-wrap: normal;
+  text-transform: none;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+}
