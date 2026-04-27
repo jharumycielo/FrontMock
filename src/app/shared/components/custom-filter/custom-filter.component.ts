@@ -103,9 +103,11 @@ export class CustomFilterComponent implements OnChanges {
   @Input() condicionOptions: TextFieldOption[] = [];
   @Input() valorOptions: TextFieldOption[] = [];
   @Input() initialRows: FilterRow[] = [];
+  @Input() deleteEnabled = false;
 
   @Output() aplicar = new EventEmitter<CustomFilterApplyEvent>();
   @Output() cancelar = new EventEmitter<void>();
+  @Output() eliminar = new EventEmitter<void>();
 
   rows: FilterRow[] = [{ campo: '', condicion: '', valor: '' }];
 
@@ -126,6 +128,11 @@ export class CustomFilterComponent implements OnChanges {
   }
 
   removeRow(index: number): void {
+    if (this.deleteEnabled && this.rows.length === 1) {
+      this.eliminar.emit();
+      return;
+    }
+
     const updated = this.rows.filter((_, i) => i !== index);
     this.rows = updated.length > 0 ? updated : [{ campo: '', condicion: '', valor: '' }];
   }
@@ -150,4 +157,5 @@ export class CustomFilterComponent implements OnChanges {
     this.rows = [{ campo: '', condicion: '', valor: '' }];
     this.cancelar.emit();
   }
+
 }

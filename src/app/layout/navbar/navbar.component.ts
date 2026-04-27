@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 
@@ -14,6 +14,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
             class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
             type="button"
             aria-label="Abrir menu"
+            (click)="menuClicked.emit()"
           >
             <siaf-icon name="menu" [size]="20" />
           </button>
@@ -66,4 +67,6 @@ export class NavbarComponent {
   @Input() showMenu = true;
   @Input() showNotifications = true;
   @Input() showProfile = true;
+
+  @Output() menuClicked = new EventEmitter<void>();
 }

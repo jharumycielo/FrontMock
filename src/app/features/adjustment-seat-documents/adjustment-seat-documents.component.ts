@@ -7,10 +7,13 @@ import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { CreateDocumentComponent, CreateDocumentField, CreateDocumentSelection } from '../../shared/ui/create-document/create-document.component';
 import { DocumentHistoryPanelComponent, DocumentHistorySummary } from '../../shared/ui/document-history-panel/document-history-panel.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
+import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation-menu/mobile-navigation-menu.component';
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
+import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
+import { TrayMenuComponent } from '../../shared/ui/tray-menu/tray-menu.component';
 
 type ActiveTab = 'documents' | 'records';
 
@@ -47,10 +50,10 @@ type AppliedCustomFilter = {
 @Component({
   selector: 'siaf-adjustment-seat-documents',
   standalone: true,
-  imports: [BreadcrumbComponent, ButtonComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, IconComponent, NavbarComponent, PaginationComponent, ProcessMenuTreeComponent, RouterLink, SidebarComponent],
+  imports: [BreadcrumbComponent, ButtonComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, IconComponent, MobileNavigationMenuComponent, NavbarComponent, PaginationComponent, ProcessMenuTreeComponent, RouterLink, SidebarComponent, TrayDocumentsViewComponent, TrayMenuComponent],
   template: `
     <main class="min-h-screen bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
-      <siaf-navbar class="sticky top-0 z-30 block" userName="Usuario rol creador" officeName="ENTIDAD ESTADO" />
+      <siaf-navbar class="sticky top-0 z-30 block" userName="Usuario rol creador" officeName="ENTIDAD ESTADO" (menuClicked)="onNavbarMenuClicked()" />
 
       <aside class="fixed bottom-0 left-0 top-14 z-20 hidden lg:block">
         <siaf-sidebar
@@ -61,18 +64,30 @@ type AppliedCustomFilter = {
         />
       </aside>
 
-      @if (hasFloatingPanel) {
-        <div class="fixed inset-0 top-14 z-10 bg-transparent" aria-hidden="true" (click)="closeFloatingPanels()"></div>
+      @if (mobileNavigationOpen) {
+        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:hidden">
+          <siaf-mobile-navigation-menu
+            [navigation]="activeNavigation"
+            (created)="openSidebarCreateDocumentFromMobileMenu()"
+            (navigationChanged)="onMobileNavigationChange($event)"
+          />
+        </div>
       }
 
       @if (processMenuOpen) {
-        <div class="fixed bottom-0 left-0 top-14 z-20 lg:left-16" (click)="$event.stopPropagation()">
+        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
           <siaf-process-menu-tree (nodeSelected)="onProcessNodeSelected($event)" />
         </div>
       }
 
+      @if (trayMenuOpen) {
+        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
+          <siaf-tray-menu [selectedItem]="selectedTrayItem" (selected)="onTrayItemSelected($event)" />
+        </div>
+      }
+
       @if (sidebarCreateDocumentOpen) {
-        <div class="fixed bottom-0 left-0 top-14 z-20 lg:left-16" (click)="$event.stopPropagation()">
+        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
           <siaf-create-document (accepted)="onCreateDocumentAccepted()" (canceled)="closeFloatingPanels()" />
         </div>
       }
@@ -83,7 +98,12 @@ type AppliedCustomFilter = {
         (closed)="closeDocumentHistory()"
       />
 
-      <section class="min-w-0 lg:pl-16">
+      @if (trayContentOpen) {
+        <section class="min-w-0 transition-[padding] duration-200 lg:pl-16" [class.lg:pl-[364px]]="trayMenuOpen" [class.lg:pl-[434px]]="processMenuOpen || sidebarCreateDocumentOpen">
+          <siaf-tray-documents-view [title]="selectedTrayItem" />
+        </section>
+      } @else {
+      <section class="min-w-0 transition-[padding] duration-200 lg:pl-16" [class.lg:pl-[364px]]="trayMenuOpen" [class.lg:pl-[434px]]="processMenuOpen || sidebarCreateDocumentOpen">
         <section class="bg-surface">
           <siaf-breadcrumb class="block" [items]="breadcrumbs" />
 
@@ -450,13 +470,16 @@ type AppliedCustomFilter = {
                 [condicionOptions]="filterCondicionOptions"
                 [valorOptions]="filterValorOptions"
                 [initialRows]="customFilterInitialRows"
+                [deleteEnabled]="!!editingCustomFilterId"
                 (aplicar)="onCustomFilterApply($event)"
                 (cancelar)="closeCustomFilter()"
+                (eliminar)="deleteEditingCustomFilter()"
               />
             </div>
           }
         </section>
       </section>
+      }
     </main>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -477,6 +500,10 @@ export class AdjustmentSeatDocumentsComponent {
   editingCustomFilterId = '';
   private customFilterSequence = 0;
   processMenuOpen = false;
+  trayMenuOpen = false;
+  trayContentOpen = false;
+  mobileNavigationOpen = false;
+  selectedTrayItem = 'Borradores';
   sidebarCreateDocumentOpen = false;
   documentHistoryOpen = false;
   selectedHistorySummary: DocumentHistorySummary = {
@@ -784,6 +811,7 @@ export class AdjustmentSeatDocumentsComponent {
   }
 
   openSidebarCreateDocument(): void {
+    this.mobileNavigationOpen = false;
     this.createDocumentPopoverOpen = false;
     this.customFilterOpen = false;
     this.fieldsMenuOpen = false;
@@ -791,12 +819,20 @@ export class AdjustmentSeatDocumentsComponent {
     this.statusFilterMenuOpen = false;
     this.actionTypeFilterMenuOpen = false;
     this.processMenuOpen = false;
+    this.trayMenuOpen = false;
+    this.trayContentOpen = false;
     this.sidebarCreateDocumentOpen = true;
+  }
+
+  openSidebarCreateDocumentFromMobileMenu(): void {
+    this.mobileNavigationOpen = false;
+    this.openSidebarCreateDocument();
   }
 
   onSidebarNavigationChange(navigation: SidebarNavigation): void {
     if (navigation === 'Panel') {
       this.activeNavigation = 'Panel';
+      this.trayContentOpen = false;
       this.closeFloatingPanels();
       this.createDocumentPopoverOpen = false;
       this.customFilterOpen = false;
@@ -811,6 +847,28 @@ export class AdjustmentSeatDocumentsComponent {
     this.activeNavigation = navigation;
     this.sidebarCreateDocumentOpen = false;
     this.processMenuOpen = navigation === 'Proceso';
+    this.trayMenuOpen = navigation === 'Bandeja';
+  }
+
+  onMobileNavigationChange(navigation: SidebarNavigation): void {
+    this.mobileNavigationOpen = false;
+    this.onSidebarNavigationChange(navigation);
+  }
+
+  onNavbarMenuClicked(): void {
+    if (this.hasFloatingPanel) {
+      this.closeFloatingPanels();
+      return;
+    }
+
+    this.mobileNavigationOpen = !this.mobileNavigationOpen;
+  }
+
+  onTrayItemSelected(item: string): void {
+    this.selectedTrayItem = item;
+    this.activeNavigation = 'Bandeja';
+    this.trayMenuOpen = this.isDesktopViewport();
+    this.trayContentOpen = true;
   }
 
   onProcessNodeSelected(node: ProcessMenuNode): void {
@@ -826,12 +884,14 @@ export class AdjustmentSeatDocumentsComponent {
   }
 
   closeFloatingPanels(): void {
+    this.mobileNavigationOpen = false;
     this.processMenuOpen = false;
+    this.trayMenuOpen = false;
     this.sidebarCreateDocumentOpen = false;
   }
 
   get hasFloatingPanel(): boolean {
-    return this.processMenuOpen || this.sidebarCreateDocumentOpen;
+    return this.processMenuOpen || this.trayMenuOpen || this.sidebarCreateDocumentOpen;
   }
 
   onCreateDocumentFieldChange(selection: CreateDocumentSelection): void {
@@ -923,5 +983,9 @@ export class AdjustmentSeatDocumentsComponent {
     }
 
     return rowValue === filterValue;
+  }
+
+  private isDesktopViewport(): boolean {
+    return typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
   }
 }
