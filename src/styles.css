@@ -64,6 +64,8 @@
   --sys-padding-base-xl: var(--figma-device-sys-padding-base-xl);
   --sys-padding-base-xxl: var(--figma-device-sys-padding-base-xxl);
 
+  --ref-color-solid-primary-50: var(--color-palette-blue-50);
+
   --sys-radius-sm: var(--figma-device-sys-border-radius-small);
   --sys-radius-md: var(--figma-device-sys-border-radius-medium);
   --sys-radius-lg: var(--figma-device-sys-border-radius-large);
