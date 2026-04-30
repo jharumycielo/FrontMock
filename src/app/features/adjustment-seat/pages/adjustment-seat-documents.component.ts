@@ -348,7 +348,7 @@ export class AdjustmentSeatDocumentsComponent {
     { label: 'Verificado', value: 'Verificado' },
     { label: 'Creación', value: 'Creación' },
     { label: 'Reversión', value: 'Reversión' },
-    { label: 'Tesorería', value: 'Tesorería' }
+    { label: 'Sistema Nacional de Contabilidad', value: 'Sistema Nacional de Contabilidad' }
   ];
   selectedHistorySummary: DocumentHistorySummary = {
     document: 'Solicitud de registro de asiento de ajuste',
@@ -368,10 +368,10 @@ export class AdjustmentSeatDocumentsComponent {
   ];
 
   readonly rows: DocumentRow[] = [
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0004', actionType: 'Creación', status: 'Elaborado', system: 'Tesorería', date: '15/06/2024', entity: '009 - Ministerio de Economía y Finanzas' },
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0003', actionType: 'Creación', status: 'Verificado', system: 'Tesorería', date: '20/01/2024', entity: '009 - Ministerio de Economía y Finanzas' },
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0002', actionType: 'Creación', status: 'Verificado', system: 'Tesorería', date: '15/12/2023', entity: '009 - Ministerio de Economía y Finanzas' },
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0001', actionType: 'Creación', status: 'Elaborado', system: 'Tesorería', date: '20/11/2023', entity: '009 - Ministerio de Economía y Finanzas' }
+    { document: 'Solicitud de registro de asiento de ajuste', number: '0004', actionType: 'Creación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '15/06/2024', entity: '009 - Ministerio de Economía y Finanzas' },
+    { document: 'Solicitud de registro de asiento de ajuste', number: '0003', actionType: 'Creación', status: 'Verificado', system: 'Sistema Nacional de Contabilidad', date: '20/01/2024', entity: '009 - Ministerio de Economía y Finanzas' },
+    { document: 'Solicitud de registro de asiento de ajuste', number: '0002', actionType: 'Creación', status: 'Verificado', system: 'Sistema Nacional de Contabilidad', date: '15/12/2023', entity: '009 - Ministerio de Economía y Finanzas' },
+    { document: 'Solicitud de registro de asiento de ajuste', number: '0001', actionType: 'Creación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '20/11/2023', entity: '009 - Ministerio de Economía y Finanzas' }
   ];
 
   readonly recordRows: RecordRow[] = [

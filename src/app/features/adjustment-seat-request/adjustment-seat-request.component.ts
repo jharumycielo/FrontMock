@@ -12,6 +12,7 @@ import { NavbarComponent } from '../../layout/navbar/navbar.component';
 import { findProcessPathById, ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
 import { SolicitudeHeaderComponent } from '../../shared/ui/solicitude-header/solicitude-header.component';
+import { SnackbarComponent } from '../../shared/ui/snackbar/snackbar.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { UploaderComponent } from '../../shared/ui/uploader/uploader.component';
 import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
@@ -96,8 +97,10 @@ type PeriodoGroup = {
     UploaderComponent,
     SidebarComponent,
     SolicitudeHeaderComponent,
+    SnackbarComponent,
     TrayDocumentsViewComponent,
     TrayMenuComponent,
+    forwardRef(() => ReadonlyFieldComponent),
     forwardRef(() => TextAreaControlComponent)
   ],
   template: `
@@ -150,30 +153,63 @@ type PeriodoGroup = {
         <section class="border-b border-[var(--sys-color-divider-default)] bg-surface">
           <siaf-breadcrumb class="block" [items]="breadcrumbs" />
           <siaf-solicitude-header
-            type="actions"
+            [type]="isReadOnly ? 'readonly' : 'actions'"
             heading="Solicitud de registro de asiento de ajuste"
             secondaryText="Creación"
-            tagLabel="Nuevo"
+            [tagLabel]="isElaborated ? 'Elaborado' : 'Nuevo'"
             [showReturn]="true"
+            [showTag]="!isReadOnly"
+            [showDelete]="isReadOnly"
+            [showEdit]="isReadOnly"
+            [showVerify]="isReadOnly"
             [saveDisabled]="!isFormValid"
-            [verifyDisabled]="true"
+            [verifyDisabled]="!isReadOnly"
             (returned)="goToDocuments()"
             (canceled)="goToDocuments()"
             (saved)="openSaveModal()"
+            (edited)="enableEditing()"
           />
         </section>
 
         <section class="flex flex-col gap-siaf-md p-siaf-md sm:p-siaf-lg">
-          <section class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
-            <div class="grid gap-siaf-xs">
-              @for (field of entityFields; track field.label) {
-                <div class="grid min-h-6 gap-siaf-xs md:grid-cols-[140px_1fr]">
-                  <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">{{ field.label }}</span>
-                  <strong class="min-w-0 text-sm font-bold leading-6 text-text">{{ field.value }}</strong>
+          @if (isReadOnly) {
+            <section class="grid gap-siaf-md xl:grid-cols-[1fr_360px]">
+              <article class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
+                <div class="grid gap-siaf-xs">
+                  @for (field of entityFields; track field.label) {
+                    <div class="grid min-h-6 gap-siaf-xs md:grid-cols-[140px_1fr]">
+                      <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">{{ field.label }}</span>
+                      <strong class="min-w-0 text-sm font-bold leading-6 text-text">{{ field.value }}</strong>
+                    </div>
+                  }
                 </div>
-              }
-            </div>
-          </section>
+              </article>
+
+              <article class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
+                <div class="grid gap-siaf-xs">
+                  <div class="grid min-h-6 gap-siaf-xs sm:grid-cols-[140px_1fr]">
+                    <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">N° documento</span>
+                    <strong class="min-w-0 text-sm font-bold leading-6 text-text">{{ generatedDocumentNumber }}</strong>
+                  </div>
+                  <div class="grid min-h-6 gap-siaf-xs sm:grid-cols-[140px_1fr]">
+                    <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Estado</span>
+                    <span class="inline-flex min-h-6 w-fit items-center rounded-siaf-sm bg-[var(--sys-color-bg-feedback-dark-default,#353537)] px-siaf-xs text-xs text-white">Elaborado</span>
+                  </div>
+                </div>
+              </article>
+            </section>
+          } @else {
+            <section class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
+              <div class="grid gap-siaf-xs">
+                @for (field of entityFields; track field.label) {
+                  <div class="grid min-h-6 gap-siaf-xs md:grid-cols-[140px_1fr]">
+                    <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">{{ field.label }}</span>
+                    <strong class="min-w-0 text-sm font-bold leading-6 text-text">{{ field.value }}</strong>
+                  </div>
+                }
+              </div>
+            </section>
+          }
 
           <section class="rounded-siaf-md bg-surface">
             <header class="flex min-h-14 items-center px-siaf-lg pt-siaf-md">
@@ -197,9 +233,11 @@ type PeriodoGroup = {
                 <section class="grid gap-siaf-md">
                   <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                     <h3 class="m-0 text-sm font-bold uppercase text-text">Periodo</h3>
-                    <button class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-white transition" type="button" aria-label="Cambiar periodo" (click)="openPeriodoPanel()">
-                      <siaf-icon name="search" [size]="24" />
-                    </button>
+                    @if (!isReadOnly) {
+                      <button class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-white transition" type="button" aria-label="Cambiar periodo" (click)="openPeriodoPanel()">
+                        <siaf-icon name="search" [size]="24" />
+                      </button>
+                    }
                   </div>
                   <article class="relative rounded-siaf-md border border-border px-siaf-xl py-siaf-xs">
                     <span class="absolute left-[-1px] top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-siaf-sm bg-brand-primary"></span>
@@ -222,14 +260,16 @@ type PeriodoGroup = {
                           <strong class="text-sm font-bold">{{ selectedPeriodo()!.fechaVigenciaAdicional }}</strong>
                         </div>
                       </div>
-                      <button
-                        class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
-                        type="button"
-                        aria-label="Quitar periodo seleccionado"
-                        (click)="selectedPeriodo.set(null)"
-                      >
-                        <siaf-icon name="close" [size]="20" />
-                      </button>
+                      @if (!isReadOnly) {
+                        <button
+                          class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                          type="button"
+                          aria-label="Quitar periodo seleccionado"
+                          (click)="selectedPeriodo.set(null)"
+                        >
+                          <siaf-icon name="close" [size]="20" />
+                        </button>
+                      }
                     </div>
                   </article>
                 </section>
@@ -238,16 +278,22 @@ type PeriodoGroup = {
               }
               <section class="grid gap-siaf-md">
                 <h3 class="m-0 text-sm font-bold uppercase text-text">Fecha de contabilización</h3>
-                <siaf-date-time-picker placeholder="Fecha*" variant="date" (valueChange)="fechaContabilizacion.set($event)" />
+                @if (isReadOnly) {
+                  <readonly-field caption="Fecha *" [value]="fechaContabilizacionDisplay" />
+                } @else {
+                  <siaf-date-time-picker placeholder="Fecha*" variant="date" (valueChange)="fechaContabilizacion.set($event)" />
+                }
               </section>
               <!-- Código de clase de ajuste -->
               @if (selectedClaseAjuste()) {
                 <section class="grid gap-siaf-md">
                   <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                     <h3 class="m-0 text-sm font-bold uppercase text-text">Código de clase de ajuste</h3>
-                    <button class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-white transition" type="button" aria-label="Cambiar código de clase de ajuste" (click)="openClaseAjustePanel()">
-                      <siaf-icon name="search" [size]="24" />
-                    </button>
+                    @if (!isReadOnly) {
+                      <button class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-white transition" type="button" aria-label="Cambiar código de clase de ajuste" (click)="openClaseAjustePanel()">
+                        <siaf-icon name="search" [size]="24" />
+                      </button>
+                    }
                   </div>
                   <article class="relative rounded-siaf-md border border-border px-siaf-xl py-siaf-xs">
                     <span class="absolute left-[-1px] top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-siaf-sm bg-brand-primary"></span>
@@ -256,14 +302,16 @@ type PeriodoGroup = {
                         <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Código de clase de ajuste</span>
                         <strong class="text-sm font-bold">{{ selectedClaseAjuste()!.descripcion }}</strong>
                       </div>
-                      <button
-                        class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
-                        type="button"
-                        aria-label="Quitar código de clase de ajuste"
-                        (click)="selectedClaseAjuste.set(null)"
-                      >
-                        <siaf-icon name="close" [size]="20" />
-                      </button>
+                      @if (!isReadOnly) {
+                        <button
+                          class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                          type="button"
+                          aria-label="Quitar código de clase de ajuste"
+                          (click)="selectedClaseAjuste.set(null)"
+                        >
+                          <siaf-icon name="close" [size]="20" />
+                        </button>
+                      }
                     </div>
                   </article>
                 </section>
@@ -277,12 +325,12 @@ type PeriodoGroup = {
                   <button
                     class="inline-flex size-10 items-center justify-center rounded-siaf-md text-white transition"
                     [class.bg-[var(--sys-color-bg-brand-accent)]]="selectedClaseAjuste()"
-                    [class.hover:brightness-90]="selectedClaseAjuste()"
-                    [class.bg-[rgba(32,32,32,0.12)]]="!selectedClaseAjuste()"
-                    [class.cursor-not-allowed]="!selectedClaseAjuste()"
+                    [class.hover:brightness-90]="selectedClaseAjuste() && !isReadOnly"
+                    [class.bg-[rgba(32,32,32,0.12)]]="!selectedClaseAjuste() || isReadOnly"
+                    [class.cursor-not-allowed]="!selectedClaseAjuste() || isReadOnly"
                     type="button"
                     aria-label="Buscar codigo de detalle de ajuste"
-                    [disabled]="!selectedClaseAjuste()"
+                    [disabled]="!selectedClaseAjuste() || isReadOnly"
                     (click)="openDetalleAjustePanel()"
                   >
                     <siaf-icon name="search" [size]="24" />
@@ -297,14 +345,16 @@ type PeriodoGroup = {
                         <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Código de detalle de ajuste</span>
                         <strong class="text-sm font-bold">{{ selectedDetalleAjuste()!.descripcion }}</strong>
                       </div>
-                      <button
-                        class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]"
-                        type="button"
-                        aria-label="Quitar código de detalle de ajuste"
-                        (click)="selectedDetalleAjuste.set(null)"
-                      >
-                        <siaf-icon name="close" [size]="20" />
-                      </button>
+                      @if (!isReadOnly) {
+                        <button
+                          class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]"
+                          type="button"
+                          aria-label="Quitar código de detalle de ajuste"
+                          (click)="selectedDetalleAjuste.set(null)"
+                        >
+                          <siaf-icon name="close" [size]="20" />
+                        </button>
+                      }
                     </div>
                   </article>
                 } @else {
@@ -313,7 +363,14 @@ type PeriodoGroup = {
                   </div>
                 }
               </section>
-              <text-area-control title="Glosa" placeholder="Glosa*" (valueChange)="glosa.set($event)" />
+              @if (isReadOnly) {
+                <section class="grid gap-siaf-md">
+                  <h3 class="m-0 text-sm font-bold uppercase text-text">Glosa</h3>
+                  <readonly-field caption="Glosa *" [value]="glosa()" />
+                </section>
+              } @else {
+                <text-area-control title="Glosa" placeholder="Glosa*" (valueChange)="glosa.set($event)" />
+              }
 
               <details class="group overflow-hidden rounded-siaf-sm border border-[var(--sys-color-divider-strong)] bg-surface" open>
                 <summary class="flex min-h-14 w-full cursor-pointer list-none items-center gap-siaf-xs px-siaf-md py-siaf-xs text-left">
@@ -337,13 +394,14 @@ type PeriodoGroup = {
                       <div class="flex items-center gap-siaf-xs">
                         <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md">
                           <span class="sr-only">Buscar</span>
-                          <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted" placeholder="Buscar"
+                          <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted disabled:text-text-muted" placeholder="Buscar"
+                            [disabled]="isReadOnly"
                             [value]="cuentasSearch" (input)="cuentasSearch = inputVal($event)" />
                         </label>
-                        <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted" type="button" aria-label="Filtrar">
+                        <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:text-text-muted" type="button" aria-label="Filtrar" [disabled]="isReadOnly">
                           <siaf-icon name="filter_list" [size]="24" />
                         </button>
-                        <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted" type="button" aria-label="Más opciones">
+                        <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:text-text-muted" type="button" aria-label="Más opciones" [disabled]="isReadOnly">
                           <siaf-icon name="more_vert" [size]="24" />
                         </button>
                       </div>
@@ -370,23 +428,27 @@ type PeriodoGroup = {
                                 <td class="min-h-12 px-siaf-md py-siaf-sm text-sm text-text">{{ cuenta.codigo }}</td>
                                 <td class="min-h-12 px-siaf-md py-siaf-sm text-sm text-text">{{ cuenta.nombre }}</td>
                                 <td class="min-h-12 px-siaf-sm py-siaf-sm text-sm text-text">{{ cuenta.tipoMovimiento }}</td>
-                                <td class="min-h-12 px-siaf-xs py-siaf-sm">
-                                  <!-- Input importe con floating label y decimales -->
-                                  <div class="relative w-full">
-                                    <label class="absolute left-3 top-[-9px] z-[1] flex items-center gap-px bg-surface px-siaf-xxs">
-                                      <span class="text-xs font-medium leading-none text-text-muted">Importe</span>
-                                      <span class="text-xs font-bold leading-none text-[var(--sys-color-text-feedback-danger,#821c1e)] opacity-80">*</span>
-                                    </label>
-                                    <input
-                                      class="h-8 w-full rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md text-right text-sm text-text outline-none transition focus:border-2 focus:border-[rgba(1,72,153,0.8)]"
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
-                                      [value]="cuenta.importe || ''"
-                                      placeholder="0,0"
-                                      (input)="onCuentasImporteChange(i, $event)"
-                                    />
-                                  </div>
+                                <td class="min-h-12 px-siaf-xs py-siaf-sm text-right">
+                                  @if (isReadOnly) {
+                                    <span class="text-sm text-text">{{ formatImporte(cuenta.importe) }}</span>
+                                  } @else {
+                                    <!-- Input importe con floating label y decimales -->
+                                    <div class="relative w-full">
+                                      <label class="absolute left-3 top-[-9px] z-[1] flex items-center gap-px bg-surface px-siaf-xxs">
+                                        <span class="text-xs font-medium leading-none text-text-muted">Importe</span>
+                                        <span class="text-xs font-bold leading-none text-[var(--sys-color-text-feedback-danger,#821c1e)] opacity-80">*</span>
+                                      </label>
+                                      <input
+                                        class="h-8 w-full rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md text-right text-sm text-text outline-none transition focus:border-2 focus:border-[rgba(1,72,153,0.8)]"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        [value]="cuenta.importe || ''"
+                                        placeholder="0,0"
+                                        (input)="onCuentasImporteChange(i, $event)"
+                                      />
+                                    </div>
+                                  }
                                 </td>
                               </tr>
                             }
@@ -424,19 +486,25 @@ type PeriodoGroup = {
             </header>
 
             <div class="flex flex-col gap-siaf-lg px-siaf-lg py-siaf-md">
-              <text-area-control title="" placeholder="Justificación del requerimiento solicitado*" />
+              @if (isReadOnly) {
+                <readonly-field caption="Justificación del requerimiento solicitado *" [value]="justificacion()" />
+              } @else {
+                <text-area-control title="" placeholder="Justificación del requerimiento solicitado*" (valueChange)="justificacion.set($event)" />
+              }
 
               <div class="flex flex-col gap-siaf-xs">
                 <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                   <h3 class="m-0 text-sm font-bold uppercase text-text">Documento de sustento</h3>
-                  <button
-                    class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-white transition hover:brightness-90"
-                    type="button"
-                    aria-label="Subir documento"
-                    (click)="uploadPanelOpen.set(true)"
-                  >
-                    <siaf-icon name="file_upload" [size]="24" />
-                  </button>
+                  @if (!isReadOnly) {
+                    <button
+                      class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-white transition hover:brightness-90"
+                      type="button"
+                      aria-label="Subir documento"
+                      (click)="uploadPanelOpen.set(true)"
+                    >
+                      <siaf-icon name="file_upload" [size]="24" />
+                    </button>
+                  }
                 </div>
 
                 @if (uploadedFile()) {
@@ -447,6 +515,7 @@ type PeriodoGroup = {
                       <span class="truncate text-sm font-bold">{{ uploadedFile()!.name }}</span>
                       <span class="text-xs text-text-muted">{{ formatFileSize(uploadedFile()!.size) }}</span>
                     </div>
+                    @if (!isReadOnly) {
                     <div class="flex shrink-0 items-center gap-1">
                       <button
                         class="inline-flex size-6 items-center justify-center rounded-siaf-sm transition hover:bg-surface-muted"
@@ -465,6 +534,7 @@ type PeriodoGroup = {
                         <siaf-icon name="cancel" [size]="24" class="text-text-muted" />
                       </button>
                     </div>
+                    }
                   </div>
                 } @else {
                   <message-box text="No se han adjuntado archivos. Por favor, haga clic en el botón para subir un archivo." />
@@ -833,6 +903,15 @@ type PeriodoGroup = {
         (closed)="saveModalOpen = false"
         (confirmed)="onConfirmSave()"
       />
+
+      <div class="fixed bottom-siaf-lg left-1/2 z-50 w-[min(430px,calc(100vw-32px))] -translate-x-1/2">
+        <siaf-snackbar
+          variant="creation-elaborated"
+          [open]="saveSnackbarOpen"
+          [requestNumber]="generatedDocumentNumber"
+          (closed)="saveSnackbarOpen = false"
+        />
+      </div>
     </main>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -845,6 +924,10 @@ export class AdjustmentSeatRequestComponent {
   mobileNavigationOpen = false;
   selectedTrayItem = 'Borradores';
   sidebarCreateDocumentOpen = false;
+  isReadOnly = false;
+  isElaborated = false;
+  saveSnackbarOpen = false;
+  readonly generatedDocumentNumber = '0001';
 
   readonly periodoPanelOpen = signal(false);
   readonly selectedPeriodo = signal<PeriodoRow | null>(null);
@@ -869,6 +952,7 @@ export class AdjustmentSeatRequestComponent {
   saveModalOpen = false;
   readonly fechaContabilizacion = signal('');
   readonly glosa = signal('');
+  readonly justificacion = signal('');
 
   cuentasContables: CuentaContable[] = [];
   cuentasSearch = '';
@@ -942,6 +1026,10 @@ export class AdjustmentSeatRequestComponent {
   constructor(private readonly router: Router, private readonly cdr: ChangeDetectorRef) {}
 
   openPeriodoPanel(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     this.tempSelectedPeriodo = this.selectedPeriodo();
     this.periodoPanelOpen.set(true);
   }
@@ -1002,8 +1090,16 @@ export class AdjustmentSeatRequestComponent {
 
   onConfirmSave(): void {
     this.saveModalOpen = false;
+    this.isElaborated = true;
+    this.isReadOnly = true;
+    this.saveSnackbarOpen = true;
     this.cdr.markForCheck();
-    void this.router.navigate(['/procesos/registro-asiento-ajuste']);
+  }
+
+  enableEditing(): void {
+    this.isReadOnly = false;
+    this.saveSnackbarOpen = false;
+    this.cdr.markForCheck();
   }
 
   get isFormValid(): boolean {
@@ -1013,9 +1109,21 @@ export class AdjustmentSeatRequestComponent {
       this.selectedDetalleAjuste() &&
       this.fechaContabilizacion() &&
       this.glosa().trim().length > 0 &&
+      this.justificacion().trim().length > 0 &&
       this.uploadedFile() &&
       (this.totalDebe > 0 || this.totalHaber > 0)
     );
+  }
+
+  get fechaContabilizacionDisplay(): string {
+    const value = this.fechaContabilizacion();
+
+    if (!value) {
+      return '';
+    }
+
+    const [year, month, day] = value.split('-');
+    return year && month && day ? `${day}/${month}/${year}` : value;
   }
 
   formatFileSize(bytes: number): string {
@@ -1046,10 +1154,14 @@ export class AdjustmentSeatRequestComponent {
   }
 
   formatImporte(value: number): string {
-    return value.toLocaleString('es-PE', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+    return value.toLocaleString('es-PE', { maximumFractionDigits: 2 });
   }
 
   openDetalleAjustePanel(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     this.tempSelectedDetalleAjuste = this.selectedDetalleAjuste();
     this.detalleAjustePanelOpen.set(true);
   }
@@ -1093,6 +1205,10 @@ export class AdjustmentSeatRequestComponent {
   }
 
   openClaseAjustePanel(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     this.tempSelectedClaseAjuste = this.selectedClaseAjuste();
     this.claseAjustePanelOpen.set(true);
   }
@@ -1282,6 +1398,24 @@ export class EmptySectionComponent {
 }
 
 @Component({
+  selector: 'readonly-field',
+  standalone: true,
+  template: `
+    <div class="relative flex min-h-10 items-center rounded-siaf-md bg-surface px-siaf-md py-siaf-xs">
+      <span class="absolute -top-2.5 left-3 z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium text-text-muted">
+        {{ caption }}
+      </span>
+      <span class="min-w-0 text-sm leading-normal tracking-[0.0249px] text-text">{{ value }}</span>
+    </div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class ReadonlyFieldComponent {
+  @Input() caption = '';
+  @Input() value = '';
+}
+
+@Component({
   selector: 'text-area-control',
   standalone: true,
   template: `
@@ -1291,9 +1425,10 @@ export class EmptySectionComponent {
       }
       <label class="flex min-h-[60px] items-start rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface px-siaf-md py-siaf-xs">
         <textarea
-          class="min-h-11 flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-text-muted"
+          class="min-h-11 flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-text-muted disabled:text-text-muted"
           maxlength="500"
           [placeholder]="placeholder"
+          [disabled]="disabled"
           (input)="onInput($event)"
         ></textarea>
       </label>
@@ -1305,6 +1440,7 @@ export class EmptySectionComponent {
 export class TextAreaControlComponent {
   @Input() title = '';
   @Input() placeholder = '';
+  @Input() disabled = false;
   @Output() valueChange = new EventEmitter<string>();
   charCount = 0;
 

@@ -57,6 +57,20 @@ export type SolicitudeHeaderType = 'readonly' | 'actions';
           <siaf-button size="md" icon="task_alt" [disabled]="verifyDisabled" (click)="verified.emit()">Verificar</siaf-button>
         </div>
       }
+
+      @if (type === 'readonly' && showButtonGroup) {
+        <div class="flex w-full flex-wrap items-center justify-end gap-siaf-sm sm:w-auto sm:shrink-0">
+          @if (showDelete) {
+            <siaf-button variant="secondary" size="md" icon="delete" (click)="deleted.emit()">{{ deleteLabel }}</siaf-button>
+          }
+          @if (showEdit) {
+            <siaf-button variant="secondary" size="md" icon="edit" (click)="edited.emit()">{{ editLabel }}</siaf-button>
+          }
+          @if (showVerify) {
+            <siaf-button size="md" icon="task_alt" [disabled]="verifyDisabled" (click)="verified.emit()">{{ verifyLabel }}</siaf-button>
+          }
+        </div>
+      }
     </header>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -72,11 +86,19 @@ export class SolicitudeHeaderComponent {
   @Input() tagLabel = 'Nuevo';
   @Input() saveDisabled = false;
   @Input() verifyDisabled = false;
+  @Input() showDelete = false;
+  @Input() showEdit = false;
+  @Input() showVerify = false;
+  @Input() deleteLabel = 'Eliminar';
+  @Input() editLabel = 'Editar';
+  @Input() verifyLabel = 'Verificar';
 
   @Output() returned = new EventEmitter<void>();
   @Output() canceled = new EventEmitter<void>();
+  @Output() deleted = new EventEmitter<void>();
   @Output() saved = new EventEmitter<void>();
   @Output() verified = new EventEmitter<void>();
+  @Output() edited = new EventEmitter<void>();
 
   get containerClass(): string {
     return this.type === 'actions' ? 'min-h-[72px]' : 'min-h-[68px]';
