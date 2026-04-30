@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 
 import { ButtonComponent } from '../button/button.component';
 import { IconComponent } from '../icon/icon.component';
+import { DEFAULT_PROCESS_TREE, ProcessMenuNode } from '../process-menu-tree/process-menu-tree.component';
 import { SelectOption, SelectOptionsComponent } from '../select-options/select-options.component';
 
 export type CreateDocumentVariant = 'sidenav' | 'dropdown';
@@ -13,12 +14,31 @@ export type CreateDocumentField = {
   value?: string;
   required?: boolean;
   options?: string[];
+  disabled?: boolean;
 };
 
 export type CreateDocumentSelection = {
   placeholder: string;
   value: string;
 };
+
+export type CreateDocumentAccepted = {
+  processId?: string;
+  processLabel?: string;
+  document?: string;
+  actionType?: string;
+  route?: string;
+};
+
+type CreateDocumentProcessOption = {
+  id: string;
+  label: string;
+  route?: string;
+  documents: string[];
+  actionTypes: string[];
+};
+
+const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessOptions(DEFAULT_PROCESS_TREE);
 
 @Component({
   selector: 'siaf-create-document',
@@ -63,6 +83,7 @@ export type CreateDocumentSelection = {
                       class="flex min-h-10 w-full items-center rounded-siaf-md bg-surface py-siaf-xs pl-siaf-md pr-siaf-sm text-left text-sm font-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-medium)] outline-none transition disabled:cursor-not-allowed disabled:border disabled:border-[var(--sys-color-border-states-disabled)] disabled:bg-[var(--sys-color-bg-surfaces-disabled)] disabled:text-[var(--sys-color-text-neutral-disabled)]"
                       [ngClass]="fieldControlClass(field)"
                       type="button"
+                      [disabled]="field.disabled"
                       [attr.aria-expanded]="openedSelectField === field.placeholder"
                       aria-haspopup="listbox"
                       (click)="toggleSelect(field)"
@@ -85,22 +106,51 @@ export type CreateDocumentSelection = {
                     }
                   </div>
                 } @else {
-                  <input
-                    class="min-h-10 w-full rounded-siaf-md bg-surface px-siaf-md py-siaf-xs text-sm font-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-medium)] outline-none transition placeholder:text-[var(--sys-color-text-neutral-low)] disabled:cursor-not-allowed disabled:border disabled:border-[var(--sys-color-border-states-disabled)] disabled:bg-[var(--sys-color-bg-surfaces-disabled)] disabled:text-[var(--sys-color-text-neutral-disabled)]"
-                    [ngClass]="fieldControlClass(field)"
-                    type="search"
-                    [placeholder]="isFieldFloating(field) ? '' : field.placeholder"
-                    [value]="field.value || ''"
-                    (focus)="focusedField = field.placeholder"
-                    (blur)="focusedField = ''"
-                  />
+                  <div class="relative">
+                    <input
+                      class="min-h-10 w-full rounded-siaf-md bg-surface px-siaf-md py-siaf-xs text-sm font-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-medium)] outline-none transition placeholder:text-[var(--sys-color-text-neutral-low)] disabled:cursor-not-allowed disabled:border disabled:border-[var(--sys-color-border-states-disabled)] disabled:bg-[var(--sys-color-bg-surfaces-disabled)] disabled:text-[var(--sys-color-text-neutral-disabled)]"
+                      [ngClass]="fieldControlClass(field)"
+                      type="search"
+                      autocomplete="off"
+                      [placeholder]="isFieldFloating(field) ? '' : field.placeholder"
+                      [value]="field.value || ''"
+                      [disabled]="field.disabled"
+                      (focus)="onSearchFocus(field)"
+                      (blur)="onSearchBlur()"
+                      (input)="onSearchInput(field, $event)"
+                      (keydown.escape)="closeProcessResults()"
+                    />
+
+                    @if (showProcessResults(field)) {
+                      <div
+                        class="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-72 overflow-y-auto rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]"
+                        role="listbox"
+                      >
+                        @for (process of filteredProcessOptions; track process.id) {
+                          <button
+                            class="flex min-h-10 w-full items-center px-siaf-md py-siaf-xs text-left text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand-primary"
+                            type="button"
+                            role="option"
+                            (mousedown)="$event.preventDefault()"
+                            (click)="selectProcess(process)"
+                          >
+                            <span class="min-w-0 flex-1 truncate">{{ process.label }}</span>
+                          </button>
+                        } @empty {
+                          <span class="block px-siaf-md py-siaf-xs text-sm text-[var(--sys-color-text-neutral-low)]">
+                            No se encontraron procesos
+                          </span>
+                        }
+                      </div>
+                    }
+                  </div>
                 }
               </label>
             }
 
             <div class="flex h-10 w-full items-start justify-end gap-siaf-sm">
               <siaf-button variant="secondary" size="md" (click)="canceled.emit()">Cancelar</siaf-button>
-              <siaf-button variant="accent" size="md" [disabled]="acceptDisabled" (click)="accepted.emit()">Aceptar</siaf-button>
+              <siaf-button variant="accent" size="md" [disabled]="resolvedAcceptDisabled" (click)="accept()">Aceptar</siaf-button>
             </div>
           </div>
         </div>
@@ -116,10 +166,11 @@ export class CreateDocumentComponent {
   @Input() fields: CreateDocumentField[] = [];
   focusedField = '';
   openedSelectField = '';
+  processResultsOpen = false;
   private readonly internalValues = new Map<string, string>();
 
   @Output() canceled = new EventEmitter<void>();
-  @Output() accepted = new EventEmitter<void>();
+  @Output() accepted = new EventEmitter<CreateDocumentAccepted>();
   @Output() fieldSelected = new EventEmitter<string>();
   @Output() fieldValueChange = new EventEmitter<CreateDocumentSelection>();
 
@@ -146,20 +197,48 @@ export class CreateDocumentComponent {
           }
         ]
       : [
-          { placeholder: 'Buscar proceso o procedimiento', type: 'search', value: 'Proceso de registro de asiento de ajuste' },
+          {
+            placeholder: 'Buscar proceso o procedimiento',
+            type: 'search',
+            required: true,
+            value: this.internalValues.get('Buscar proceso o procedimiento') || ''
+          },
           {
             placeholder: 'Documento',
             type: 'select',
-            value: this.internalValues.get('Documento') || 'Solicitud de registro de asiento de ajuste',
-            options: ['Solicitud de registro de asiento de ajuste']
+            required: true,
+            value: this.internalValues.get('Documento') || '',
+            options: this.selectedProcess?.documents || [],
+            disabled: !this.selectedProcess?.documents.length
           },
           {
             placeholder: 'Tipo de acci\u00f3n',
             type: 'select',
-            value: this.internalValues.get('Tipo de acci\u00f3n') || 'Creaci\u00f3n',
-            options: ['Creaci\u00f3n', 'Reversi\u00f3n']
+            required: true,
+            value: this.internalValues.get('Tipo de acci\u00f3n') || '',
+            options: this.selectedProcess?.actionTypes || [],
+            disabled: !this.selectedProcess?.actionTypes.length
           }
         ];
+  }
+
+  get selectedProcess(): CreateDocumentProcessOption | null {
+    const selectedProcessId = this.internalValues.get('processId');
+    return CREATE_DOCUMENT_PROCESSES.find((process) => process.id === selectedProcessId) || null;
+  }
+
+  get filteredProcessOptions(): CreateDocumentProcessOption[] {
+    const query = this.normalize(this.internalValues.get('Buscar proceso o procedimiento') || '');
+
+    if (!query) {
+      return CREATE_DOCUMENT_PROCESSES;
+    }
+
+    return CREATE_DOCUMENT_PROCESSES.filter((process) => this.normalize(process.label).includes(query));
+  }
+
+  get resolvedAcceptDisabled(): boolean {
+    return this.acceptDisabled || this.resolvedFields.some((field) => field.required && !field.value);
   }
 
   get variantClass(): string {
@@ -169,9 +248,14 @@ export class CreateDocumentComponent {
   }
 
   toggleSelect(field: CreateDocumentField): void {
+    if (field.disabled) {
+      return;
+    }
+
     this.fieldSelected.emit(field.placeholder);
     this.openedSelectField = this.openedSelectField === field.placeholder ? '' : field.placeholder;
     this.focusedField = this.openedSelectField;
+    this.processResultsOpen = false;
   }
 
   closeSelect(): void {
@@ -191,6 +275,66 @@ export class CreateDocumentComponent {
       placeholder: field.placeholder,
       value
     });
+  }
+
+  onSearchFocus(field: CreateDocumentField): void {
+    this.focusedField = field.placeholder;
+    this.openedSelectField = '';
+    this.processResultsOpen = this.isProcessSearchField(field);
+  }
+
+  onSearchBlur(): void {
+    this.focusedField = '';
+    setTimeout(() => this.closeProcessResults(), 120);
+  }
+
+  onSearchInput(field: CreateDocumentField, event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+
+    if (this.fields.length === 0) {
+      this.internalValues.set(field.placeholder, value);
+      this.internalValues.delete('processId');
+      this.internalValues.delete('Documento');
+      this.internalValues.delete('Tipo de acci\u00f3n');
+      this.processResultsOpen = true;
+    }
+
+    this.fieldValueChange.emit({
+      placeholder: field.placeholder,
+      value
+    });
+  }
+
+  selectProcess(process: CreateDocumentProcessOption): void {
+    this.internalValues.set('processId', process.id);
+    this.internalValues.set('Buscar proceso o procedimiento', process.label);
+    this.internalValues.delete('Documento');
+    this.internalValues.delete('Tipo de acci\u00f3n');
+    this.processResultsOpen = false;
+    this.focusedField = '';
+
+    this.fieldValueChange.emit({
+      placeholder: 'Buscar proceso o procedimiento',
+      value: process.label
+    });
+  }
+
+  accept(): void {
+    this.accepted.emit({
+      processId: this.selectedProcess?.id,
+      processLabel: this.internalValues.get('Buscar proceso o procedimiento') || this.selectedProcess?.label,
+      document: this.internalValues.get('Documento') || this.externalFieldValue('Documento'),
+      actionType: this.internalValues.get('Tipo de acci\u00f3n') || this.externalFieldValue('Tipo de acción'),
+      route: this.selectedProcess?.route
+    });
+  }
+
+  closeProcessResults(): void {
+    this.processResultsOpen = false;
+  }
+
+  showProcessResults(field: CreateDocumentField): boolean {
+    return this.processResultsOpen && this.isProcessSearchField(field);
   }
 
   fieldOptions(field: CreateDocumentField): SelectOption[] {
@@ -216,6 +360,10 @@ export class CreateDocumentComponent {
   }
 
   fieldControlClass(field: CreateDocumentField): string {
+    if (field.disabled) {
+      return 'border border-[var(--sys-color-border-states-disabled)]';
+    }
+
     if (this.focusedField === field.placeholder || this.openedSelectField === field.placeholder) {
       return 'border-2 border-[var(--sys-color-border-states-focus)]';
     }
@@ -226,4 +374,41 @@ export class CreateDocumentComponent {
 
     return 'border border-[var(--sys-color-border-states-enabled)] hover:border-2 hover:border-[var(--sys-color-border-states-hover)]';
   }
+
+  private isProcessSearchField(field: CreateDocumentField): boolean {
+    return this.fields.length === 0 && field.placeholder === 'Buscar proceso o procedimiento';
+  }
+
+  private normalize(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  private externalFieldValue(placeholder: string): string {
+    return this.fields.find((field) => field.placeholder === placeholder)?.value || '';
+  }
+}
+
+function collectProcessOptions(nodes: ProcessMenuNode[]): CreateDocumentProcessOption[] {
+  return nodes.flatMap((node) => {
+    const children = node.children ? collectProcessOptions(node.children) : [];
+
+    if (node.children?.length) {
+      return children;
+    }
+
+    return [
+      ...children,
+      {
+        id: node.id,
+        label: node.label,
+        route: node.createRoute,
+        documents: node.documentOptions || [],
+        actionTypes: node.actionTypeOptions || []
+      }
+    ];
+  });
 }

@@ -8,10 +8,13 @@ export interface ProcessMenuNode {
   label: string;
   selected?: boolean;
   expanded?: boolean;
+  createRoute?: string;
+  documentOptions?: string[];
+  actionTypeOptions?: string[];
   children?: ProcessMenuNode[];
 }
 
-const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
+export const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
   {
     id: 'gestion-contabilidad',
     label: 'Gesti\u00f3n contabilidad',
@@ -59,7 +62,14 @@ const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
         label: 'Asientos de ajustes',
         expanded: true,
         children: [
-          { id: 'registro-asiento-ajuste', label: 'Proceso de registro de asiento de ajuste', selected: true },
+          {
+            id: 'registro-asiento-ajuste',
+            label: 'Proceso de registro de asiento de ajuste',
+            selected: true,
+            createRoute: '/procesos/registro-asiento-ajuste/solicitud',
+            documentOptions: ['Solicitud de registro de asiento de ajuste'],
+            actionTypeOptions: ['Creación', 'Reversión']
+          },
           { id: 'consulta-reporte-asiento-ajuste', label: 'Consultas y reportes de proceso de registro de asiento de ajuste' }
         ]
       }

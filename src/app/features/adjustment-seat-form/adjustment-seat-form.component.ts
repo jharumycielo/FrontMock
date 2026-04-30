@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, forwardRef, Input } from '@angular/
 import { Router } from '@angular/router';
 
 import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/components/breadcrumb/breadcrumb.component';
-import { CreateDocumentComponent } from '../../shared/ui/create-document/create-document.component';
+import { CreateDocumentAccepted, CreateDocumentComponent } from '../../shared/ui/create-document/create-document.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation-menu/mobile-navigation-menu.component';
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
@@ -80,7 +80,7 @@ type AccountingRow = {
 
       @if (sidebarCreateDocumentOpen) {
         <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
-          <siaf-create-document (accepted)="closeFloatingPanels()" (canceled)="closeFloatingPanels()" />
+          <siaf-create-document (accepted)="onCreateDocumentAccepted($event)" (canceled)="closeFloatingPanels()" />
         </div>
       }
 
@@ -420,6 +420,14 @@ export class AdjustmentSeatFormComponent {
   openSidebarCreateDocumentFromMobileMenu(): void {
     this.mobileNavigationOpen = false;
     this.openSidebarCreateDocument();
+  }
+
+  onCreateDocumentAccepted(selection: CreateDocumentAccepted): void {
+    this.closeFloatingPanels();
+
+    if (selection.route) {
+      void this.router.navigate([selection.route]);
+    }
   }
 
   onSidebarNavigationChange(navigation: SidebarNavigation): void {
