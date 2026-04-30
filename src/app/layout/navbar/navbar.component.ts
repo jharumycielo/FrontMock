@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 
 @Component({
   selector: 'siaf-navbar',
   standalone: true,
-  imports: [IconComponent],
+  imports: [IconComponent, RouterLink],
   template: `
     <header class="flex h-14 w-full items-center justify-between bg-brand-primary px-siaf-md py-siaf-xxs text-white">
       <div class="flex min-w-0 shrink-0 items-center gap-siaf-lg">
@@ -20,7 +21,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
           </button>
         }
 
-        <a class="flex h-10 items-center text-white" [href]="homeHref" aria-label="SIAF-RP">
+        <a class="flex h-10 items-center text-white" [routerLink]="homeHref" aria-label="SIAF-RP">
           <img class="h-10 w-[128px] object-contain" src="assets/figma/logos/siaf-rp-default-white.svg" alt="SIAF-RP" />
         </a>
       </div>
@@ -60,7 +61,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NavbarComponent {
-  @Input() homeHref = '#';
+  @Input() homeHref = '/panel';
   @Input() initials = 'JP';
   @Input() userName = 'Juan Doe Perez Perez';
   @Input() officeName = 'Office name';
