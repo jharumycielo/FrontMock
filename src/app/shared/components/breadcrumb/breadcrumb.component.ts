@@ -110,6 +110,7 @@ export class BreadcrumbComponent {
   }
 
   get displayItems(): BreadcrumbItem[] {
+    // El icono de home ya representa "Inicio"; si llega como item, se usa solo su ruta.
     if (this.homeItem) {
       return this.items.slice(1);
     }
@@ -120,6 +121,7 @@ export class BreadcrumbComponent {
   get visibleItems(): BreadcrumbItem[] {
     const displayItems = this.displayItems;
 
+    // Regla UX del Figma: para rutas largas se muestra Home > ... > penultimo > actual.
     if (displayItems.length > 3) {
       return displayItems.slice(-2);
     }
@@ -136,6 +138,7 @@ export class BreadcrumbComponent {
       return [];
     }
 
+    // Estos niveles son los que se ocultan detras del boton "...".
     return this.displayItems.slice(0, -2);
   }
 

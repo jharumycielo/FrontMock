@@ -7,13 +7,16 @@ export interface ProcessMenuNode {
   id: string;
   label: string;
   selected?: boolean;
+  // Solo debe marcarse en nodos raiz: la vista inicial muestra hasta el segundo nivel.
   expanded?: boolean;
+  // Si un nodo tiene estas propiedades, Crear documento puede completar documento/tipo y navegar.
   createRoute?: string;
   documentOptions?: string[];
   actionTypeOptions?: string[];
   children?: ProcessMenuNode[];
 }
 
+// Arbol maestro de procesos. Mantener aqui las rutas y relaciones usadas por el menu y Crear documento.
 export const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
   {
     id: 'gestion-contabilidad',
@@ -307,6 +310,7 @@ export class ProcessMenuTreeComponent implements OnChanges, OnInit {
         this.parentById.set(node.id, parentId);
       }
 
+      // Evita que hijos profundos arranquen abiertos aunque alguien agregue expanded por error.
       if (node.expanded && !parentId) {
         this.expandedIds.add(node.id);
       }
@@ -344,6 +348,7 @@ export class ProcessMenuTreeComponent implements OnChanges, OnInit {
 
       result.push({
         ...node,
+        // Durante la busqueda se abren las ramas que contienen coincidencias para mostrar contexto.
         expanded: true,
         children: children.length > 0 ? children : node.children
       });

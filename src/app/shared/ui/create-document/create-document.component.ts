@@ -38,6 +38,7 @@ type CreateDocumentProcessOption = {
   actionTypes: string[];
 };
 
+// Las opciones del buscador salen del arbol de procesos para no duplicar catalogos a mano.
 const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessOptions(DEFAULT_PROCESS_TREE);
 
 @Component({
@@ -181,6 +182,7 @@ export class CreateDocumentComponent {
       return this.fields;
     }
 
+    // Si no llegan campos externos, el componente arma el flujo base de Crear documento.
     return this.variant === 'dropdown'
       ? [
           {
@@ -296,6 +298,7 @@ export class CreateDocumentComponent {
 
     if (this.fields.length === 0) {
       this.internalValues.set(field.placeholder, value);
+      // Cambiar de proceso invalida documento y tipo de accion seleccionados previamente.
       this.internalValues.delete('processId');
       this.internalValues.delete('Documento');
       this.internalValues.delete('Tipo de acci\u00f3n');
@@ -406,6 +409,7 @@ function collectProcessOptions(nodes: ProcessMenuNode[]): CreateDocumentProcessO
       return children;
     }
 
+    // Solo los nodos hoja aparecen como resultados; los que tienen metadata habilitan el flujo completo.
     return [
       ...children,
       {

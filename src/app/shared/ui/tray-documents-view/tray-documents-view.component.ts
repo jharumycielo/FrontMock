@@ -373,6 +373,7 @@ export class TrayDocumentsViewComponent {
   }
 
   get rowsForCurrentTray(): TrayDocumentRow[] {
+    // La maqueta usa las mismas filas base y cambia el estado segun la bandeja seleccionada.
     return this.rows.map((row, index) => ({
       ...row,
       status: this.statusForTray(this.title, index)
@@ -381,10 +382,12 @@ export class TrayDocumentsViewComponent {
 
   statusForTray(title: TrayTitle, rowIndex = 0): TrayDocumentStatus {
     if (title === 'Recibidos') {
+      // Recibidos debe mostrar los tres estados finales disponibles.
       const receivedStatuses: TrayDocumentStatus[] = ['Aprobado', 'Observado', 'Rechazado'];
       return receivedStatuses[rowIndex % receivedStatuses.length];
     }
 
+    // Estados fijos solicitados para cada bandeja.
     const statuses: Record<string, TrayDocumentStatus> = {
       Enviados: 'Verificado',
       Borradores: 'Elaborado',
