@@ -32,10 +32,10 @@ const RAIL_ITEMS: RailItem[] = [
   imports: [IconComponent, NgClass],
   template: `
     @if (variant === 'rail') {
-      <aside class="flex h-full min-h-[745px] w-16 flex-col items-center gap-0 border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-[var(--sys-color-bg-surfaces-surface,#fff)] px-siaf-xxs py-siaf-xs">
+      <aside class="flex h-full min-h-[745px] w-16 flex-col items-center gap-0 border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-[var(--sys-color-bg-surfaces-surface)] px-siaf-xxs py-siaf-xs">
         <div class="z-[1] flex min-h-0 w-full flex-1 flex-col items-center gap-siaf-xxs">
           <button
-            class="group flex w-full flex-col items-center gap-siaf-xxs px-0 py-siaf-xs text-center font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium,#29292A)] transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.98] disabled:cursor-not-allowed"
+            class="group flex w-full flex-col items-center gap-siaf-xxs px-0 py-siaf-xs text-center font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)] transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.98] disabled:cursor-not-allowed"
             type="button"
             [disabled]="!ctaAdd"
             [ngClass]="ctaAdd ? 'text-[var(--sys-color-text-neutral-medium)]' : 'text-[var(--sys-color-text-neutral-disabled)]'"
@@ -43,20 +43,20 @@ const RAIL_ITEMS: RailItem[] = [
           >
             <span
               class="relative inline-flex size-10 items-center justify-center rounded-siaf-md transition duration-150"
-              [ngClass]="ctaAdd ? 'bg-[var(--sys-color-bg-brand-accent)] text-white group-hover:bg-[#bd294b] group-active:bg-[#a82342]' : 'bg-white text-[var(--sys-color-text-neutral-disabled)]'"
+              [ngClass]="ctaAdd ? 'bg-[var(--sys-color-bg-brand-accent)] text-white group-hover:brightness-90 group-active:brightness-75' : 'bg-white text-[var(--sys-color-text-neutral-disabled)]'"
             >
               @if (!ctaAdd) {
                 <span class="absolute inset-0 rounded-siaf-md bg-[var(--sys-color-bg-states-dark-disabled)]"></span>
               }
               <siaf-icon class="relative" name="add" [size]="24" />
             </span>
-            <span class="font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium,#29292A)]">Crear</span>
+            <span class="font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)]">Crear</span>
           </button>
 
           <nav class="flex min-h-0 w-full flex-1 flex-col items-center gap-siaf-xxs">
             @for (item of railItems; track item.id) {
               <button
-                class="group flex w-full flex-col items-center gap-siaf-xxs px-0 py-siaf-xs text-center font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium,#29292A)] transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.98]"
+                class="group flex w-full flex-col items-center gap-siaf-xxs px-0 py-siaf-xs text-center font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)] transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.98]"
                 type="button"
                 (click)="navigationChanged.emit(item.id)"
               >
@@ -66,26 +66,26 @@ const RAIL_ITEMS: RailItem[] = [
                   }
                   <siaf-icon class="relative" [name]="item.icon" [size]="24" />
                 </span>
-                <span class="font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium,#29292A)]">{{ item.label }}</span>
+                <span class="font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)]">{{ item.label }}</span>
               </button>
             }
           </nav>
 
           @if (buttonHelp) {
             <button
-              class="group flex w-full flex-col items-center gap-siaf-xxs px-0 py-siaf-xs text-center font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium,#29292A)] transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.98]"
+              class="group flex w-full flex-col items-center gap-siaf-xxs px-0 py-siaf-xs text-center font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)] transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.98]"
               type="button"
               (click)="help.emit()"
             >
               <span class="inline-flex size-8 items-center justify-center rounded-siaf-md transition duration-150 group-hover:bg-[rgba(32,32,32,0.08)] group-active:bg-[rgba(32,32,32,0.16)]">
                 <siaf-icon name="help_outline" [size]="24" />
               </span>
-              <span class="font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium,#29292A)]">Ayuda</span>
+              <span class="font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)]">Ayuda</span>
             </button>
           }
 
           <button
-            class="group flex w-full flex-col items-center gap-siaf-xxs px-0 py-siaf-xs text-center font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium,#29292A)] transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.98]"
+            class="group flex w-full flex-col items-center gap-siaf-xxs px-0 py-siaf-xs text-center font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)] transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.98]"
             type="button"
             (click)="navigationChanged.emit('Ajustes')"
           >
@@ -95,7 +95,7 @@ const RAIL_ITEMS: RailItem[] = [
               }
               <siaf-icon class="relative" name="settings" [size]="24" />
             </span>
-            <span class="font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium,#29292A)]">Ajustes</span>
+            <span class="font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)]">Ajustes</span>
           </button>
         </div>
       </aside>

@@ -45,7 +45,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
             type="button"
             aria-label="Perfil de usuario"
           >
-            <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-white bg-[#e6edf5] text-base font-medium text-brand-primary">
+            <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-white bg-[var(--sys-color-bg-states-light-selected)] text-base font-medium text-brand-primary">
               {{ initials }}
             </span>
             <span class="hidden min-w-0 flex-col gap-1 text-white md:flex">

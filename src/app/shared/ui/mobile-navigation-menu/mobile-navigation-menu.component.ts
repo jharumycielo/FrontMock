@@ -21,7 +21,7 @@ type MobileNavigationItem = {
 
       <div class="flex flex-col gap-siaf-lg bg-surface px-siaf-md py-siaf-xs">
         <button
-          class="inline-flex min-h-10 w-full items-center justify-center gap-siaf-xs rounded-siaf-md bg-[var(--sys-color-bg-brand-accent,#d13255)] px-siaf-md py-siaf-xs text-sm font-medium text-white transition hover:bg-[#bd294b] active:bg-[#a82342]"
+          class="inline-flex min-h-10 w-full items-center justify-center gap-siaf-xs rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-white transition hover:brightness-90 active:brightness-75"
           type="button"
           (click)="created.emit()"
         >
@@ -41,8 +41,8 @@ type MobileNavigationItem = {
                 class="shrink-0"
                 [name]="item.icon"
                 [size]="24"
-                [class.text-[var(--sys-color-text-neutral-activated,#014899)]]="isActive(item.id)"
-                [class.text-[var(--sys-color-text-neutral-medium,#29292a)]]="!isActive(item.id)"
+                [class.text-[var(--sys-color-text-neutral-activated)]]="isActive(item.id)"
+                [class.text-[var(--sys-color-text-neutral-medium)]]="!isActive(item.id)"
               />
               <span
                 class="min-w-0 flex-1 text-sm leading-normal"
@@ -50,8 +50,8 @@ type MobileNavigationItem = {
                 [class.font-normal]="!isActive(item.id)"
                 [class.tracking-[-0.02px]]="isActive(item.id)"
                 [class.tracking-[0.025px]]="!isActive(item.id)"
-                [class.text-[var(--sys-color-text-neutral-activated,#014899)]]="isActive(item.id)"
-                [class.text-[var(--sys-color-text-neutral-medium,#29292a)]]="!isActive(item.id)"
+                [class.text-[var(--sys-color-text-neutral-activated)]]="isActive(item.id)"
+                [class.text-[var(--sys-color-text-neutral-medium)]]="!isActive(item.id)"
               >
                 {{ item.label }}
               </span>

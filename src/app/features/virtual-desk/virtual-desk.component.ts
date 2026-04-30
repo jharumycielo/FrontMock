@@ -23,7 +23,7 @@ type DeskCard = {
   standalone: true,
   imports: [CreateDocumentComponent, IconComponent, MobileNavigationMenuComponent, NavbarComponent, ProcessMenuTreeComponent, SidebarComponent, TrayDocumentsViewComponent, TrayMenuComponent],
   template: `
-    <main class="min-h-screen bg-[var(--sys-color-bg-surfaces-surface,#fff)] text-text">
+    <main class="min-h-screen bg-[var(--sys-color-bg-surfaces-surface)] text-text">
       <siaf-navbar class="sticky top-0 z-30 block" userName="Usuario rol creador" officeName="Entidad del estado" (menuClicked)="onNavbarMenuClicked()" />
 
       <aside class="fixed bottom-0 left-0 top-14 z-20 hidden lg:block">
@@ -79,7 +79,7 @@ type DeskCard = {
               class="flex min-h-[204px] items-center gap-siaf-lg rounded-siaf-md bg-surface px-siaf-xl py-12"
               aria-label="Bandeja de Documentos"
             >
-              <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] text-[#d13255] sm:size-[98px]">
+              <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] text-[var(--sys-color-text-brand-accent)] sm:size-[98px]">
                 <siaf-icon name="inbox" [size]="64" />
               </span>
               <div class="min-w-0">
@@ -97,7 +97,7 @@ type DeskCard = {
               (keydown.enter)="openProcessMenu()"
               (keydown.space)="openProcessMenu()"
             >
-              <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] text-[#003c71] sm:size-[98px]">
+              <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] text-[var(--sys-color-text-brand-primary)] sm:size-[98px]">
                 <siaf-icon name="picture_in_picture" [size]="64" />
               </span>
               <p class="m-0 text-[30px] font-medium leading-normal tracking-[-0.63px] text-brand-secondary">Procesos</p>
@@ -149,15 +149,15 @@ export class VirtualDeskComponent {
   constructor(private readonly router: Router) {}
 
   readonly smallCards: DeskCard[] = [
-    { title: 'Recibidos', value: '03', icon: 'description', iconClass: '#1f6f6b', size: 'small' },
-    { title: 'Enviados', value: '02', icon: 'send', iconClass: '#d13255', size: 'small' },
-    { title: 'Borradores', value: '02', icon: 'edit_note', iconClass: '#8a6b23', size: 'small' },
-    { title: 'Notificaciones', value: '02', icon: 'notifications', iconClass: '#4b4b4d', size: 'small' }
+    { title: 'Recibidos', value: '03', icon: 'description', iconClass: 'var(--sys-color-text-feedback-success)', size: 'small' },
+    { title: 'Enviados', value: '02', icon: 'send', iconClass: 'var(--sys-color-text-brand-accent)', size: 'small' },
+    { title: 'Borradores', value: '02', icon: 'edit_note', iconClass: 'var(--sys-color-text-feedback-warning)', size: 'small' },
+    { title: 'Notificaciones', value: '02', icon: 'notifications', iconClass: 'var(--sys-color-text-feedback-default)', size: 'small' }
   ];
 
   readonly wideCards: DeskCard[] = [
-    { title: 'Consulta y Reportes', icon: 'content_paste_search', iconClass: '#1f6f6b', size: 'wide' },
-    { title: 'Crear documento', icon: 'add', iconClass: '#d13255', size: 'wide' }
+    { title: 'Consulta y Reportes', icon: 'content_paste_search', iconClass: 'var(--sys-color-text-feedback-success)', size: 'wide' },
+    { title: 'Crear documento', icon: 'add', iconClass: 'var(--sys-color-text-brand-accent)', size: 'wide' }
   ];
 
   onNavigationChange(navigation: SidebarNavigation): void {

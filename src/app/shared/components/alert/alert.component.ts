@@ -63,11 +63,11 @@ export class AlertComponent {
 
   get iconClass(): string {
     const classes: Record<Exclude<AlertTone, 'neutral'>, string> = {
-      info: 'text-[#40a9ff]',
-      success: 'text-[#93d9d7]',
-      warning: 'text-[#ffd580]',
-      danger: 'text-[#ff7f8a]',
-      error: 'text-[#ff7f8a]'
+      info: 'text-[var(--sys-color-icon-feedback-dark-info)]',
+      success: 'text-[var(--sys-color-icon-feedback-dark-success)]',
+      warning: 'text-[var(--sys-color-icon-feedback-dark-warning)]',
+      danger: 'text-[var(--sys-color-icon-feedback-dark-danger)]',
+      error: 'text-[var(--sys-color-icon-feedback-dark-danger)]'
     };
 
     return this.tone === 'neutral' ? '' : classes[this.tone];

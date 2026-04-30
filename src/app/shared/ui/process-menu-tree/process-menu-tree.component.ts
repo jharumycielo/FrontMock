@@ -138,20 +138,20 @@ export function findProcessPathById(id: string, nodes: readonly ProcessMenuNode[
   imports: [IconComponent, NgTemplateOutlet],
   template: `
     <aside
-      class="flex h-[calc(100vh-56px)] w-screen flex-col bg-[var(--sys-color-bg-surfaces-surface,#fff)] text-text shadow-[0_1px_3px_rgba(0,0,0,0.20),0_2px_1px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.14)] lg:max-w-[370px]"
+      class="flex h-[calc(100vh-56px)] w-screen flex-col bg-[var(--sys-color-bg-surfaces-surface)] text-text shadow-[0_1px_3px_rgba(0,0,0,0.20),0_2px_1px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.14)] lg:max-w-[370px]"
       aria-label="Menu de procesos"
     >
-      <header class="sticky top-0 z-[2] flex min-h-14 w-full items-center bg-[var(--sys-color-bg-surfaces-surface,#fff)] p-siaf-md">
-        <h2 class="m-0 min-h-6 text-base font-bold uppercase leading-none tracking-[0.02px] text-[var(--sys-color-text-neutral-high,#202020)]">
+      <header class="sticky top-0 z-[2] flex min-h-14 w-full items-center bg-[var(--sys-color-bg-surfaces-surface)] p-siaf-md">
+        <h2 class="m-0 min-h-6 text-base font-bold uppercase leading-none tracking-[0.02px] text-[var(--sys-color-text-neutral-high)]">
           {{ title }}
         </h2>
       </header>
 
-      <div class="min-h-0 flex-1 overflow-y-auto bg-[var(--sys-color-bg-surfaces-surface-highest,#fff)] px-siaf-md pt-siaf-xs">
+      <div class="min-h-0 flex-1 overflow-y-auto bg-[var(--sys-color-bg-surfaces-surface-highest)] px-siaf-md pt-siaf-xs">
         <label class="flex h-10 w-full items-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-md py-siaf-xs">
           <span class="sr-only">{{ searchLabel }}</span>
           <input
-            class="h-6 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-normal leading-normal tracking-[0.0249px] text-text outline-none placeholder:text-[var(--sys-color-text-neutral-low,#6f6f71)]"
+            class="h-6 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-normal leading-normal tracking-[0.0249px] text-text outline-none placeholder:text-[var(--sys-color-text-neutral-low)]"
             type="search"
             [attr.placeholder]="placeholder"
             [value]="query"
@@ -160,7 +160,7 @@ export function findProcessPathById(id: string, nodes: readonly ProcessMenuNode[
         </label>
 
         <section class="flex w-full flex-col gap-siaf-md overflow-hidden pt-siaf-lg">
-          <h3 class="m-0 px-siaf-md text-sm font-bold leading-normal text-[var(--sys-color-text-neutral-medium,#29292a)]">
+          <h3 class="m-0 px-siaf-md text-sm font-bold leading-normal text-[var(--sys-color-text-neutral-medium)]">
             {{ subtitle }}
           </h3>
 
@@ -191,7 +191,7 @@ export function findProcessPathById(id: string, nodes: readonly ProcessMenuNode[
             >
               @if (hasChildren(node)) {
                 <siaf-icon
-                  class="mr-siaf-md shrink-0 text-[var(--sys-color-text-neutral-activated,#014899)] transition-transform duration-150"
+                  class="mr-siaf-md shrink-0 text-[var(--sys-color-text-neutral-activated)] transition-transform duration-150"
                   name="arrow_drop_down"
                   [size]="level === 0 ? 24 : 20"
                   [class.-rotate-90]="!isExpanded(node)"
@@ -204,8 +204,8 @@ export function findProcessPathById(id: string, nodes: readonly ProcessMenuNode[
                 [class.font-normal]="level > 0"
                 [class.tracking-[-0.02px]]="level === 0"
                 [class.tracking-[0.0249px]]="level > 0"
-                [class.text-[var(--sys-color-text-neutral-activated,#014899)]]="isNodeHighlighted(node, level)"
-                [class.text-[var(--sys-color-text-neutral-medium,#29292a)]]="!isNodeHighlighted(node, level)"
+                [class.text-[var(--sys-color-text-neutral-activated)]]="isNodeHighlighted(node, level)"
+                [class.text-[var(--sys-color-text-neutral-medium)]]="!isNodeHighlighted(node, level)"
               >
                 {{ node.label }}
               </span>

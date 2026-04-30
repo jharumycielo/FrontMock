@@ -143,7 +143,7 @@ type AccountingRow = {
                     </span>
 
                     @if (field.label === 'Estado') {
-                      <span class="inline-flex h-6 w-fit items-center rounded-siaf-sm bg-[#298079] px-siaf-xs text-xs text-white">
+                      <span class="inline-flex h-6 w-fit items-center rounded-siaf-sm bg-[var(--sys-color-bg-feedback-dark-success)] px-siaf-xs text-xs text-white">
                         {{ field.value }}
                       </span>
                     } @else {
@@ -239,7 +239,7 @@ type AccountingRow = {
 
                     <div class="overflow-x-auto">
                       <table class="min-w-[760px] w-full border-collapse text-sm">
-                        <thead class="bg-[#dddddd] text-xs font-bold uppercase text-text">
+                        <thead class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
                           <tr>
                             <th class="w-[190px] px-siaf-md py-siaf-sm text-left">Cod. cuentas contables</th>
                             <th class="px-siaf-md py-siaf-sm text-left">Nombre de la cuenta contable</th>

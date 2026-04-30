@@ -49,10 +49,10 @@ export class TimelineComponent {
 
   markerClass(status: TimelineItem['status'] = 'pending'): string {
     const classes: Record<NonNullable<TimelineItem['status']>, string> = {
-      done: 'border-[#12a150]/20 text-[#0b7a3b]',
+      done: 'border-[var(--sys-color-border-feedback-success)] text-[var(--sys-color-text-feedback-success)]',
       current: 'border-brand-primary/20 text-brand-primary',
       pending: 'border-border text-text-muted',
-      error: 'border-[#d92d20]/20 text-[#b42318]'
+      error: 'border-[var(--sys-color-border-feedback-danger)] text-[var(--sys-color-text-feedback-danger)]'
     };
 
     return classes[status];

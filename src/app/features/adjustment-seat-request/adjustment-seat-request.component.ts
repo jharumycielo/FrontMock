@@ -6,12 +6,13 @@ import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { CreateDocumentComponent } from '../../shared/ui/create-document/create-document.component';
 import { DateTimePickerComponent } from '../../shared/ui/date-time-picker/date-time-picker.component';
+import { FlowStatusTagComponent } from '../../shared/ui/flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation-menu/mobile-navigation-menu.component';
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
 import { findProcessPathById, ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
-import { SolicitudeHeaderComponent } from '../../shared/ui/solicitude-header/solicitude-header.component';
+import { SolicitudeHeaderComponent, SolicitudeHeaderState } from '../../shared/ui/solicitude-header/solicitude-header.component';
 import { SnackbarComponent } from '../../shared/ui/snackbar/snackbar.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { UploaderComponent } from '../../shared/ui/uploader/uploader.component';
@@ -86,6 +87,7 @@ type PeriodoGroup = {
     ButtonComponent,
     CreateDocumentComponent,
     DateTimePickerComponent,
+    FlowStatusTagComponent,
     forwardRef(() => EmptySectionComponent),
     IconComponent,
     forwardRef(() => MessageBoxComponent),
@@ -153,15 +155,11 @@ type PeriodoGroup = {
         <section class="border-b border-[var(--sys-color-divider-default)] bg-surface">
           <siaf-breadcrumb class="block" [items]="breadcrumbs" />
           <siaf-solicitude-header
-            [type]="isReadOnly ? 'readonly' : 'actions'"
+            role="creator"
+            [state]="solicitudeHeaderState"
             heading="Solicitud de registro de asiento de ajuste"
             secondaryText="Creación"
-            [tagLabel]="isElaborated ? 'Elaborado' : 'Nuevo'"
             [showReturn]="true"
-            [showTag]="!isReadOnly"
-            [showDelete]="isReadOnly"
-            [showEdit]="isReadOnly"
-            [showVerify]="isReadOnly"
             [saveDisabled]="!isFormValid"
             [verifyDisabled]="!isReadOnly"
             (returned)="goToDocuments()"
@@ -172,7 +170,7 @@ type PeriodoGroup = {
         </section>
 
         <section class="flex flex-col gap-siaf-md p-siaf-md sm:p-siaf-lg">
-          @if (isReadOnly) {
+          @if (isElaborated) {
             <section class="grid gap-siaf-md xl:grid-cols-[1fr_360px]">
               <article class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
                 <div class="grid gap-siaf-xs">
@@ -193,7 +191,7 @@ type PeriodoGroup = {
                   </div>
                   <div class="grid min-h-6 gap-siaf-xs sm:grid-cols-[140px_1fr]">
                     <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Estado</span>
-                    <span class="inline-flex min-h-6 w-fit items-center rounded-siaf-sm bg-[var(--sys-color-bg-feedback-dark-default,#353537)] px-siaf-xs text-xs text-white">Elaborado</span>
+                    <siaf-flow-status-tag status="Elaborado" size="standard" />
                   </div>
                 </div>
               </article>
@@ -281,7 +279,7 @@ type PeriodoGroup = {
                 @if (isReadOnly) {
                   <readonly-field caption="Fecha *" [value]="fechaContabilizacionDisplay" />
                 } @else {
-                  <siaf-date-time-picker placeholder="Fecha*" variant="date" (valueChange)="fechaContabilizacion.set($event)" />
+                  <siaf-date-time-picker placeholder="Fecha*" variant="date" [value]="fechaContabilizacion()" (valueChange)="fechaContabilizacion.set($event)" />
                 }
               </section>
               <!-- Código de clase de ajuste -->
@@ -322,19 +320,21 @@ type PeriodoGroup = {
               <section class="grid gap-siaf-md">
                 <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                   <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar codigo de detalle de ajuste</h3>
-                  <button
-                    class="inline-flex size-10 items-center justify-center rounded-siaf-md text-white transition"
-                    [class.bg-[var(--sys-color-bg-brand-accent)]]="selectedClaseAjuste()"
-                    [class.hover:brightness-90]="selectedClaseAjuste() && !isReadOnly"
-                    [class.bg-[rgba(32,32,32,0.12)]]="!selectedClaseAjuste() || isReadOnly"
-                    [class.cursor-not-allowed]="!selectedClaseAjuste() || isReadOnly"
-                    type="button"
-                    aria-label="Buscar codigo de detalle de ajuste"
-                    [disabled]="!selectedClaseAjuste() || isReadOnly"
-                    (click)="openDetalleAjustePanel()"
-                  >
-                    <siaf-icon name="search" [size]="24" />
-                  </button>
+                  @if (!isReadOnly) {
+                    <button
+                      class="inline-flex size-10 items-center justify-center rounded-siaf-md text-white transition"
+                      [class.bg-[var(--sys-color-bg-brand-accent)]]="selectedClaseAjuste()"
+                      [class.hover:brightness-90]="selectedClaseAjuste()"
+                      [class.bg-[rgba(32,32,32,0.12)]]="!selectedClaseAjuste()"
+                      [class.cursor-not-allowed]="!selectedClaseAjuste()"
+                      type="button"
+                      aria-label="Buscar codigo de detalle de ajuste"
+                      [disabled]="!selectedClaseAjuste()"
+                      (click)="openDetalleAjustePanel()"
+                    >
+                      <siaf-icon name="search" [size]="24" />
+                    </button>
+                  }
                 </div>
 
                 @if (selectedDetalleAjuste()) {
@@ -369,7 +369,7 @@ type PeriodoGroup = {
                   <readonly-field caption="Glosa *" [value]="glosa()" />
                 </section>
               } @else {
-                <text-area-control title="Glosa" placeholder="Glosa*" (valueChange)="glosa.set($event)" />
+                <text-area-control title="Glosa" placeholder="Glosa*" [value]="glosa()" (valueChange)="glosa.set($event)" />
               }
 
               <details class="group overflow-hidden rounded-siaf-sm border border-[var(--sys-color-divider-strong)] bg-surface" open>
@@ -436,7 +436,7 @@ type PeriodoGroup = {
                                     <div class="relative w-full">
                                       <label class="absolute left-3 top-[-9px] z-[1] flex items-center gap-px bg-surface px-siaf-xxs">
                                         <span class="text-xs font-medium leading-none text-text-muted">Importe</span>
-                                        <span class="text-xs font-bold leading-none text-[var(--sys-color-text-feedback-danger,#821c1e)] opacity-80">*</span>
+                                        <span class="text-xs font-bold leading-none text-[var(--sys-color-text-feedback-danger)] opacity-80">*</span>
                                       </label>
                                       <input
                                         class="h-8 w-full rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md text-right text-sm text-text outline-none transition focus:border-2 focus:border-[rgba(1,72,153,0.8)]"
@@ -489,7 +489,7 @@ type PeriodoGroup = {
               @if (isReadOnly) {
                 <readonly-field caption="Justificación del requerimiento solicitado *" [value]="justificacion()" />
               } @else {
-                <text-area-control title="" placeholder="Justificación del requerimiento solicitado*" (valueChange)="justificacion.set($event)" />
+                <text-area-control title="" placeholder="Justificación del requerimiento solicitado*" [value]="justificacion()" (valueChange)="justificacion.set($event)" />
               }
 
               <div class="flex flex-col gap-siaf-xs">
@@ -819,7 +819,7 @@ type PeriodoGroup = {
                           <td class="min-h-12 px-siaf-md py-siaf-sm text-sm font-bold leading-normal text-text">{{ group.fechaVigenciaAdicional }}</td>
                           <td class="min-h-12 px-siaf-md py-siaf-sm text-sm font-bold leading-normal text-text">{{ group.usuarioResponsable }}</td>
                           <td class="min-h-12 px-siaf-md py-siaf-sm">
-                            <span class="inline-flex items-center gap-1 rounded-siaf-sm border border-[#002854] bg-[#b0defd] px-siaf-xs text-xs text-[#005188]">
+                            <span class="inline-flex items-center gap-1 rounded-siaf-sm border border-[var(--sys-color-border-feedback-info)] bg-[var(--sys-color-bg-feedback-light-info)] px-siaf-xs text-xs text-[var(--sys-color-text-feedback-info)]">
                               <siaf-icon name="check_circle" [size]="16" />{{ group.estado }}
                             </span>
                           </td>
@@ -850,7 +850,7 @@ type PeriodoGroup = {
                               <td class="min-h-12 px-siaf-md py-siaf-sm text-sm leading-normal text-text">{{ row.fechaVigenciaAdicional }}</td>
                               <td class="min-h-12 px-siaf-md py-siaf-sm text-sm leading-normal text-text">{{ row.usuarioResponsable }}</td>
                               <td class="min-h-12 px-siaf-md py-siaf-sm">
-                                <span class="inline-flex items-center gap-1 rounded-siaf-sm border border-[#002854] bg-[#b0defd] px-siaf-xs text-xs text-[#005188]">
+                                <span class="inline-flex items-center gap-1 rounded-siaf-sm border border-[var(--sys-color-border-feedback-info)] bg-[var(--sys-color-bg-feedback-light-info)] px-siaf-xs text-xs text-[var(--sys-color-text-feedback-info)]">
                                   <siaf-icon name="check_circle" [size]="16" />{{ row.estado }}
                                 </span>
                               </td>
@@ -1113,6 +1113,18 @@ export class AdjustmentSeatRequestComponent {
       this.uploadedFile() &&
       (this.totalDebe > 0 || this.totalHaber > 0)
     );
+  }
+
+  get isEditingElaborated(): boolean {
+    return this.isElaborated && !this.isReadOnly;
+  }
+
+  get solicitudeHeaderState(): SolicitudeHeaderState {
+    if (this.isReadOnly) {
+      return 'elaborated';
+    }
+
+    return this.isElaborated ? 'edit' : 'new';
   }
 
   get fechaContabilizacionDisplay(): string {
@@ -1428,6 +1440,7 @@ export class ReadonlyFieldComponent {
           class="min-h-11 flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-text-muted disabled:text-text-muted"
           maxlength="500"
           [placeholder]="placeholder"
+          [value]="value"
           [disabled]="disabled"
           (input)="onInput($event)"
         ></textarea>
@@ -1440,6 +1453,7 @@ export class ReadonlyFieldComponent {
 export class TextAreaControlComponent {
   @Input() title = '';
   @Input() placeholder = '';
+  @Input() value = '';
   @Input() disabled = false;
   @Output() valueChange = new EventEmitter<string>();
   charCount = 0;

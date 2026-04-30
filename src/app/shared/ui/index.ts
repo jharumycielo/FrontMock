@@ -19,6 +19,8 @@ export { TooltipComponent } from './tooltip/tooltip.component';
 export { IconComponent } from './icon/icon.component';
 export { DividerComponent } from './divider/divider.component';
 export { TagComponent } from './tag/tag.component';
+export { FlowStatusTagComponent } from './flow-status-tag/flow-status-tag.component';
+export type { FlowStatus, FlowStatusTagSize } from './flow-status-tag/flow-status-tag.component';
 export { AccordionComponent } from './accordion/accordion.component';
 export { SwitchComponent } from './switch/switch.component';
 export { MenuComponent } from './menu/menu.component';

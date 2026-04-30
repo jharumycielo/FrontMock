@@ -34,9 +34,9 @@ export class TagComponent {
     const classes: Record<TagTone, string> = {
       neutral: 'border-border bg-surface text-text',
       info: 'border-brand-primary/20 bg-brand-primary/10 text-brand-primary',
-      success: 'border-[#12a150]/20 bg-[#12a150]/10 text-[#0b7a3b]',
-      warning: 'border-accent/20 bg-[#fff5ef] text-accent',
-      danger: 'border-[#d92d20]/20 bg-[#d92d20]/10 text-[#b42318]'
+      success: 'border-[var(--sys-color-border-feedback-success)] bg-[var(--sys-color-bg-feedback-light-success)] text-[var(--sys-color-text-feedback-success)]',
+      warning: 'border-accent/20 bg-[var(--sys-color-bg-feedback-light-warning)] text-accent',
+      danger: 'border-[var(--sys-color-border-feedback-danger)] bg-[var(--sys-color-bg-feedback-light-danger)] text-[var(--sys-color-text-feedback-danger)]'
     };
 
     return classes[this.tone];

@@ -18,10 +18,10 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
 
             <!-- Título y descripción -->
             <div class="flex flex-col items-center gap-5">
-              <h1 class="m-0 text-[27px] font-bold leading-[36px] tracking-[-0.31px] text-[#004899]">
+              <h1 class="m-0 text-[27px] font-bold leading-[36px] tracking-[-0.31px] text-[var(--sys-color-text-brand-primary)]">
                 Verificación de código OTP
               </h1>
-              <p class="m-0 w-[302px] text-center text-sm font-medium leading-5 text-[#3c3c3c]">
+              <p class="m-0 w-[302px] text-center text-sm font-medium leading-5 text-[var(--sys-color-text-neutral-medium)]">
                 Hemos enviado el código OTP a su correo electrónico. Por favor, ingrese el código en el campo a continuación.
               </p>
             </div>
@@ -52,10 +52,10 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
 
             <!-- Sección de ayuda -->
             <div class="w-[320px]">
-              <p class="m-0 text-sm font-bold leading-5 text-[#3c3c3c]">¿Necesitas ayuda?</p>
-              <p class="m-0 text-xs leading-5 text-[#3c3c3c]">
+              <p class="m-0 text-sm font-bold leading-5 text-[var(--sys-color-text-neutral-medium)]">¿Necesitas ayuda?</p>
+              <p class="m-0 text-xs leading-5 text-[var(--sys-color-text-neutral-medium)]">
                 Si no puedes recibir el código o si cambiaste tu correo electrónico o número de teléfono,
-                <a class="text-[#014899] hover:underline" href="#">Prueba de otra manera</a>
+                <a class="text-[var(--sys-color-text-brand-primary)] hover:underline" href="#">Prueba de otra manera</a>
               </p>
             </div>
           </div>
@@ -63,7 +63,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
           <!-- Ir a inicio -->
           <div class="flex w-full justify-end">
             <a
-              class="inline-flex min-h-10 items-center gap-siaf-xs rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+              class="inline-flex min-h-10 items-center gap-siaf-xs rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
               routerLink="/login"
             >
               <siaf-icon name="home" [size]="24" />

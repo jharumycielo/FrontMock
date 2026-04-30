@@ -1,7 +1,7 @@
-import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../components/custom-filter/custom-filter.component';
+import { FlowStatusTagComponent } from '../flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../icon/icon.component';
 import { PaginationComponent } from '../../components/pagination/pagination.component';
 
@@ -30,7 +30,7 @@ type AppliedCustomFilter = {
 @Component({
   selector: 'siaf-tray-documents-view',
   standalone: true,
-  imports: [CustomFilterComponent, IconComponent, NgClass, PaginationComponent],
+  imports: [CustomFilterComponent, FlowStatusTagComponent, IconComponent, PaginationComponent],
   template: `
     <section class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest,rgba(32,32,32,0.04))]">
       <section class="bg-surface">
@@ -39,9 +39,9 @@ type AppliedCustomFilter = {
             <siaf-icon name="home" [size]="20" />
           </button>
           <siaf-icon class="text-text-muted" name="keyboard_arrow_right" [size]="12" />
-          <span class="font-medium text-[var(--sys-color-text-neutral-medium,#29292a)]">Bandeja de Documentos</span>
+          <span class="font-medium text-[var(--sys-color-text-neutral-medium)]">Bandeja de Documentos</span>
           <siaf-icon class="text-text-muted" name="keyboard_arrow_right" [size]="12" />
-          <span class="font-normal text-[var(--sys-color-text-neutral-low,#6f6f71)]">{{ title }}</span>
+          <span class="font-normal text-[var(--sys-color-text-neutral-low)]">{{ title }}</span>
         </nav>
 
         <header class="flex min-h-[73px] items-start border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] px-siaf-lg py-siaf-md">
@@ -81,7 +81,7 @@ type AppliedCustomFilter = {
                     <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar campos" (click)="closeFieldsMenu()"></button>
                     <div class="absolute right-0 top-12 z-30 w-[248px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]" (click)="$event.stopPropagation()">
                       @for (option of fieldsMenuOptions; track option.label) {
-                        <button class="flex min-h-8 w-full items-center gap-siaf-md px-siaf-md py-siaf-xxs text-left text-sm text-[var(--sys-color-text-neutral-medium,#353537)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFieldsMenuOption(option.label)">
+                        <button class="flex min-h-8 w-full items-center gap-siaf-md px-siaf-md py-siaf-xxs text-left text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFieldsMenuOption(option.label)">
                           <span class="min-w-0 flex-1">{{ option.label }}</span>
                           @if (option.hasChildren) {
                             <siaf-icon name="chevron_right" [size]="24" />
@@ -106,11 +106,11 @@ type AppliedCustomFilter = {
                   @if (favoriteMenuOpen) {
                     <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar favoritos" (click)="closeFavoriteMenu()"></button>
                     <div class="absolute right-0 top-12 z-30 w-[248px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]" (click)="$event.stopPropagation()">
-                      <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm text-[var(--sys-color-text-neutral-medium,#353537)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFavoriteOption('observed')">
+                      <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFavoriteOption('observed')">
                         Solicitudes observadas
                       </button>
                       <div class="h-px w-full bg-[var(--sys-color-divider-default,rgba(32,32,32,0.12))]"></div>
-                      <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm text-[var(--sys-color-text-neutral-medium,#353537)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFavoriteOption('save-search')">
+                      <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFavoriteOption('save-search')">
                         Guardar b&uacute;squeda actual
                       </button>
                     </div>
@@ -126,7 +126,7 @@ type AppliedCustomFilter = {
             <div class="flex min-h-8 flex-wrap items-center gap-siaf-xs">
               <div class="relative">
                 @if (selectedStatusFilter) {
-                  <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active,#014899)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated,#014899)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="toggleStatusFilterMenu()">
+                  <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="toggleStatusFilterMenu()">
                     <siaf-icon name="check" [size]="20" />
                     Estado: {{ selectedStatusFilter }}
                     <span class="inline-flex size-5 items-center justify-center rounded-siaf-sm" role="button" tabindex="0" aria-label="Quitar filtro de estado" (click)="clearStatusFilter($event)" (keydown.enter)="clearStatusFilter($event)" (keydown.space)="clearStatusFilter($event)">
@@ -144,7 +144,7 @@ type AppliedCustomFilter = {
                   <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar estados" (click)="closeStatusFilterMenu()"></button>
                   <div class="absolute left-0 top-10 z-30 w-[220px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]" (click)="$event.stopPropagation()">
                     @for (option of statusFilterOptions; track option) {
-                      <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm text-[var(--sys-color-text-neutral-medium,#353537)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectStatusFilter(option)">
+                      <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectStatusFilter(option)">
                         {{ option }}
                       </button>
                     }
@@ -154,7 +154,7 @@ type AppliedCustomFilter = {
 
               <div class="relative">
                 @if (selectedActionTypeFilter) {
-                  <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active,#014899)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated,#014899)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="toggleActionTypeFilterMenu()">
+                  <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="toggleActionTypeFilterMenu()">
                     <siaf-icon name="check" [size]="20" />
                     Tipo de acci&oacute;n: {{ selectedActionTypeFilter }}
                     <span class="inline-flex size-5 items-center justify-center rounded-siaf-sm" role="button" tabindex="0" aria-label="Quitar filtro de tipo de accion" (click)="clearActionTypeFilter($event)" (keydown.enter)="clearActionTypeFilter($event)" (keydown.space)="clearActionTypeFilter($event)">
@@ -172,7 +172,7 @@ type AppliedCustomFilter = {
                   <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar tipos de accion" (click)="closeActionTypeFilterMenu()"></button>
                   <div class="absolute left-0 top-10 z-30 w-[220px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]" (click)="$event.stopPropagation()">
                     @for (option of actionTypeFilterOptions; track option) {
-                      <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm text-[var(--sys-color-text-neutral-medium,#353537)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectActionTypeFilter(option)">
+                      <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectActionTypeFilter(option)">
                         {{ option }}
                       </button>
                     }
@@ -181,7 +181,7 @@ type AppliedCustomFilter = {
               </div>
 
               @for (filter of appliedCustomFilters; track filter.id) {
-                <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active,#014899)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated,#014899)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" aria-label="Filtro personalizado aplicado" (click)="editCustomAppliedFilter(filter)">
+                <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" aria-label="Filtro personalizado aplicado" (click)="editCustomAppliedFilter(filter)">
                   <siaf-icon name="bolt" [size]="20" />
                   {{ filter.campoLabel }}: {{ filter.valor }}
                   <span class="inline-flex size-5 items-center justify-center rounded-siaf-sm" role="button" tabindex="0" aria-label="Quitar filtro personalizado" (click)="clearCustomAppliedFilter(filter.id, $event)" (keydown.enter)="clearCustomAppliedFilter(filter.id, $event)" (keydown.space)="clearCustomAppliedFilter(filter.id, $event)">
@@ -228,15 +228,13 @@ type AppliedCustomFilter = {
                 </thead>
                 <tbody>
                   @for (row of filteredRows; track row.document + row.number) {
-                    <tr class="h-[58px] border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-surface text-[var(--sys-color-text-neutral-medium,#29292a)] hover:bg-[rgba(1,72,153,0.04)]">
+                    <tr class="h-[58px] border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-surface text-[var(--sys-color-text-neutral-medium)] hover:bg-[rgba(1,72,153,0.04)]">
                       <td class="px-siaf-sm py-siaf-sm"><input class="size-4 accent-brand-primary" type="checkbox" /></td>
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.document }}</td>
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.number }}</td>
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.actionType }}</td>
                       <td class="px-siaf-md py-siaf-sm">
-                        <span class="inline-flex min-h-6 items-center rounded-siaf-sm px-siaf-xs text-xs text-white" [ngClass]="statusClass(row.status)">
-                          {{ row.status }}
-                        </span>
+                        <siaf-flow-status-tag [status]="row.status" size="standard" />
                       </td>
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.system }}</td>
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.date }}</td>
@@ -395,19 +393,6 @@ export class TrayDocumentsViewComponent {
     };
 
     return statuses[title] || 'Elaborado';
-  }
-
-  statusClass(status: TrayDocumentStatus): string {
-    const classes: Record<TrayDocumentStatus, string> = {
-      Elaborado: 'bg-[var(--sys-color-bg-status-flow-status-elaborado,var(--sys-color-bg-feedback-dark-default,#353537))]',
-      Verificado: 'bg-[var(--sys-color-bg-status-flow-status-verificado,var(--sys-color-bg-feedback-dark-default,#353537))]',
-      Eliminado: 'bg-[var(--sys-color-bg-feedback-dark-danger,#d92d20)]',
-      Aprobado: 'bg-[var(--sys-color-bg-feedback-dark-success,#20635e)]',
-      Observado: 'bg-[var(--sys-color-bg-feedback-dark-warning,#8a6b23)]',
-      Rechazado: 'bg-[var(--sys-color-bg-feedback-dark-danger,#d92d20)]'
-    };
-
-    return classes[status];
   }
 
   toggleFieldsMenu(): void {

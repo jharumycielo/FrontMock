@@ -24,9 +24,9 @@ export class BadgeComponent {
   get toneClass(): string {
     const classes: Record<BadgeTone, string> = {
       info: 'bg-brand-primary/10 text-brand-primary',
-      success: 'bg-[#12a150]/10 text-[#0b7a3b]',
-      warning: 'bg-[#fff5ef] text-accent',
-      danger: 'bg-[#d92d20]/10 text-[#b42318]',
+      success: 'bg-[var(--sys-color-bg-feedback-light-success)] text-[var(--sys-color-text-feedback-success)]',
+      warning: 'bg-[var(--sys-color-bg-feedback-light-warning)] text-accent',
+      danger: 'bg-[var(--sys-color-bg-feedback-light-danger)] text-[var(--sys-color-text-feedback-danger)]',
       neutral: 'bg-surface-muted text-text-muted'
     };
 

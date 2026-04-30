@@ -12,7 +12,7 @@ type LoginTab = 'entidades' | 'proveedores';
   standalone: true,
   imports: [ButtonComponent, IconComponent, RouterLink],
   template: `
-    <main class="flex min-h-screen bg-[var(--sys-color-bg-surfaces-surface,#fff)] text-text lg:h-screen lg:overflow-hidden">
+    <main class="flex min-h-screen bg-[var(--sys-color-bg-surfaces-surface)] text-text lg:h-screen lg:overflow-hidden">
       <section class="hidden h-screen flex-[0_0_50%] overflow-hidden lg:block" aria-hidden="true">
         <img class="h-full w-full object-cover" src="assets/figma/login/login-hero.png" alt="" />
       </section>
@@ -30,7 +30,7 @@ type LoginTab = 'entidades' | 'proveedores';
 
             <!-- Título + Tabs -->
             <div class="flex w-full flex-col items-center gap-siaf-xs">
-              <h1 class="m-0 text-[30px] font-bold leading-none tracking-[-0.63px] text-[#014899]">Bienvenido</h1>
+              <h1 class="m-0 text-[30px] font-bold leading-none tracking-[-0.63px] text-[var(--sys-color-text-brand-primary)]">Bienvenido</h1>
               <p class="m-0 text-sm font-medium leading-normal text-[var(--sys-color-bg-on-surfaces-medium,rgba(32,32,32,0.8))]">
                 Ingresa tus datos para Iniciar sesión
               </p>
@@ -42,15 +42,15 @@ type LoginTab = 'entidades' | 'proveedores';
                   role="tab"
                   [attr.aria-selected]="activeTab() === 'entidades'"
                   [class.font-bold]="activeTab() === 'entidades'"
-                  [class.text-[#014899]]="activeTab() === 'entidades'"
+                  [class.text-[var(--sys-color-text-brand-primary)]]="activeTab() === 'entidades'"
                   [class.font-medium]="activeTab() !== 'entidades'"
-                  [class.text-[var(--sys-color-text-neutral-low,#6f6f71)]]="activeTab() !== 'entidades'"
+                  [class.text-[var(--sys-color-text-neutral-low)]]="activeTab() !== 'entidades'"
                   type="button"
                   (click)="activeTab.set('entidades')"
                 >
                   Entidades del Estado
                   @if (activeTab() === 'entidades') {
-                    <span class="absolute bottom-[-2px] left-0 right-0 h-0.5 rounded-t bg-[#014899]"></span>
+                    <span class="absolute bottom-[-2px] left-0 right-0 h-0.5 rounded-t bg-[var(--sys-color-bg-brand-primary)]"></span>
                   }
                 </button>
                 <button
@@ -58,15 +58,15 @@ type LoginTab = 'entidades' | 'proveedores';
                   role="tab"
                   [attr.aria-selected]="activeTab() === 'proveedores'"
                   [class.font-bold]="activeTab() === 'proveedores'"
-                  [class.text-[#014899]]="activeTab() === 'proveedores'"
+                  [class.text-[var(--sys-color-text-brand-primary)]]="activeTab() === 'proveedores'"
                   [class.font-medium]="activeTab() !== 'proveedores'"
-                  [class.text-[var(--sys-color-text-neutral-low,#6f6f71)]]="activeTab() !== 'proveedores'"
+                  [class.text-[var(--sys-color-text-neutral-low)]]="activeTab() !== 'proveedores'"
                   type="button"
                   (click)="activeTab.set('proveedores')"
                 >
                   Proveedores y Externos
                   @if (activeTab() === 'proveedores') {
-                    <span class="absolute bottom-[-2px] left-0 right-0 h-0.5 rounded-t bg-[#014899]"></span>
+                    <span class="absolute bottom-[-2px] left-0 right-0 h-0.5 rounded-t bg-[var(--sys-color-bg-brand-primary)]"></span>
                   }
                 </button>
               </div>
@@ -79,19 +79,19 @@ type LoginTab = 'entidades' | 'proveedores';
               <!-- Input Usuario -->
               <label class="relative block w-full">
                 @if (isFieldFloating('user')) {
-                  <span class="absolute left-3 top-[-10px] z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal text-[var(--sys-color-text-neutral-low,#6f6f71)]">
+                  <span class="absolute left-3 top-[-10px] z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal text-[var(--sys-color-text-neutral-low)]">
                     Usuario
                   </span>
                 }
                 <span
                   class="flex min-h-10 items-center gap-siaf-xs rounded-siaf-md border bg-surface px-siaf-md py-siaf-xs transition focus-within:border-2 focus-within:border-[rgba(1,72,153,0.8)]"
-                  [class.border-[#818181]]="!isFieldSuccess('user')"
-                  [class.border-[#20635e]]="isFieldSuccess('user')"
+                  [class.border-[var(--sys-color-border-states-enabled)]]="!isFieldSuccess('user')"
+                  [class.border-[var(--sys-color-border-feedback-success)]]="isFieldSuccess('user')"
                   [class.border-2]="isFieldSuccess('user')"
                 >
-                  <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium,#29292a)]" name="mail" [size]="24" />
+                  <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium)]" name="mail" [size]="24" />
                   <input
-                    class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium,#29292a)] outline-none placeholder:text-[var(--sys-color-text-neutral-low,#6f6f71)]"
+                    class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)] outline-none placeholder:text-[var(--sys-color-text-neutral-low)]"
                     type="email"
                     [placeholder]="isFieldFloating('user') ? '' : 'Usuario'"
                     [value]="userValue"
@@ -106,19 +106,19 @@ type LoginTab = 'entidades' | 'proveedores';
               <!-- Input Contraseña -->
               <label class="relative block w-full">
                 @if (isFieldFloating('password')) {
-                  <span class="absolute left-3 top-[-10px] z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal text-[var(--sys-color-text-neutral-low,#6f6f71)]">
+                  <span class="absolute left-3 top-[-10px] z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal text-[var(--sys-color-text-neutral-low)]">
                     Contraseña
                   </span>
                 }
                 <span
                   class="flex min-h-10 items-center gap-siaf-xs rounded-siaf-md border bg-surface px-siaf-md py-siaf-xs transition focus-within:border-2 focus-within:border-[rgba(1,72,153,0.8)]"
                   [class.border-[rgba(32,32,32,0.4)]]="!isFieldSuccess('password')"
-                  [class.border-[#20635e]]="isFieldSuccess('password')"
+                  [class.border-[var(--sys-color-border-feedback-success)]]="isFieldSuccess('password')"
                   [class.border-2]="isFieldSuccess('password')"
                 >
-                  <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium,#29292a)]" name="lock" [size]="24" />
+                  <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium)]" name="lock" [size]="24" />
                   <input
-                    class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium,#29292a)] outline-none placeholder:text-[var(--sys-color-text-neutral-low,#6f6f71)]"
+                    class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)] outline-none placeholder:text-[var(--sys-color-text-neutral-low)]"
                     [type]="showPassword() ? 'text' : 'password'"
                     [placeholder]="isFieldFloating('password') ? '' : 'Contraseña'"
                     [value]="passwordValue"
@@ -128,7 +128,7 @@ type LoginTab = 'entidades' | 'proveedores';
                     (input)="passwordValue = inputValue($event)"
                   />
                   <button
-                    class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-[rgba(32,32,32,0.08)] active:bg-[rgba(32,32,32,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                    class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[rgba(32,32,32,0.08)] active:bg-[rgba(32,32,32,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
                     type="button"
                     [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
                     (click)="togglePassword()"
@@ -146,13 +146,13 @@ type LoginTab = 'entidades' | 'proveedores';
               <!-- Links inferiores -->
               <div class="flex w-full items-center justify-between">
                 <a
-                  class="inline-flex min-h-10 items-center justify-center rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[#014899] transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                  class="inline-flex min-h-10 items-center justify-center rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-brand-primary)] transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
                   href="#"
                 >
                   Ir a inicio
                 </a>
                 <button
-                  class="inline-flex min-h-10 items-center justify-center rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[#014899] transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                  class="inline-flex min-h-10 items-center justify-center rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-brand-primary)] transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
                   type="button"
                   (click)="goToRecuperarContrasena()"
                 >
@@ -168,11 +168,11 @@ type LoginTab = 'entidades' | 'proveedores';
 
               <!-- ID Peru -->
               <button
-                class="flex w-full items-center justify-center gap-siaf-xs rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                class="flex w-full items-center justify-center gap-siaf-xs rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
                 type="button"
               >
                 <!-- ID Peru: fondo rojo, dos vectores posicionados (24×24px base) -->
-                <span style="position:relative;display:inline-block;width:24px;height:24px;flex-shrink:0;overflow:hidden;border-radius:4px;background:#d63026;">
+                <span style="position:relative;display:inline-block;width:24px;height:24px;flex-shrink:0;overflow:hidden;border-radius:4px;background:var(--sys-color-bg-feedback-dark-danger);">
                   <img src="assets/figma/login/id-peru-v1.svg" style="position:absolute;left:7.74px;top:4.65px;width:12.36px;height:14.7px;" alt="" />
                   <img src="assets/figma/login/id-peru-v2.svg" style="position:absolute;left:4.05px;top:9.35px;width:6.87px;height:7.45px;" alt="" />
                 </span>
@@ -181,11 +181,11 @@ type LoginTab = 'entidades' | 'proveedores';
 
               <!-- Sunat -->
               <button
-                class="flex w-full items-center justify-center gap-siaf-xs rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                class="flex w-full items-center justify-center gap-siaf-xs rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
                 type="button"
               >
                 <!-- Sunat: fondo blanco, dos vectores posicionados -->
-                <span style="position:relative;display:inline-block;width:24px;height:24px;flex-shrink:0;overflow:hidden;border-radius:4px;background:#fff;border:1px solid rgba(32,32,32,0.08);">
+                <span style="position:relative;display:inline-block;width:24px;height:24px;flex-shrink:0;overflow:hidden;border-radius:4px;background:var(--sys-color-bg-surfaces-surface);border:1px solid rgba(32,32,32,0.08);">
                   <img src="assets/figma/login/sunat-v1.svg" style="position:absolute;left:8.1px;top:3.6px;width:11.55px;height:11.25px;" alt="" />
                   <img src="assets/figma/login/sunat-v2.svg" style="position:absolute;left:4.35px;top:9.3px;width:11.55px;height:11.1px;" alt="" />
                 </span>
@@ -195,13 +195,13 @@ type LoginTab = 'entidades' | 'proveedores';
               <!-- JNE -->
               <div class="relative w-full">
                 <button
-                  class="flex w-full items-center justify-center gap-siaf-xs rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium,#29292a)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                  class="flex w-full items-center justify-center gap-siaf-xs rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
                   type="button"
                   (mouseenter)="jnePopover.set(true)"
                   (mouseleave)="jnePopover.set(false)"
                 >
                   <!-- JNE: fondo blanco, dos vectores posicionados -->
-                  <span style="position:relative;display:inline-block;width:24px;height:24px;flex-shrink:0;overflow:hidden;border-radius:4px;background:#fff;border:1px solid rgba(32,32,32,0.08);">
+                  <span style="position:relative;display:inline-block;width:24px;height:24px;flex-shrink:0;overflow:hidden;border-radius:4px;background:var(--sys-color-bg-surfaces-surface);border:1px solid rgba(32,32,32,0.08);">
                     <img src="assets/figma/login/jne-v1.svg" style="position:absolute;left:3.9px;top:3.9px;width:16.35px;height:10.95px;" alt="" />
                     <img src="assets/figma/login/jne-v2.svg" style="position:absolute;left:3.9px;top:8.4px;width:16.35px;height:11.7px;" alt="" />
                   </span>
@@ -210,7 +210,7 @@ type LoginTab = 'entidades' | 'proveedores';
 
                 @if (jnePopover()) {
                   <div class="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-[4px] bg-surface px-siaf-md py-siaf-sm shadow-[0px_6px_5px_rgba(0,0,0,0.14),0px_1px_9px_rgba(0,0,0,0.12),0px_3px_3px_rgba(0,0,0,0.2)]">
-                    <p class="m-0 text-sm leading-normal text-[var(--sys-color-text-neutral-medium,#29292a)]">
+                    <p class="m-0 text-sm leading-normal text-[var(--sys-color-text-neutral-medium)]">
                       Exclusivo para autoridades electas.<br />
                       Se registra automáticamente al ingresar por primera vez.
                     </p>
@@ -221,7 +221,7 @@ type LoginTab = 'entidades' | 'proveedores';
               <!-- Ir a inicio -->
               <div class="flex w-full items-center">
                 <a
-                  class="inline-flex min-h-10 items-center justify-center rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[#014899] transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                  class="inline-flex min-h-10 items-center justify-center rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-brand-primary)] transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
                   href="#"
                 >
                   Ir a inicio
