@@ -28,8 +28,8 @@ export interface BreadcrumbItem {
           }
         </li>
 
-        @if (hasCollapsedItems) {
-          <li class="relative flex shrink-0 items-center gap-siaf-xxs">
+        @if (hasMobileCollapsedItems) {
+          <li class="relative flex shrink-0 items-center gap-siaf-xxs md:hidden">
             <button
               class="inline-flex size-8 items-center justify-center rounded-siaf-md text-text-muted transition hover:bg-surface-muted hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
               type="button"
@@ -47,7 +47,7 @@ export interface BreadcrumbItem {
                 role="menu"
                 (click)="$event.stopPropagation()"
               >
-                @for (item of collapsedItems; track item.label) {
+                @for (item of mobileCollapsedItems; track item.label) {
                   @if (item.href) {
                     <a
                       class="block truncate px-siaf-md py-siaf-sm text-xs font-medium text-text hover:bg-surface-muted"
@@ -67,8 +67,70 @@ export interface BreadcrumbItem {
           </li>
         }
 
-        @for (item of visibleItems; track item.label; let last = $last) {
-          <li class="flex min-w-0 shrink-0 items-center gap-siaf-xxs">
+        @if (hasDesktopCollapsedItems) {
+          <li class="relative hidden shrink-0 items-center gap-siaf-xxs md:flex">
+            <button
+              class="inline-flex size-8 items-center justify-center rounded-siaf-md text-text-muted transition hover:bg-surface-muted hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+              type="button"
+              aria-label="Niveles intermedios"
+              [attr.aria-expanded]="collapsedMenuOpen"
+              (click)="toggleCollapsedMenu($event)"
+            >
+              <siaf-icon name="more_horiz" [size]="20" />
+            </button>
+            <siaf-icon class="text-text-muted" name="keyboard_arrow_right" [size]="12" />
+
+            @if (collapsedMenuOpen) {
+              <div
+                class="absolute left-0 top-9 z-30 min-w-64 max-w-80 rounded-siaf-md border border-border bg-surface py-siaf-xs shadow-lg"
+                role="menu"
+                (click)="$event.stopPropagation()"
+              >
+                @for (item of desktopCollapsedItems; track item.label) {
+                  @if (item.href) {
+                    <a
+                      class="block truncate px-siaf-md py-siaf-sm text-xs font-medium text-text hover:bg-surface-muted"
+                      [routerLink]="item.href"
+                      role="menuitem"
+                    >
+                      {{ item.label }}
+                    </a>
+                  } @else {
+                    <span class="block truncate px-siaf-md py-siaf-sm text-xs font-medium text-text-muted" role="menuitem">
+                      {{ item.label }}
+                    </span>
+                  }
+                }
+              </div>
+            }
+          </li>
+        }
+
+        @for (item of mobileVisibleItems; track item.label; let last = $last) {
+          <li class="flex min-w-0 shrink-0 items-center gap-siaf-xxs md:hidden">
+            @if (item.href && !last) {
+              <a class="max-w-[180px] truncate font-medium text-text hover:underline" [routerLink]="item.href">
+                {{ item.label }}
+              </a>
+            } @else {
+              <span
+                class="max-w-[220px] truncate"
+                [class.font-medium]="!last"
+                [class.font-normal]="last"
+                [class.text-text]="!last"
+                [class.text-text-muted]="last"
+              >
+                {{ item.label }}
+              </span>
+            }
+            @if (!last) {
+              <siaf-icon class="text-text-muted" name="keyboard_arrow_right" [size]="12" />
+            }
+          </li>
+        }
+
+        @for (item of desktopVisibleItems; track item.label; let last = $last) {
+          <li class="hidden min-w-0 shrink-0 items-center gap-siaf-xxs md:flex">
             @if (item.href && !last) {
               <a class="max-w-[180px] truncate font-medium text-text hover:underline" [routerLink]="item.href">
                 {{ item.label }}
@@ -118,7 +180,11 @@ export class BreadcrumbComponent {
     return this.items;
   }
 
-  get visibleItems(): BreadcrumbItem[] {
+  get mobileVisibleItems(): BreadcrumbItem[] {
+    return this.displayItems.slice(-1);
+  }
+
+  get desktopVisibleItems(): BreadcrumbItem[] {
     const displayItems = this.displayItems;
 
     // Regla UX del Figma: para rutas largas se muestra Home > ... > penultimo > actual.
@@ -129,16 +195,29 @@ export class BreadcrumbComponent {
     return displayItems;
   }
 
-  get hasCollapsedItems(): boolean {
+  get hasMobileCollapsedItems(): boolean {
+    return this.displayItems.length > 1;
+  }
+
+  get hasDesktopCollapsedItems(): boolean {
     return this.displayItems.length > 3;
   }
 
-  get collapsedItems(): BreadcrumbItem[] {
-    if (!this.hasCollapsedItems) {
+  get mobileCollapsedItems(): BreadcrumbItem[] {
+    if (!this.hasMobileCollapsedItems) {
       return [];
     }
 
-    // Estos niveles son los que se ocultan detras del boton "...".
+    // En movil solo queda visible el ultimo nivel; todo lo anterior vive detras de "...".
+    return this.displayItems.slice(0, -1);
+  }
+
+  get desktopCollapsedItems(): BreadcrumbItem[] {
+    if (!this.hasDesktopCollapsedItems) {
+      return [];
+    }
+
+    // En desktop estos niveles se ocultan detras del boton "...".
     return this.displayItems.slice(0, -2);
   }
 
