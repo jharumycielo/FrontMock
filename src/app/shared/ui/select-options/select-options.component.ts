@@ -24,8 +24,13 @@ export interface SelectOption {
           role="option"
           [disabled]="option.disabled"
           [attr.aria-selected]="isSelected(option.value)"
+          [attr.tabindex]="option.disabled ? -1 : 0"
           [ngClass]="{ 'bg-[var(--sys-color-bg-states-light-selected)]': isSelected(option.value) }"
           (click)="selected.emit(option.value)"
+          (keydown.arrowDown)="focusSibling($event, 1)"
+          (keydown.arrowUp)="focusSibling($event, -1)"
+          (keydown.home)="focusBoundary($event, 'first')"
+          (keydown.end)="focusBoundary($event, 'last')"
         >
           <span class="min-w-0 flex-1 truncate">{{ option.label }}</span>
         </button>
@@ -44,5 +49,29 @@ export class SelectOptionsComponent {
 
   isSelected(value: string): boolean {
     return this.multiple ? this.selectedValues.includes(value) : this.selectedValue === value;
+  }
+
+  focusSibling(event: Event, direction: 1 | -1): void {
+    event.preventDefault();
+    const options = this.enabledOptionButtons(event);
+    const currentIndex = options.indexOf(event.currentTarget as HTMLButtonElement);
+    const nextIndex = (currentIndex + direction + options.length) % options.length;
+    options[nextIndex]?.focus();
+  }
+
+  focusBoundary(event: Event, boundary: 'first' | 'last'): void {
+    event.preventDefault();
+    const options = this.enabledOptionButtons(event);
+    const index = boundary === 'first' ? 0 : options.length - 1;
+    options[index]?.focus();
+  }
+
+  private enabledOptionButtons(event: Event): HTMLButtonElement[] {
+    const listbox = (event.currentTarget as HTMLElement).closest('[role="listbox"]');
+    if (!listbox) {
+      return [];
+    }
+
+    return Array.from(listbox.querySelectorAll<HTMLButtonElement>('button[role="option"]:not(:disabled)'));
   }
 }

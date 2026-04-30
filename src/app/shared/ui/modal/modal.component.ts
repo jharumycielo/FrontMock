@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 
 import { ButtonComponent } from '../button/button.component';
 import { IconComponent } from '../icon/icon.component';
@@ -143,10 +143,14 @@ const MODAL_PRESETS: Record<Exclude<ModalVariant, 'custom'>, ModalPreset> = {
     @if (open) {
       <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-siaf-md" role="presentation">
         <section
+          #dialog
           class="relative flex max-h-[calc(100vh-32px)] w-full max-w-[500px] flex-col gap-siaf-lg overflow-y-auto rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest)] px-siaf-lg pb-siaf-lg pt-12 shadow-[0_24px_19px_rgb(0_0_0_/_0.14),0_9px_23px_rgb(0_0_0_/_0.12),0_11px_8px_rgb(0_0_0_/_0.2)]"
           role="dialog"
           aria-modal="true"
-          [attr.aria-label]="resolvedTitle"
+          tabindex="-1"
+          [attr.aria-labelledby]="titleId"
+          [attr.aria-describedby]="resolvedDescription ? descriptionId : null"
+          (keydown)="onDialogKeydown($event)"
         >
           @if (showClose) {
             <button
@@ -172,11 +176,11 @@ const MODAL_PRESETS: Record<Exclude<ModalVariant, 'custom'>, ModalPreset> = {
 
           <div class="flex flex-col items-center gap-siaf-md px-0 text-center sm:px-siaf-lg">
             @if (resolvedTitle) {
-              <h2 class="w-full text-base font-medium text-[var(--sys-color-text-neutral-high)]">{{ resolvedTitle }}</h2>
+              <h2 [id]="titleId" class="w-full text-base font-medium text-[var(--sys-color-text-neutral-high)]">{{ resolvedTitle }}</h2>
             }
 
             @if (resolvedDescription) {
-              <p class="w-full whitespace-pre-line text-sm font-normal tracking-[0.024px] text-[var(--sys-color-text-neutral-medium)]">
+              <p [id]="descriptionId" class="w-full whitespace-pre-line text-sm font-normal tracking-[0.024px] text-[var(--sys-color-text-neutral-medium)]">
                 {{ resolvedDescription }}
               </p>
             }
@@ -220,7 +224,9 @@ const MODAL_PRESETS: Record<Exclude<ModalVariant, 'custom'>, ModalPreset> = {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ModalComponent {
+export class ModalComponent implements OnChanges {
+  @ViewChild('dialog') private dialog?: ElementRef<HTMLElement>;
+
   @Input() open = false;
   @Input() variant: ModalVariant = 'custom';
   @Input() title = '';
@@ -240,6 +246,23 @@ export class ModalComponent {
   @Output() closed = new EventEmitter<void>();
   @Output() canceled = new EventEmitter<void>();
   @Output() confirmed = new EventEmitter<void>();
+
+  readonly titleId = `siaf-modal-title-${Math.random().toString(36).slice(2)}`;
+  readonly descriptionId = `siaf-modal-description-${Math.random().toString(36).slice(2)}`;
+  private previouslyFocusedElement: HTMLElement | null = null;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['open']) {
+      return;
+    }
+
+    if (this.open) {
+      this.previouslyFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      setTimeout(() => this.focusInitialElement());
+    } else {
+      this.restoreFocus();
+    }
+  }
 
   get preset(): ModalPreset | null {
     return this.variant === 'custom' ? null : MODAL_PRESETS[this.variant];
@@ -276,5 +299,72 @@ export class ModalComponent {
   handleCancel(): void {
     this.canceled.emit();
     this.closed.emit();
+    this.restoreFocus();
+  }
+
+  onDialogKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      this.handleCancel();
+      return;
+    }
+
+    if (event.key === 'Tab') {
+      this.trapFocus(event);
+    }
+  }
+
+  private focusInitialElement(): void {
+    const dialog = this.dialog?.nativeElement;
+    if (!dialog) {
+      return;
+    }
+
+    const focusable = this.getFocusableElements(dialog);
+    (focusable[0] ?? dialog).focus();
+  }
+
+  private trapFocus(event: KeyboardEvent): void {
+    const dialog = this.dialog?.nativeElement;
+    if (!dialog) {
+      return;
+    }
+
+    const focusable = this.getFocusableElements(dialog);
+    if (focusable.length === 0) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  private getFocusableElements(root: HTMLElement): HTMLElement[] {
+    const selector = [
+      'a[href]',
+      'button:not([disabled])',
+      'textarea:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])'
+    ].join(',');
+
+    return Array.from(root.querySelectorAll<HTMLElement>(selector)).filter((element) => !element.hasAttribute('disabled'));
+  }
+
+  private restoreFocus(): void {
+    this.previouslyFocusedElement?.focus();
+    this.previouslyFocusedElement = null;
   }
 }

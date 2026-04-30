@@ -22,10 +22,13 @@ Aplicación web para la gestión de procesos financieros y contables del Estado 
 ## Instalación y desarrollo
 
 ```bash
+nvm use
 npm install
 npm start          # http://localhost:4200
 npm run build      # Build de producción
 ```
+
+> El proyecto fija Node.js en `.nvmrc` para mantener builds reproducibles con Angular/esbuild.
 
 ---
 

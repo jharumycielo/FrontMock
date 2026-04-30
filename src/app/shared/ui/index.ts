@@ -6,7 +6,8 @@
 
 export { ButtonComponent } from './button/button.component';
 export { InputComponent } from './input/input.component';
-export { SelectComponent } from './select-options/select-options.component';
+export { SelectOptionsComponent, SelectOptionsComponent as SelectComponent } from './select-options/select-options.component';
+export type { SelectOption } from './select-options/select-options.component';
 export { CheckboxComponent } from './checkbox/checkbox.component';
 export { RadioComponent } from './radio/radio.component';
 export { CardComponent } from './card/card.component';
@@ -28,4 +29,4 @@ export { TreeViewComponent } from './tree-view/tree-view.component';
 export { UploaderComponent } from './uploader/uploader.component';
 export { ListComponent } from './list/list.component';
 export { ReadonlyComponent } from './readonly/readonly.component';
-export { TextField Component } from './text-field/text-field.component';
+export { TextFieldComponent } from './text-field/text-field.component';

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { IconComponent } from '../icon/icon.component';
 import { SelectOption, SelectOptionsComponent } from '../select-options/select-options.component';
@@ -15,6 +16,13 @@ type TextFieldState = 'enabled' | 'error' | 'success';
   selector: 'siaf-text-field',
   standalone: true,
   imports: [IconComponent, SelectOptionsComponent],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => TextFieldComponent),
+      multi: true
+    }
+  ],
   template: `
     <label class="grid gap-1.5">
       <span class="relative block w-full">
@@ -33,8 +41,10 @@ type TextFieldState = 'enabled' | 'error' | 'success';
             type="button"
             [disabled]="disabled"
             [attr.aria-expanded]="selectOpen"
+            [attr.aria-label]="labelText"
             aria-haspopup="listbox"
             (click)="toggleSelect()"
+            (keydown.escape)="closeSelect()"
           >
             <span class="min-w-0 flex-1 truncate" [class.text-[var(--sys-color-text-neutral-low)]]="!hasValue">
               {{ selectDisplayText }}
@@ -63,7 +73,7 @@ type TextFieldState = 'enabled' | 'error' | 'success';
             [disabled]="disabled"
             [value]="internalValue"
             (focus)="focused = true"
-            (blur)="focused = false"
+            (blur)="onBlur()"
             (input)="onInput($event)"
           />
         }
@@ -80,7 +90,7 @@ type TextFieldState = 'enabled' | 'error' | 'success';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TextFieldComponent implements OnChanges {
+export class TextFieldComponent implements OnChanges, ControlValueAccessor {
   @Input() label = '';
   @Input() placeholder = '';
   @Input() hint = '';
@@ -96,6 +106,11 @@ export class TextFieldComponent implements OnChanges {
   focused = false;
   selectOpen = false;
   internalValue: string | number | string[] = '';
+
+  private onChange: (value: string | number | string[]) => void = () => undefined;
+  private onTouched: () => void = () => undefined;
+
+  constructor(private readonly cdr: ChangeDetectorRef) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['value']) {
@@ -227,7 +242,7 @@ export class TextFieldComponent implements OnChanges {
   onInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.internalValue = value;
-    this.valueChange.emit(value);
+    this.emitValue(value);
   }
 
   toggleSelect(): void {
@@ -242,6 +257,7 @@ export class TextFieldComponent implements OnChanges {
   closeSelect(): void {
     this.selectOpen = false;
     this.focused = false;
+    this.onTouched();
   }
 
   onOptionSelected(value: string): void {
@@ -255,12 +271,40 @@ export class TextFieldComponent implements OnChanges {
 
       const nextValue = Array.from(currentValues);
       this.internalValue = nextValue;
-      this.valueChange.emit(nextValue);
+      this.emitValue(nextValue);
       return;
     }
 
     this.internalValue = value;
-    this.valueChange.emit(value);
+    this.emitValue(value);
     this.closeSelect();
+  }
+
+  writeValue(value: string | number | string[] | null): void {
+    this.internalValue = value ?? '';
+    this.cdr.markForCheck();
+  }
+
+  registerOnChange(fn: (value: string | number | string[]) => void): void {
+    this.onChange = fn;
+  }
+
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+    this.cdr.markForCheck();
+  }
+
+  onBlur(): void {
+    this.focused = false;
+    this.onTouched();
+  }
+
+  private emitValue(value: string | number | string[]): void {
+    this.valueChange.emit(value);
+    this.onChange(value);
   }
 }

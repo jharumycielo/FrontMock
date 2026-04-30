@@ -1,19 +1,30 @@
 import { Routes } from '@angular/router';
 
-import { AdjustmentSeatDocumentsComponent } from './features/adjustment-seat-documents/adjustment-seat-documents.component';
-import { AdjustmentSeatFormComponent } from './features/adjustment-seat-form/adjustment-seat-form.component';
-import { AdjustmentSeatRequestComponent } from './features/adjustment-seat-request/adjustment-seat-request.component';
-import { LoginComponent } from './features/login/login.component';
-import { OtpVerificationComponent } from './features/otp-verification/otp-verification.component';
-import { VirtualDeskComponent } from './features/virtual-desk/virtual-desk.component';
-
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'login/recuperar-contrasena', component: OtpVerificationComponent },
-  { path: 'panel', component: VirtualDeskComponent },
-  { path: 'procesos/registro-asiento-ajuste', component: AdjustmentSeatDocumentsComponent },
-  { path: 'procesos/registro-asiento-ajuste/solicitud', component: AdjustmentSeatRequestComponent },
-  { path: 'procesos/registro-asiento-ajuste/formulario', component: AdjustmentSeatFormComponent },
+  {
+    path: 'login',
+    loadComponent: () => import('./features/login/login.component').then((m) => m.LoginComponent)
+  },
+  {
+    path: 'login/recuperar-contrasena',
+    loadComponent: () => import('./features/otp-verification/otp-verification.component').then((m) => m.OtpVerificationComponent)
+  },
+  {
+    path: 'panel',
+    loadComponent: () => import('./features/virtual-desk/virtual-desk.component').then((m) => m.VirtualDeskComponent)
+  },
+  {
+    path: 'procesos/registro-asiento-ajuste',
+    loadComponent: () => import('./features/adjustment-seat-documents/adjustment-seat-documents.component').then((m) => m.AdjustmentSeatDocumentsComponent)
+  },
+  {
+    path: 'procesos/registro-asiento-ajuste/solicitud',
+    loadComponent: () => import('./features/adjustment-seat-request/adjustment-seat-request.component').then((m) => m.AdjustmentSeatRequestComponent)
+  },
+  {
+    path: 'procesos/registro-asiento-ajuste/formulario',
+    loadComponent: () => import('./features/adjustment-seat-form/adjustment-seat-form.component').then((m) => m.AdjustmentSeatFormComponent)
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' }
 ];
