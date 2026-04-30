@@ -9,7 +9,7 @@ import { DateTimePickerComponent } from '../../shared/ui/date-time-picker/date-t
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation-menu/mobile-navigation-menu.component';
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
-import { ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
+import { findProcessPathById, ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
 import { SolicitudeHeaderComponent } from '../../shared/ui/solicitude-header/solicitude-header.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
@@ -21,6 +21,22 @@ type ReadonlyField = {
   label: string;
   value: string;
 };
+
+const ADJUSTMENT_SEAT_PROCESS_ID = 'registro-asiento-ajuste';
+const ADJUSTMENT_SEAT_PROCESS_ROUTE = '/procesos/registro-asiento-ajuste';
+
+const getAdjustmentSeatPathHref = (nodeId: string): string => {
+  if (nodeId === ADJUSTMENT_SEAT_PROCESS_ID) {
+    return ADJUSTMENT_SEAT_PROCESS_ROUTE;
+  }
+
+  return '/panel';
+};
+
+const buildAdjustmentSeatBreadcrumbs = (currentLabel: string): BreadcrumbItem[] => [
+  ...findProcessPathById(ADJUSTMENT_SEAT_PROCESS_ID).map((node) => ({ label: node.label, href: getAdjustmentSeatPathHref(node.id) })),
+  { label: currentLabel }
+];
 
 type PeriodoRow = {
   periodo: string;
@@ -1121,9 +1137,7 @@ export class AdjustmentSeatRequestComponent {
 
   readonly breadcrumbs: BreadcrumbItem[] = [
     { label: 'Inicio', href: '/panel' },
-    { label: 'Nivel 0', href: '#' },
-    { label: 'Nivel 1', href: '#' },
-    { label: 'Nivel 2' }
+    ...buildAdjustmentSeatBreadcrumbs('Solicitud de registro de asiento de ajuste')
   ];
 
   readonly entityFields: ReadonlyField[] = [

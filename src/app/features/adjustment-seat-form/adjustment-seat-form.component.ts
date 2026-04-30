@@ -7,7 +7,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation-menu/mobile-navigation-menu.component';
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
-import { ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
+import { findProcessPathById, ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
 import { SolicitudeHeaderComponent } from '../../shared/ui/solicitude-header/solicitude-header.component';
 import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
@@ -17,6 +17,25 @@ type ReadonlyField = {
   label: string;
   value: string;
 };
+
+const ADJUSTMENT_SEAT_PROCESS_ID = 'registro-asiento-ajuste';
+const ADJUSTMENT_SEAT_PROCESS_ROUTE = '/procesos/registro-asiento-ajuste';
+const ADJUSTMENT_SEAT_REQUEST_ROUTE = '/procesos/registro-asiento-ajuste/solicitud';
+const ADJUSTMENT_SEAT_REQUEST_LABEL = 'Solicitud de registro de asiento de ajuste';
+
+const getAdjustmentSeatPathHref = (nodeId: string): string => {
+  if (nodeId === ADJUSTMENT_SEAT_PROCESS_ID) {
+    return ADJUSTMENT_SEAT_PROCESS_ROUTE;
+  }
+
+  return '/panel';
+};
+
+const buildAdjustmentSeatBreadcrumbs = (currentLabel: string): BreadcrumbItem[] => [
+  ...findProcessPathById(ADJUSTMENT_SEAT_PROCESS_ID).map((node) => ({ label: node.label, href: getAdjustmentSeatPathHref(node.id) })),
+  { label: ADJUSTMENT_SEAT_REQUEST_LABEL, href: ADJUSTMENT_SEAT_REQUEST_ROUTE },
+  { label: currentLabel }
+];
 
 type AccountingRow = {
   code: string;
@@ -335,9 +354,8 @@ export class AdjustmentSeatFormComponent {
   constructor(private readonly router: Router) {}
 
   readonly breadcrumbs: BreadcrumbItem[] = [
-    { label: 'Inicio', href: '#' },
-    { label: 'Proceso de registro', href: '#' },
-    { label: 'Asiento de ajuste' }
+    { label: 'Inicio', href: '/panel' },
+    ...buildAdjustmentSeatBreadcrumbs('Formulario de asiento de ajuste')
   ];
 
   readonly entityFields: ReadonlyField[] = [

@@ -25,27 +25,64 @@ export const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
         id: 'catalogos-clasificadores',
         label: 'Cat\u00e1logos y clasificadores',
         children: [
-          { id: 'catalogos-plan-contable', label: 'Plan contable' },
-          { id: 'catalogos-clasificador-ingresos', label: 'Clasificador de ingresos' },
-          { id: 'catalogos-clasificador-gastos', label: 'Clasificador de gastos' }
+          {
+            id: 'catalogos',
+            label: 'Cat\u00e1logos',
+            children: [
+              {
+                id: 'catalogo-tipo-asiento-ajuste',
+                label: 'Cat\u00e1logo de tipo de asiento de ajuste',
+                children: [
+                  { id: 'consulta-catalogo-tipo-asiento-ajuste', label: 'Cat\u00e1logo de tipo de asiento de ajuste' },
+                  {
+                    id: 'consultas-reportes-catalogo-tipo-asiento-ajuste',
+                    label: 'Consultas y reportes',
+                    children: [
+                      { id: 'reporte-catalogo-tipo-asiento-ajuste', label: 'Cat\u00e1logo de tipo de asiento de ajuste' }
+                    ]
+                  }
+                ]
+              },
+              { id: 'catalogo-eventos', label: 'Cat\u00e1logo de eventos' },
+              { id: 'catalogo-eventos-contables', label: 'Cat\u00e1logo de eventos contables' }
+            ]
+          },
+          {
+            id: 'clasificadores',
+            label: 'Clasificadores',
+            children: [
+              { id: 'plan-cuentas-contables', label: 'Plan de cuentas contables' }
+            ]
+          }
         ]
       },
       {
         id: 'integracion-siaf-rp-sp',
         label: 'Integraci\u00f3n SIAF RP - SIAF SP',
         children: [
-          { id: 'integracion-parametros', label: 'Par\u00e1metros de integraci\u00f3n' },
-          { id: 'integracion-validacion', label: 'Validaci\u00f3n de informaci\u00f3n' },
-          { id: 'integracion-consultas', label: 'Consultas de integraci\u00f3n' }
+          { id: 'configuracion-integracion-operaciones-rp-sp', label: 'Configuraci\u00f3n de integraci\u00f3n de operaciones rp / sp' },
+          { id: 'proceso-ejecucion-job-integracion', label: 'Proceso de ejecuci\u00f3n de job (manual y autom\u00e1tico)' },
+          {
+            id: 'consultas-reportes-integracion',
+            label: 'Consultas y reportes',
+            children: [
+              { id: 'reporte-proceso-ejecucion-job-integracion', label: 'Proceso de ejecuci\u00f3n de job (manual y autom\u00e1tico)' }
+            ]
+          }
         ]
       },
       {
         id: 'contabilizacion-automatica',
         label: 'Contabilizaci\u00f3n autom\u00e1tica',
         children: [
-          { id: 'contabilizacion-reglas', label: 'Reglas de contabilizaci\u00f3n' },
-          { id: 'contabilizacion-proceso', label: 'Proceso de contabilizaci\u00f3n autom\u00e1tica' },
-          { id: 'contabilizacion-reportes', label: 'Reportes de contabilizaci\u00f3n autom\u00e1tica' }
+          {
+            id: 'proceso-pedidos-contabilizacion',
+            label: 'Proceso de pedidos de contabilizaci\u00f3n',
+            children: [
+              { id: 'consulta-pedidos-contabilizacion', label: 'Consulta de pedidos de contabilizaci\u00f3n' },
+              { id: 'reprocesamiento-registros-error', label: 'Reprocesamiento de registros con error' }
+            ]
+          }
         ]
       },
       {
@@ -60,7 +97,6 @@ export const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
       {
         id: 'asientos-ajustes',
         label: 'Asientos de ajustes',
-        expanded: true,
         children: [
           {
             id: 'registro-asiento-ajuste',
@@ -76,6 +112,22 @@ export const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
     ]
   }
 ];
+
+export function findProcessPathById(id: string, nodes: readonly ProcessMenuNode[] = DEFAULT_PROCESS_TREE): ProcessMenuNode[] {
+  for (const node of nodes) {
+    if (node.id === id) {
+      return [node];
+    }
+
+    const childPath = findProcessPathById(id, node.children || []);
+
+    if (childPath.length > 0) {
+      return [node, ...childPath];
+    }
+  }
+
+  return [];
+}
 
 @Component({
   selector: 'siaf-process-menu-tree',
@@ -255,7 +307,7 @@ export class ProcessMenuTreeComponent implements OnChanges, OnInit {
         this.parentById.set(node.id, parentId);
       }
 
-      if (node.expanded) {
+      if (node.expanded && !parentId) {
         this.expandedIds.add(node.id);
       }
 

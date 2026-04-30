@@ -1,3 +1,4 @@
+import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../components/custom-filter/custom-filter.component';
@@ -8,12 +9,15 @@ type TrayDocumentRow = {
   document: string;
   number: string;
   actionType: string;
-  status: 'Elaborado' | 'Verificado';
+  status: TrayDocumentStatus;
   system: string;
   date: string;
   institutionalScope: string;
   entity: string;
 };
+
+type TrayDocumentStatus = 'Elaborado' | 'Verificado' | 'Eliminado' | 'Aprobado' | 'Observado' | 'Rechazado';
+type TrayTitle = 'Recibidos' | 'Enviados' | 'Borradores' | 'Papelera' | string;
 
 type AppliedCustomFilter = {
   id: string;
@@ -26,7 +30,7 @@ type AppliedCustomFilter = {
 @Component({
   selector: 'siaf-tray-documents-view',
   standalone: true,
-  imports: [CustomFilterComponent, IconComponent, PaginationComponent],
+  imports: [CustomFilterComponent, IconComponent, NgClass, PaginationComponent],
   template: `
     <section class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest,rgba(32,32,32,0.04))]">
       <section class="bg-surface">
@@ -230,7 +234,7 @@ type AppliedCustomFilter = {
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.number }}</td>
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.actionType }}</td>
                       <td class="px-siaf-md py-siaf-sm">
-                        <span class="inline-flex min-h-6 items-center rounded-siaf-sm bg-[var(--sys-color-bg-feedback-dark-default,#353537)] px-siaf-xs text-xs text-white">
+                        <span class="inline-flex min-h-6 items-center rounded-siaf-sm px-siaf-xs text-xs text-white" [ngClass]="statusClass(row.status)">
                           {{ row.status }}
                         </span>
                       </td>
@@ -326,9 +330,13 @@ export class TrayDocumentsViewComponent {
   readonly filterValorOptions = [
     { label: 'Elaborado', value: 'Elaborado' },
     { label: 'Verificado', value: 'Verificado' },
+    { label: 'Eliminado', value: 'Eliminado' },
+    { label: 'Aprobado', value: 'Aprobado' },
+    { label: 'Observado', value: 'Observado' },
+    { label: 'Rechazado', value: 'Rechazado' },
     { label: 'Creacion', value: 'Creacion' },
     { label: 'Solicitud de notificacion', value: 'Solicitud de notificacion' },
-    { label: 'Sistema Nacional de Tesoreria', value: 'Sistema Nacional de Tesoreria' },
+    { label: 'Sistema Nacional de Contabilidad', value: 'Sistema Nacional de Contabilidad' },
     { label: '1. Institucional', value: '1. Institucional' }
   ];
 
@@ -341,27 +349,62 @@ export class TrayDocumentsViewComponent {
     { label: 'Entidad' }
   ];
 
-  readonly statusFilterOptions: TrayDocumentRow['status'][] = ['Elaborado', 'Verificado'];
+  readonly statusFilterOptions: TrayDocumentStatus[] = ['Elaborado', 'Verificado', 'Eliminado', 'Aprobado', 'Observado', 'Rechazado'];
   readonly actionTypeFilterOptions = ['Creacion'];
 
   readonly rows: TrayDocumentRow[] = [
-    { document: 'Solicitud de notificacion', number: '0001', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Tesoreria', date: '29/09/2025', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
-    { document: 'Solicitud de registro de bonos', number: '0006', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Tesoreria', date: '24/09/2025', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
-    { document: 'Solicitud de registro de estructura', number: '0005', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Tesoreria', date: '31/08/2025', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
-    { document: 'Solicitud de registro de prestamo', number: '0004', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Tesoreria', date: '15/06/2024', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
-    { document: 'Solicitud de creacion de colocacion', number: '0003', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Tesoreria', date: '20/01/2024', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
-    { document: 'Solicitud de mes base', number: '0002', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Tesoreria', date: '15/12/2023', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
-    { document: 'Solicitud de anio base', number: '0001', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Tesoreria', date: '20/11/2023', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' }
+    { document: 'Solicitud de notificacion', number: '0001', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '29/09/2025', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
+    { document: 'Solicitud de registro de bonos', number: '0006', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '24/09/2025', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
+    { document: 'Solicitud de registro de estructura', number: '0005', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '31/08/2025', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
+    { document: 'Solicitud de registro de prestamo', number: '0004', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '15/06/2024', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
+    { document: 'Solicitud de creacion de colocacion', number: '0003', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '20/01/2024', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
+    { document: 'Solicitud de mes base', number: '0002', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '15/12/2023', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' },
+    { document: 'Solicitud de anio base', number: '0001', actionType: 'Creacion', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '20/11/2023', institutionalScope: '1. Institucional', entity: '009 - Ministerio de Economia y Finanzas' }
   ];
 
   get filteredRows(): TrayDocumentRow[] {
-    return this.rows.filter((row) => {
+    return this.rowsForCurrentTray.filter((row) => {
       const matchesStatus = !this.selectedStatusFilter || row.status === this.selectedStatusFilter;
       const matchesActionType = !this.selectedActionTypeFilter || row.actionType === this.selectedActionTypeFilter;
       const matchesCustomFilters = this.appliedCustomFilters.every((filter) => this.matchesCustomFilter(row, filter));
 
       return matchesStatus && matchesActionType && matchesCustomFilters;
     });
+  }
+
+  get rowsForCurrentTray(): TrayDocumentRow[] {
+    return this.rows.map((row, index) => ({
+      ...row,
+      status: this.statusForTray(this.title, index)
+    }));
+  }
+
+  statusForTray(title: TrayTitle, rowIndex = 0): TrayDocumentStatus {
+    if (title === 'Recibidos') {
+      const receivedStatuses: TrayDocumentStatus[] = ['Aprobado', 'Observado', 'Rechazado'];
+      return receivedStatuses[rowIndex % receivedStatuses.length];
+    }
+
+    const statuses: Record<string, TrayDocumentStatus> = {
+      Enviados: 'Verificado',
+      Borradores: 'Elaborado',
+      Papelera: 'Eliminado'
+    };
+
+    return statuses[title] || 'Elaborado';
+  }
+
+  statusClass(status: TrayDocumentStatus): string {
+    const classes: Record<TrayDocumentStatus, string> = {
+      Elaborado: 'bg-[var(--sys-color-bg-status-flow-status-elaborado,var(--sys-color-bg-feedback-dark-default,#353537))]',
+      Verificado: 'bg-[var(--sys-color-bg-status-flow-status-verificado,var(--sys-color-bg-feedback-dark-default,#353537))]',
+      Eliminado: 'bg-[var(--sys-color-bg-feedback-dark-danger,#d92d20)]',
+      Aprobado: 'bg-[var(--sys-color-bg-feedback-dark-success,#20635e)]',
+      Observado: 'bg-[var(--sys-color-bg-feedback-dark-warning,#8a6b23)]',
+      Rechazado: 'bg-[var(--sys-color-bg-feedback-dark-danger,#d92d20)]'
+    };
+
+    return classes[status];
   }
 
   toggleFieldsMenu(): void {

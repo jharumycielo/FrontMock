@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { ButtonComponent } from '../button/button.component';
 import { IconComponent } from '../icon/icon.component';
@@ -174,6 +174,8 @@ export class CreateDocumentComponent {
   @Output() fieldSelected = new EventEmitter<string>();
   @Output() fieldValueChange = new EventEmitter<CreateDocumentSelection>();
 
+  constructor(private readonly cdr: ChangeDetectorRef) {}
+
   get resolvedFields(): CreateDocumentField[] {
     if (this.fields.length > 0) {
       return this.fields;
@@ -261,6 +263,7 @@ export class CreateDocumentComponent {
   closeSelect(): void {
     this.openedSelectField = '';
     this.focusedField = '';
+    this.cdr.markForCheck();
   }
 
   onOptionSelected(field: CreateDocumentField, value: string): void {
@@ -285,7 +288,7 @@ export class CreateDocumentComponent {
 
   onSearchBlur(): void {
     this.focusedField = '';
-    setTimeout(() => this.closeProcessResults(), 120);
+    this.closeProcessResults();
   }
 
   onSearchInput(field: CreateDocumentField, event: Event): void {
@@ -297,6 +300,7 @@ export class CreateDocumentComponent {
       this.internalValues.delete('Documento');
       this.internalValues.delete('Tipo de acci\u00f3n');
       this.processResultsOpen = true;
+      this.cdr.markForCheck();
     }
 
     this.fieldValueChange.emit({
@@ -312,6 +316,7 @@ export class CreateDocumentComponent {
     this.internalValues.delete('Tipo de acci\u00f3n');
     this.processResultsOpen = false;
     this.focusedField = '';
+    this.cdr.markForCheck();
 
     this.fieldValueChange.emit({
       placeholder: 'Buscar proceso o procedimiento',
@@ -331,6 +336,7 @@ export class CreateDocumentComponent {
 
   closeProcessResults(): void {
     this.processResultsOpen = false;
+    this.cdr.markForCheck();
   }
 
   showProcessResults(field: CreateDocumentField): boolean {

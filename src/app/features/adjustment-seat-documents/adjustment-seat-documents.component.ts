@@ -11,7 +11,7 @@ import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
-import { ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
+import { findProcessPathById, ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
 import { SnackbarComponent } from '../../shared/ui/snackbar/snackbar.component';
 import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
@@ -29,6 +29,22 @@ type DocumentRow = {
   date: string;
   entity: string;
 };
+
+const ADJUSTMENT_SEAT_PROCESS_ID = 'registro-asiento-ajuste';
+const ADJUSTMENT_SEAT_PROCESS_ROUTE = '/procesos/registro-asiento-ajuste';
+
+const getAdjustmentSeatPathHref = (nodeId: string): string => {
+  if (nodeId === ADJUSTMENT_SEAT_PROCESS_ID) {
+    return ADJUSTMENT_SEAT_PROCESS_ROUTE;
+  }
+
+  return '/panel';
+};
+
+const buildAdjustmentSeatBreadcrumbs = (currentLabel: string): BreadcrumbItem[] => [
+  ...findProcessPathById(ADJUSTMENT_SEAT_PROCESS_ID).map((node) => ({ label: node.label, href: getAdjustmentSeatPathHref(node.id) })),
+  { label: currentLabel }
+];
 
 type RecordRow = {
   selected?: boolean;
@@ -590,9 +606,7 @@ export class AdjustmentSeatDocumentsComponent {
 
   readonly breadcrumbs: BreadcrumbItem[] = [
     { label: 'Inicio', href: '/panel' },
-    { label: 'Apertura contable', href: '#' },
-    { label: 'Proceso de registro de asiento de ajuste', href: '#' },
-    { label: 'Documentos y registros' }
+    ...buildAdjustmentSeatBreadcrumbs('Documentos y registros')
   ];
 
   readonly rows: DocumentRow[] = [
