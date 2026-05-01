@@ -9,6 +9,8 @@ Aplicación web para la gestión de procesos financieros y contables del Estado 
 - Se estandarizó la cabecera de solicitudes con `role` + `state` para reutilizarla por rol y estado del documento.
 - Se agregó `siaf-flow-status-tag` para mostrar estados oficiales del documento con colores del UI Kit mediante tokens CSS.
 - Se documentó una plantilla de prompts para construir pantallas y flujos como piezas reutilizables.
+- Se hizo transversal `siaf-create-document`: cada proceso puede inyectar documentos, tipos de acción y ruta destino mediante configuración.
+- Se agregó una plantilla para crear pantallas de `Documentos y registros` por proceso, incluyendo documentos, acciones y filas de ejemplo.
 - Se limpió `src/app` para evitar colores hexadecimales directos en clases o estilos de componentes.
 - Se reforzó la regla de usar tokens semánticos antes de agregar nuevos valores visuales.
 
@@ -51,6 +53,10 @@ npm run build      # Build de producción
 ```
 src/
 ├── app/
+│   ├── core/
+│   │   ├── auth/          # Roles, permisos y guards
+│   │   ├── config/
+│   │   └── models/
 │   ├── features/          # Páginas y flujos de la aplicación
 │   ├── shared/
 │   │   ├── ui/            # Librería de componentes base (~45 componentes)
@@ -78,6 +84,7 @@ docs/
 /procesos/registro-asiento-ajuste              → Documentos y registros
 /procesos/registro-asiento-ajuste/solicitud    → Solicitud de asiento de ajuste
 /procesos/registro-asiento-ajuste/formulario   → Formulario de asiento de ajuste
+/procesos/plan-cuentas-contables               → Documentos y registros de Plan de Cuentas Contables
 ```
 
 ---
@@ -103,6 +110,13 @@ Gestión completa de asientos de ajuste contable con dos tabs:
 - **Registros** — Tabla con columnas: Estado, Doc. contable, Ámbito institucional, Código clase ajuste, Código detalle ajuste, Total débito, Total crédito.
 
 Funcionalidades: búsqueda, filtros predefinidos, filtros personalizados dinámicos, paginación configurable (10/25/50/100), selección múltiple, modal de confirmación y snackbar de resultado.
+
+### `/procesos/plan-cuentas-contables` — Documentos y registros
+Pantalla del clasificador **Plan de Cuentas Contables** con la misma estructura transversal de documentos y registros.
+
+- **Documentos** — Grilla con `Solicitud de Cuentas Contables` y `Solicitud de carga masiva de plan de cuentas contables`.
+- **Crear documento** — La acción depende del documento: `Solicitud de Cuentas Contables` permite `Creación` y `Modificación`; la carga masiva permite solo `Creación`.
+- **Registros** — Tabla con código de cuenta, nombre de cuenta, nivel y naturaleza.
 
 ---
 
@@ -161,7 +175,7 @@ Todos los componentes usan el selector prefix `siaf-` y `ChangeDetectionStrategy
 
 | Componente | Selector | Descripción |
 |---|---|---|
-| CreateDocumentComponent | `siaf-create-document` | Panel/dropdown para crear documentos con campos configurables. |
+| CreateDocumentComponent | `siaf-create-document` | Panel/dropdown transversal para crear documentos. Recibe `processOptions` con proceso, documentos, tipos de acción y ruta destino. |
 | DocumentHistoryPanelComponent | `siaf-document-history-panel` | Panel lateral con historial de cambios de un documento. |
 | AnnulmentModalComponent | `siaf-annulment-modal` | Modal especializado para anulación de documentos. |
 | ProcessMenuTreeComponent | `siaf-process-menu-tree` | Árbol de navegación de procesos del sistema. |
@@ -244,7 +258,45 @@ Campos solo lectura:
 Acción al guardar / aprobar / observar / rechazar:
 ```
 
+Para pantallas de `Documentos y registros`, incluir además: proceso, id, ruta del proceso, ruta de creación, documentos permitidos, tipos de acción y filas de ejemplo para la grilla.
+
 La guía completa está en `docs/plantilla-prompts-pantallas-siaf.md`.
+
+---
+
+## Roles y permisos
+
+La arquitectura se organiza por proceso o dominio, no por carpetas de rol. Los roles se aplican mediante permisos, guards y configuracion de componentes.
+
+Base disponible:
+
+| Archivo | Responsabilidad |
+|---|---|
+| `src/app/core/auth/role.model.ts` | Define roles, permisos y matriz de permisos por rol. |
+| `src/app/core/auth/permission.service.ts` | Expone el rol actual y helpers `hasRole`, `can`, `canAny`. |
+| `src/app/core/auth/role.guard.ts` | Restringe rutas por `data.roles` y `data.permissions`. |
+
+Ejemplo de ruta protegida:
+
+```typescript
+{
+  path: 'procesos/registro-asiento-ajuste/solicitud',
+  canActivate: [roleGuard],
+  data: {
+    roles: ['creator', 'approver'],
+    permissions: ['document.read']
+  },
+  loadComponent: () => import('./features/adjustment-seat-request/adjustment-seat-request.component').then((m) => m.AdjustmentSeatRequestComponent)
+}
+```
+
+Reglas:
+
+- Mantener las carpetas por proceso: `features/adjustment-seat`, `features/accounting-opening`, etc.
+- No crear carpetas principales por rol como `features/creator` o `features/approver`.
+- Usar rutas separadas solo cuando la experiencia sea realmente distinta.
+- Usar permisos para mostrar u ocultar botones, acciones, tabs, campos y secciones.
+- Usar `role` + `state` en componentes compartidos para variantes visuales por rol.
 
 ---
 

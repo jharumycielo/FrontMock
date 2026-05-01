@@ -491,6 +491,12 @@ export class AdjustmentSeatFormComponent {
       return;
     }
 
+    if (node.id === 'plan-cuentas-contables') {
+      this.closeFloatingPanels();
+      void this.router.navigate(['/procesos/plan-cuentas-contables']);
+      return;
+    }
+
     if (!node.children?.length) {
       this.activeNavigation = 'Proceso';
     }

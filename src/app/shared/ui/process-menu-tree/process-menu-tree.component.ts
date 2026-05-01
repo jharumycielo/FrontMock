@@ -12,6 +12,11 @@ export interface ProcessMenuNode {
   // Si un nodo tiene estas propiedades, Crear documento puede completar documento/tipo y navegar.
   createRoute?: string;
   documentOptions?: string[];
+  documentCreateOptions?: Array<{
+    label: string;
+    route?: string;
+    actionTypes?: string[];
+  }>;
   actionTypeOptions?: string[];
   children?: ProcessMenuNode[];
 }
@@ -54,7 +59,25 @@ export const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
             id: 'clasificadores',
             label: 'Clasificadores',
             children: [
-              { id: 'plan-cuentas-contables', label: 'Plan de cuentas contables' }
+              {
+                id: 'plan-cuentas-contables',
+                label: 'Plan de Cuentas Contables',
+                createRoute: '/procesos/plan-cuentas-contables/solicitud',
+                documentOptions: ['Solicitud de Cuentas Contables', 'Solicitud de carga masiva de plan de cuentas contables'],
+                documentCreateOptions: [
+                  {
+                    label: 'Solicitud de Cuentas Contables',
+                    route: '/procesos/plan-cuentas-contables/solicitud',
+                    actionTypes: ['Creación', 'Modificación']
+                  },
+                  {
+                    label: 'Solicitud de carga masiva de plan de cuentas contables',
+                    route: '/procesos/plan-cuentas-contables/carga-masiva/solicitud',
+                    actionTypes: ['Creación']
+                  }
+                ],
+                actionTypeOptions: ['Creación', 'Modificación']
+              }
             ]
           }
         ]

@@ -6,14 +6,14 @@ import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { CreateDocumentComponent } from '../../shared/ui/create-document/create-document.component';
 import { DateTimePickerComponent } from '../../shared/ui/date-time-picker/date-time-picker.component';
-import { FlowStatusTagComponent } from '../../shared/ui/flow-status-tag/flow-status-tag.component';
+import { FlowStatus, FlowStatusTagComponent } from '../../shared/ui/flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation-menu/mobile-navigation-menu.component';
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
 import { findProcessPathById, ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
 import { SolicitudeHeaderComponent, SolicitudeHeaderState } from '../../shared/ui/solicitude-header/solicitude-header.component';
-import { SnackbarComponent } from '../../shared/ui/snackbar/snackbar.component';
+import { SnackbarComponent, SnackbarVariant } from '../../shared/ui/snackbar/snackbar.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { UploaderComponent } from '../../shared/ui/uploader/uploader.component';
 import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
@@ -166,6 +166,8 @@ type PeriodoGroup = {
             (canceled)="goToDocuments()"
             (saved)="openSaveModal()"
             (edited)="enableEditing()"
+            (verified)="openVerifyModal()"
+            (deleted)="openDeleteModal()"
           />
         </section>
 
@@ -191,7 +193,7 @@ type PeriodoGroup = {
                   </div>
                   <div class="grid min-h-6 gap-siaf-xs sm:grid-cols-[140px_1fr]">
                     <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Estado</span>
-                    <siaf-flow-status-tag status="Elaborado" size="standard" />
+                    <siaf-flow-status-tag [status]="documentStatus" size="standard" />
                   </div>
                 </div>
               </article>
@@ -232,9 +234,7 @@ type PeriodoGroup = {
                   <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                     <h3 class="m-0 text-sm font-bold uppercase text-text">Periodo</h3>
                     @if (!isReadOnly) {
-                      <button class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-white transition" type="button" aria-label="Cambiar periodo" (click)="openPeriodoPanel()">
-                        <siaf-icon name="search" [size]="24" />
-                      </button>
+                      <siaf-button variant="accent" size="md" icon="search" ariaLabel="Cambiar periodo" [iconOnly]="true" (click)="openPeriodoPanel()" />
                     }
                   </div>
                   <article class="relative rounded-siaf-md border border-border px-siaf-xl py-siaf-xs">
@@ -288,9 +288,7 @@ type PeriodoGroup = {
                   <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                     <h3 class="m-0 text-sm font-bold uppercase text-text">Código de clase de ajuste</h3>
                     @if (!isReadOnly) {
-                      <button class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-white transition" type="button" aria-label="Cambiar código de clase de ajuste" (click)="openClaseAjustePanel()">
-                        <siaf-icon name="search" [size]="24" />
-                      </button>
+                      <siaf-button variant="accent" size="md" icon="search" ariaLabel="Cambiar código de clase de ajuste" [iconOnly]="true" (click)="openClaseAjustePanel()" />
                     }
                   </div>
                   <article class="relative rounded-siaf-md border border-border px-siaf-xl py-siaf-xs">
@@ -321,19 +319,15 @@ type PeriodoGroup = {
                 <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                   <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar codigo de detalle de ajuste</h3>
                   @if (!isReadOnly) {
-                    <button
-                      class="inline-flex size-10 items-center justify-center rounded-siaf-md text-white transition"
-                      [class.bg-[var(--sys-color-bg-brand-accent)]]="selectedClaseAjuste()"
-                      [class.hover:brightness-90]="selectedClaseAjuste()"
-                      [class.bg-[rgba(32,32,32,0.12)]]="!selectedClaseAjuste()"
-                      [class.cursor-not-allowed]="!selectedClaseAjuste()"
-                      type="button"
-                      aria-label="Buscar codigo de detalle de ajuste"
+                    <siaf-button
+                      variant="accent"
+                      size="md"
+                      icon="search"
+                      ariaLabel="Buscar codigo de detalle de ajuste"
+                      [iconOnly]="true"
                       [disabled]="!selectedClaseAjuste()"
                       (click)="openDetalleAjustePanel()"
-                    >
-                      <siaf-icon name="search" [size]="24" />
-                    </button>
+                    />
                   }
                 </div>
 
@@ -899,14 +893,41 @@ type PeriodoGroup = {
         confirmVariant="primary"
         confirmLabel="Aceptar"
         cancelLabel="Cancelar"
+        [showIllustration]="true"
         (canceled)="saveModalOpen = false"
         (closed)="saveModalOpen = false"
         (confirmed)="onConfirmSave()"
       />
 
+      <!-- Modal confirmar verificacion de solicitud -->
+      <siaf-modal
+        variant="verify"
+        [open]="verifyModalOpen"
+        confirmVariant="primary"
+        confirmLabel="Aceptar"
+        cancelLabel="Cancelar"
+        [showIllustration]="true"
+        (canceled)="verifyModalOpen = false"
+        (closed)="verifyModalOpen = false"
+        (confirmed)="onConfirmVerify()"
+      />
+
+      <!-- Modal confirmar eliminacion de solicitud -->
+      <siaf-modal
+        variant="delete-request"
+        [open]="deleteModalOpen"
+        confirmVariant="primary"
+        confirmLabel="Aceptar"
+        cancelLabel="Cancelar"
+        [showIllustration]="true"
+        (canceled)="deleteModalOpen = false"
+        (closed)="deleteModalOpen = false"
+        (confirmed)="onConfirmDelete()"
+      />
+
       <div class="fixed bottom-siaf-lg left-1/2 z-50 w-[min(430px,calc(100vw-32px))] -translate-x-1/2">
         <siaf-snackbar
-          variant="creation-elaborated"
+          [variant]="snackbarVariant"
           [open]="saveSnackbarOpen"
           [requestNumber]="generatedDocumentNumber"
           (closed)="saveSnackbarOpen = false"
@@ -926,7 +947,10 @@ export class AdjustmentSeatRequestComponent {
   sidebarCreateDocumentOpen = false;
   isReadOnly = false;
   isElaborated = false;
+  isVerified = false;
+  isDeleted = false;
   saveSnackbarOpen = false;
+  snackbarVariant: SnackbarVariant = 'creation-elaborated';
   readonly generatedDocumentNumber = '0001';
 
   readonly periodoPanelOpen = signal(false);
@@ -950,6 +974,8 @@ export class AdjustmentSeatRequestComponent {
   readonly uploadPanelOpen = signal(false);
   readonly uploadedFile = signal<File | null>(null);
   saveModalOpen = false;
+  verifyModalOpen = false;
+  deleteModalOpen = false;
   readonly fechaContabilizacion = signal('');
   readonly glosa = signal('');
   readonly justificacion = signal('');
@@ -1091,13 +1117,50 @@ export class AdjustmentSeatRequestComponent {
   onConfirmSave(): void {
     this.saveModalOpen = false;
     this.isElaborated = true;
+    this.isVerified = false;
+    this.isDeleted = false;
     this.isReadOnly = true;
+    this.snackbarVariant = 'creation-elaborated';
+    this.saveSnackbarOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  openVerifyModal(): void {
+    this.verifyModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  onConfirmVerify(): void {
+    this.verifyModalOpen = false;
+    this.isElaborated = true;
+    this.isVerified = true;
+    this.isDeleted = false;
+    this.isReadOnly = true;
+    this.snackbarVariant = 'creation-verified';
+    this.saveSnackbarOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  openDeleteModal(): void {
+    this.deleteModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  onConfirmDelete(): void {
+    this.deleteModalOpen = false;
+    this.isElaborated = true;
+    this.isVerified = false;
+    this.isDeleted = true;
+    this.isReadOnly = true;
+    this.snackbarVariant = 'creation-deleted';
     this.saveSnackbarOpen = true;
     this.cdr.markForCheck();
   }
 
   enableEditing(): void {
     this.isReadOnly = false;
+    this.isVerified = false;
+    this.isDeleted = false;
     this.saveSnackbarOpen = false;
     this.cdr.markForCheck();
   }
@@ -1120,11 +1183,27 @@ export class AdjustmentSeatRequestComponent {
   }
 
   get solicitudeHeaderState(): SolicitudeHeaderState {
+    if (this.isDeleted) {
+      return 'deleted';
+    }
+
+    if (this.isVerified) {
+      return 'verified';
+    }
+
     if (this.isReadOnly) {
       return 'elaborated';
     }
 
     return this.isElaborated ? 'edit' : 'new';
+  }
+
+  get documentStatus(): FlowStatus {
+    if (this.isDeleted) {
+      return 'Eliminado';
+    }
+
+    return this.isVerified ? 'Verificado' : 'Elaborado';
   }
 
   get fechaContabilizacionDisplay(): string {
@@ -1330,6 +1409,12 @@ export class AdjustmentSeatRequestComponent {
       return;
     }
 
+    if (node.id === 'plan-cuentas-contables') {
+      this.closeFloatingPanels();
+      void this.router.navigate(['/procesos/plan-cuentas-contables']);
+      return;
+    }
+
     if (!node.children?.length) {
       this.activeNavigation = 'Proceso';
     }
@@ -1378,24 +1463,20 @@ export class MessageBoxComponent {
 @Component({
   selector: 'empty-section',
   standalone: true,
-  imports: [IconComponent, MessageBoxComponent],
+  imports: [ButtonComponent, MessageBoxComponent],
   template: `
     <section class="grid gap-siaf-md">
       <div class="flex min-h-10 items-center justify-between gap-siaf-md">
         <h3 class="m-0 text-sm font-bold uppercase text-text">{{ title }}</h3>
-        <button
-          class="inline-flex size-10 items-center justify-center rounded-siaf-md text-white transition"
-          [class.bg-[var(--sys-color-bg-brand-accent)]]="!disabled"
-          [class.hover:brightness-90]="!disabled"
-          [class.bg-[rgba(32,32,32,0.12)]]="disabled"
-          [class.cursor-not-allowed]="disabled"
-          type="button"
-          [attr.aria-label]="title"
+        <siaf-button
+          variant="accent"
+          size="md"
+          [icon]="actionIcon"
+          [ariaLabel]="title"
+          [iconOnly]="true"
           [disabled]="disabled"
           (click)="actionClicked.emit()"
-        >
-          <siaf-icon [name]="actionIcon" [size]="24" />
-        </button>
+        />
       </div>
       <message-box text="No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección." />
     </section>

@@ -30,11 +30,18 @@ export type CreateDocumentAccepted = {
   route?: string;
 };
 
-type CreateDocumentProcessOption = {
+export type CreateDocumentOption = {
+  label: string;
+  route?: string;
+  actionTypes?: string[];
+};
+
+export type CreateDocumentProcessOption = {
   id: string;
   label: string;
   route?: string;
   documents: string[];
+  documentOptions?: CreateDocumentOption[];
   actionTypes: string[];
 };
 
@@ -165,6 +172,7 @@ export class CreateDocumentComponent {
   @Input() title = 'Crear documento';
   @Input() acceptDisabled = false;
   @Input() fields: CreateDocumentField[] = [];
+  @Input() processOptions: CreateDocumentProcessOption[] = CREATE_DOCUMENT_PROCESSES;
   focusedField = '';
   openedSelectField = '';
   processResultsOpen = false;
@@ -190,14 +198,15 @@ export class CreateDocumentComponent {
             type: 'select',
             required: true,
             value: this.internalValues.get('Documento') || '',
-            options: ['Solicitud de registro de asiento de ajuste']
+            options: this.defaultProcessDocuments
           },
           {
             placeholder: 'Tipo de acci\u00f3n',
             type: 'select',
             required: true,
             value: this.internalValues.get('Tipo de acci\u00f3n') || '',
-            options: ['Creaci\u00f3n', 'Reversi\u00f3n']
+            options: this.defaultProcessActionTypes,
+            disabled: this.defaultProcessActionTypes.length === 0
           }
         ]
       : [
@@ -212,33 +221,33 @@ export class CreateDocumentComponent {
             type: 'select',
             required: true,
             value: this.internalValues.get('Documento') || '',
-            options: this.selectedProcess?.documents || [],
-            disabled: !this.selectedProcess?.documents.length
+            options: this.selectedProcessDocuments,
+            disabled: !this.selectedProcessDocuments.length
           },
           {
             placeholder: 'Tipo de acci\u00f3n',
             type: 'select',
             required: true,
             value: this.internalValues.get('Tipo de acci\u00f3n') || '',
-            options: this.selectedProcess?.actionTypes || [],
-            disabled: !this.selectedProcess?.actionTypes.length
+            options: this.selectedProcessActionTypes,
+            disabled: !this.selectedProcessActionTypes.length
           }
         ];
   }
 
   get selectedProcess(): CreateDocumentProcessOption | null {
     const selectedProcessId = this.internalValues.get('processId');
-    return CREATE_DOCUMENT_PROCESSES.find((process) => process.id === selectedProcessId) || null;
+    return this.processOptions.find((process) => process.id === selectedProcessId) || null;
   }
 
   get filteredProcessOptions(): CreateDocumentProcessOption[] {
     const query = this.normalize(this.internalValues.get('Buscar proceso o procedimiento') || '');
 
     if (!query) {
-      return CREATE_DOCUMENT_PROCESSES;
+      return this.processOptions;
     }
 
-    return CREATE_DOCUMENT_PROCESSES.filter((process) => this.normalize(process.label).includes(query));
+    return this.processOptions.filter((process) => this.normalize(process.label).includes(query));
   }
 
   get resolvedAcceptDisabled(): boolean {
@@ -274,6 +283,10 @@ export class CreateDocumentComponent {
 
     if (this.fields.length === 0) {
       this.internalValues.set(field.placeholder, value);
+
+      if (field.placeholder === 'Documento') {
+        this.internalValues.delete('Tipo de acci\u00f3n');
+      }
     }
 
     this.fieldValueChange.emit({
@@ -328,12 +341,16 @@ export class CreateDocumentComponent {
   }
 
   accept(): void {
+    const selectedProcess = this.selectedProcess || this.defaultProcess;
+    const document = this.internalValues.get('Documento') || this.externalFieldValue('Documento');
+    const documentOption = this.findDocumentOption(selectedProcess, document);
+
     this.accepted.emit({
-      processId: this.selectedProcess?.id,
-      processLabel: this.internalValues.get('Buscar proceso o procedimiento') || this.selectedProcess?.label,
-      document: this.internalValues.get('Documento') || this.externalFieldValue('Documento'),
+      processId: selectedProcess?.id,
+      processLabel: this.internalValues.get('Buscar proceso o procedimiento') || selectedProcess?.label,
+      document,
       actionType: this.internalValues.get('Tipo de acci\u00f3n') || this.externalFieldValue('Tipo de acción'),
-      route: this.selectedProcess?.route
+      route: documentOption?.route || selectedProcess?.route
     });
   }
 
@@ -388,6 +405,54 @@ export class CreateDocumentComponent {
     return this.fields.length === 0 && field.placeholder === 'Buscar proceso o procedimiento';
   }
 
+  private get defaultProcess(): CreateDocumentProcessOption | null {
+    return this.processOptions.find((process) => this.documentLabels(process).length > 0 && this.actionTypesForProcess(process).length > 0) || this.processOptions[0] || null;
+  }
+
+  private get defaultProcessDocuments(): string[] {
+    return this.documentLabels(this.defaultProcess);
+  }
+
+  private get defaultProcessActionTypes(): string[] {
+    return this.actionTypesForProcess(this.defaultProcess);
+  }
+
+  private get selectedProcessDocuments(): string[] {
+    return this.documentLabels(this.selectedProcess);
+  }
+
+  private get selectedProcessActionTypes(): string[] {
+    return this.actionTypesForProcess(this.selectedProcess);
+  }
+
+  private documentLabels(process: CreateDocumentProcessOption | null): string[] {
+    if (!process) {
+      return [];
+    }
+
+    return process.documentOptions?.map((document) => document.label) || process.documents;
+  }
+
+  private actionTypesForProcess(process: CreateDocumentProcessOption | null): string[] {
+    if (!process) {
+      return [];
+    }
+
+    const selectedDocument = this.internalValues.get('Documento') || this.externalFieldValue('Documento');
+
+    if (process.documentOptions?.length && !selectedDocument) {
+      return [];
+    }
+
+    const documentOption = this.findDocumentOption(process, selectedDocument);
+
+    return documentOption?.actionTypes || process.actionTypes;
+  }
+
+  private findDocumentOption(process: CreateDocumentProcessOption | null | undefined, document: string): CreateDocumentOption | undefined {
+    return process?.documentOptions?.find((option) => option.label === document);
+  }
+
   private normalize(value: string): string {
     return value
       .normalize('NFD')
@@ -417,6 +482,7 @@ function collectProcessOptions(nodes: ProcessMenuNode[]): CreateDocumentProcessO
         label: node.label,
         route: node.createRoute,
         documents: node.documentOptions || [],
+        documentOptions: node.documentCreateOptions,
         actionTypes: node.actionTypeOptions || []
       }
     ];

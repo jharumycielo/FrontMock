@@ -115,6 +115,60 @@ Usar estos valores para que el codigo pueda mapear el header y las acciones:
 | Revisor | `reviewer` | Revisa informacion y puede observar o derivar. |
 | Aprobador | `approver` | Aprueba, observa o rechaza una solicitud. |
 
+## Reglas de arquitectura por rol
+
+La estructura del codigo se organiza por proceso o dominio, no por rol. Los roles se aplican con permisos, guards y configuracion de componentes.
+
+Reglas:
+
+- Crear carpetas por proceso, por ejemplo `features/adjustment-seat`.
+- No crear carpetas principales como `features/creator` o `features/approver`.
+- Usar `roleGuard` solo cuando una ruta completa sea exclusiva para uno o varios roles.
+- Usar `PermissionService` cuando una misma pantalla cambie botones, campos o acciones segun el rol.
+- Usar `siaf-solicitude-header` con `role` + `state` para variantes del encabezado.
+- Si la pantalla es casi igual entre roles, reutilizar la misma pagina y cambiar permisos/acciones.
+- Si la pantalla cambia mucho, crear componentes internos por caso dentro del mismo feature.
+
+Base tecnica disponible:
+
+```ts
+import { roleGuard } from './core/auth';
+
+{
+  path: 'procesos/registro-asiento-ajuste/solicitud',
+  canActivate: [roleGuard],
+  data: {
+    roles: ['creator', 'approver'],
+    permissions: ['document.read']
+  },
+  loadComponent: () => import('./features/adjustment-seat-request/adjustment-seat-request.component').then((m) => m.AdjustmentSeatRequestComponent)
+}
+```
+
+Para comportamiento dentro de una pantalla:
+
+```ts
+readonly role = this.permission.currentRole;
+
+canEdit = this.permission.can('document.edit');
+canApprove = this.permission.can('document.approve');
+```
+
+## Permisos recomendados
+
+| Permiso | Uso |
+| --- | --- |
+| `document.create` | Crear solicitudes o documentos. |
+| `document.edit` | Editar documentos elaborados u observados. |
+| `document.delete` | Eliminar documentos. |
+| `document.verify` | Verificar documentos elaborados. |
+| `document.review` | Revisar documentos. |
+| `document.approve` | Aprobar documentos verificados. |
+| `document.observe` | Observar documentos. |
+| `document.reject` | Rechazar documentos. |
+| `document.annul` | Anular documentos. |
+| `document.read` | Visualizar documentos en modo lectura. |
+
 ## Estados recomendados
 
 Usar estos valores cuando el prompt describa el estado del documento. Estos estados salen del componente `FlowTags` del UI Kit SIAF - RP.
@@ -181,6 +235,232 @@ Cuando pidas una pantalla, puedes indicar estas piezas:
 | Modal | `siaf-modal` | Confirmaciones y decisiones bloqueantes. |
 | Snackbar | `siaf-snackbar` | Confirmaciones no bloqueantes. |
 | Paginacion | `siaf-pagination` | Tablas con resultados. |
+
+## Crear documento transversal
+
+`siaf-create-document` debe usarse como componente transversal. La pantalla o proceso que lo abre debe enviar la relacion entre proceso, documentos, tipos de accion y ruta destino.
+
+Estructura esperada:
+
+```ts
+const CREATE_DOCUMENT_OPTIONS = [
+  {
+    id: 'registro-asiento-ajuste',
+    label: 'Proceso de registro de asiento de ajuste',
+    route: '/procesos/registro-asiento-ajuste/solicitud',
+    documents: ['Solicitud de registro de asiento de ajuste'],
+    actionTypes: ['Creacion']
+  }
+];
+```
+
+Uso:
+
+```html
+<siaf-create-document
+  [processOptions]="createDocumentProcessOptions"
+  (accepted)="onCreateDocumentAccepted($event)"
+/>
+```
+
+Reglas:
+
+- No hardcodear documentos ni tipos de accion dentro de `siaf-create-document`.
+- Cada proceso define su data: `id`, `label`, `route`, `documents` y `actionTypes`.
+- Si un proceso tiene mas de un documento, todos deben venir en `documents`.
+- Si un documento tiene acciones distintas por rol o estado, filtrarlas antes de pasarlas al componente.
+- Al aceptar, navegar usando `selection.route` para que el flujo funcione con cualquier proceso.
+
+## Pantalla transversal de documentos y registros
+
+Usar esta plantilla cuando quieras crear una nueva seccion como la de `Documentos y registros` para cualquier proceso. La pantalla debe reutilizar la estructura existente: navbar, sidebar, breadcrumb del arbol de procesos, header del proceso, tabs `Documentos` y `Registros`, boton `Crear documento`, tabla, filtros, paginacion e historial.
+
+```md
+## Contexto
+
+Pantalla o flujo: Documentos y registros
+Proceso:
+Id del proceso:
+Ruta del proceso:
+Ruta para crear solicitud:
+Breadcrumb segun arbol:
+- Nivel 1:
+- Nivel 2:
+- Nivel 3:
+- Nivel final:
+Referencia Figma:
+
+## Header de la pantalla
+
+Titulo:
+Subtitulo: Documentos y registros
+Sistema: Sistema Nacional de Contabilidad
+
+## Crear documento
+
+Debe usar `siaf-create-document`: si
+Documentos permitidos:
+- Documento:
+  - Ruta:
+  - Tipos de accion permitidos:
+    - Creacion
+    - Modificacion
+    - Eliminacion
+
+Reglas:
+- Al elegir documento y tipo de accion, habilitar Aceptar.
+- Al aceptar, navegar a la ruta del documento seleccionado.
+- La grilla de Documentos debe reflejar los mismos nombres definidos en `Documentos permitidos`.
+- Si hay mas de un documento, el select Documento debe mostrar todos.
+- Si un documento tiene acciones propias, el select Tipo de accion debe mostrar solo las acciones de ese documento.
+
+## Tabla Documentos
+
+Columnas:
+- Documento
+- Numero
+- Tipo de accion
+- Estado
+- Sistema
+- Fecha de registro
+- Entidad
+
+Filas de ejemplo:
+- Documento:
+  Numero:
+  Tipo de accion:
+  Estado:
+  Sistema:
+  Fecha de registro:
+  Entidad:
+
+Estados disponibles:
+- Elaborado
+- Verificado
+- Aprobado
+- Observado
+- Rechazado
+- Eliminado
+
+Acciones:
+- Crear documento
+- Ver historial
+- Verificar seleccion, si aplica
+
+## Tabla Registros
+
+Debe existir tab Registros: si/no
+Columnas:
+- Columna 1:
+- Columna 2:
+- Columna 3:
+
+Filas de ejemplo:
+- Campo 1:
+- Campo 2:
+- Campo 3:
+
+## Navegacion
+
+Al abrir desde sidebar Procesos:
+Al dar click al proceso:
+Al crear documento:
+Al abrir documento existente:
+Al volver:
+
+## Reglas especiales
+
+- Mantener el componente y datos del proceso reutilizables.
+- No hardcodear documentos dentro de `siaf-create-document`.
+- Si el proceso no tiene registros, mantener el tab pero mostrar estado vacio o indicar ocultarlo.
+```
+
+## Ejemplo: documentos y registros de plan de cuentas contables
+
+```md
+## Contexto
+
+Pantalla o flujo: Documentos y registros
+Proceso: Plan de Cuentas Contables
+Id del proceso: plan-cuentas-contables
+Ruta del proceso: /procesos/plan-cuentas-contables
+Ruta para crear solicitud: /procesos/plan-cuentas-contables/solicitud
+Breadcrumb segun arbol:
+- Nivel 1: Gestion contabilidad
+- Nivel 2: Catalogos y clasificadores
+- Nivel 3: Clasificadores
+- Nivel final: Plan de Cuentas Contables
+Referencia Figma: usar misma estructura de Documentos y registros hasta que se entregue diseno especifico
+
+## Header de la pantalla
+
+Titulo: Plan de Cuentas Contables
+Subtitulo: Documentos y registros
+Sistema: Sistema Nacional de Contabilidad
+
+## Crear documento
+
+Debe usar `siaf-create-document`: si
+Documentos permitidos:
+- Documento: Solicitud de Cuentas Contables
+  - Ruta: /procesos/plan-cuentas-contables/solicitud
+  - Tipos de accion permitidos:
+    - Creacion
+    - Modificacion
+- Documento: Solicitud de carga masiva de plan de cuentas contables
+  - Ruta: /procesos/plan-cuentas-contables/carga-masiva/solicitud
+  - Tipos de accion permitidos:
+    - Creacion
+
+Reglas:
+- La grilla de Documentos debe mostrar los nombres definidos en `Documentos permitidos`.
+- Para `Solicitud de Cuentas Contables`, el select Tipo de accion debe mostrar Creacion y Modificacion.
+- Para `Solicitud de carga masiva de plan de cuentas contables`, el select Tipo de accion debe mostrar solo Creacion.
+
+## Tabla Documentos
+
+Columnas:
+- Documento
+- Numero
+- Tipo de accion
+- Estado
+- Sistema
+- Fecha de registro
+- Entidad
+
+Filas de ejemplo:
+- Documento: Solicitud de Cuentas Contables
+  Numero: 0001
+  Tipo de accion: Creacion
+  Estado: Elaborado
+  Sistema: Sistema Nacional de Contabilidad
+  Fecha de registro: 20/11/2023
+  Entidad: 009 - Ministerio de Economia y Finanzas
+- Documento: Solicitud de carga masiva de plan de cuentas contables
+  Numero: 0002
+  Tipo de accion: Creacion
+  Estado: Verificado
+  Sistema: Sistema Nacional de Contabilidad
+  Fecha de registro: 22/11/2023
+  Entidad: 009 - Ministerio de Economia y Finanzas
+
+## Tabla Registros
+
+Debe existir tab Registros: si
+Columnas:
+- Estado
+- Codigo de cuenta
+- Nombre de cuenta
+- Nivel
+- Naturaleza
+
+Filas de ejemplo:
+- Estado: Activo
+  Codigo de cuenta: 1101
+  Nombre de cuenta: Caja y bancos
+  Nivel: 2
+  Naturaleza: Deudora
+```
 
 ## Ejemplo: creador crea solicitud
 

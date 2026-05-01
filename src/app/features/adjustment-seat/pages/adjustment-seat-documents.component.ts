@@ -4,7 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/components/breadcrumb/breadcrumb.component';
 import { CustomFilterApplyEvent, CustomFilterComponent } from '../../shared/components/custom-filter/custom-filter.component';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
-import { CreateDocumentComponent, CreateDocumentField, CreateDocumentSelection } from '../../shared/ui/create-document/create-document.component';
+import { CreateDocumentAccepted, CreateDocumentComponent, CreateDocumentField, CreateDocumentProcessOption, CreateDocumentSelection } from '../../shared/ui/create-document/create-document.component';
 import { DocumentHistoryPanelComponent, DocumentHistorySummary } from '../../shared/ui/document-history-panel/document-history-panel.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
@@ -24,6 +24,20 @@ type DocumentRow = {
   date: string;
   entity: string;
 };
+
+const ADJUSTMENT_SEAT_PROCESS_ID = 'registro-asiento-ajuste';
+const ADJUSTMENT_SEAT_REQUEST_ROUTE = '/procesos/registro-asiento-ajuste/solicitud';
+const ADJUSTMENT_SEAT_REQUEST_LABEL = 'Solicitud de registro de asiento de ajuste';
+const ADJUSTMENT_SEAT_ACTION_TYPES = ['Creación', 'Reversión'];
+const ADJUSTMENT_SEAT_CREATE_DOCUMENT_OPTIONS: CreateDocumentProcessOption[] = [
+  {
+    id: ADJUSTMENT_SEAT_PROCESS_ID,
+    label: 'Proceso de registro de asiento de ajuste',
+    route: ADJUSTMENT_SEAT_REQUEST_ROUTE,
+    documents: [ADJUSTMENT_SEAT_REQUEST_LABEL],
+    actionTypes: ADJUSTMENT_SEAT_ACTION_TYPES
+  }
+];
 
 type RecordRow = {
   selected?: boolean;
@@ -65,7 +79,7 @@ type RecordRow = {
 
       @if (sidebarCreateDocumentOpen) {
         <div class="fixed bottom-0 left-0 top-14 z-20 lg:left-16" (click)="$event.stopPropagation()">
-          <siaf-create-document (accepted)="onCreateDocumentAccepted()" (canceled)="closeFloatingPanels()" />
+          <siaf-create-document [processOptions]="createDocumentProcessOptions" (accepted)="onCreateDocumentAccepted($event)" (canceled)="closeFloatingPanels()" />
         </div>
       }
 
@@ -93,11 +107,12 @@ type RecordRow = {
                 <div class="absolute right-0 top-12 z-30 w-[min(360px,calc(100vw-32px))]" (click)="$event.stopPropagation()">
                   <siaf-create-document
                     variant="dropdown"
+                    [processOptions]="createDocumentProcessOptions"
                     [fields]="createDocumentFields"
                     [acceptDisabled]="createDocumentAcceptDisabled"
                     (fieldValueChange)="onCreateDocumentFieldChange($event)"
                     (canceled)="closeCreateDocumentPopover()"
-                    (accepted)="onCreateDocumentAccepted()"
+                    (accepted)="onCreateDocumentAccepted($event)"
                   />
                 </div>
               }
@@ -351,10 +366,11 @@ export class AdjustmentSeatDocumentsComponent {
     { label: 'Sistema Nacional de Contabilidad', value: 'Sistema Nacional de Contabilidad' }
   ];
   selectedHistorySummary: DocumentHistorySummary = {
-    document: 'Solicitud de registro de asiento de ajuste',
+    document: ADJUSTMENT_SEAT_REQUEST_LABEL,
     number: '0004',
     actionType: 'Creación'
   };
+  readonly createDocumentProcessOptions = ADJUSTMENT_SEAT_CREATE_DOCUMENT_OPTIONS;
   createDocumentDocument = '';
   createDocumentActionType = '';
 
@@ -398,14 +414,14 @@ export class AdjustmentSeatDocumentsComponent {
         type: 'select',
         required: true,
         value: this.createDocumentDocument,
-        options: ['Solicitud de registro de asiento de ajuste']
+        options: this.createDocumentProcessOptions[0].documents
       },
       {
         placeholder: 'Tipo de acción',
         type: 'select',
         required: true,
         value: this.createDocumentActionType,
-        options: ['Creación', 'Reversión']
+        options: this.createDocumentProcessOptions[0].actionTypes
       }
     ];
   }
@@ -427,10 +443,10 @@ export class AdjustmentSeatDocumentsComponent {
     this.createDocumentPopoverOpen = false;
   }
 
-  onCreateDocumentAccepted(): void {
+  onCreateDocumentAccepted(selection?: CreateDocumentAccepted): void {
     this.closeCreateDocumentPopover();
     this.closeFloatingPanels();
-    void this.router.navigate(['/procesos/registro-asiento-ajuste/solicitud']);
+    void this.router.navigate([selection?.route || ADJUSTMENT_SEAT_REQUEST_ROUTE]);
   }
 
   openDocumentHistory(row: DocumentRow): void {
@@ -448,7 +464,7 @@ export class AdjustmentSeatDocumentsComponent {
     this.closeFloatingPanels();
     this.createDocumentPopoverOpen = false;
     this.selectedHistorySummary = {
-      document: 'Solicitud de registro de asiento de ajuste',
+      document: ADJUSTMENT_SEAT_REQUEST_LABEL,
       number: row.accountingDocument,
       actionType: 'Creación'
     };
@@ -483,6 +499,12 @@ export class AdjustmentSeatDocumentsComponent {
     if (node.id === 'registro-asiento-ajuste') {
       this.closeFloatingPanels();
       void this.router.navigate(['/procesos/registro-asiento-ajuste']);
+      return;
+    }
+
+    if (node.id === 'plan-cuentas-contables') {
+      this.closeFloatingPanels();
+      void this.router.navigate(['/procesos/plan-cuentas-contables']);
       return;
     }
 

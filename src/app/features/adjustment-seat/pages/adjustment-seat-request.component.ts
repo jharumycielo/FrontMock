@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, forwardRef, Input } from '@angular/
 import { Router } from '@angular/router';
 
 import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/components/breadcrumb/breadcrumb.component';
+import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { CreateDocumentComponent } from '../../shared/ui/create-document/create-document.component';
 import { DateTimePickerComponent } from '../../shared/ui/date-time-picker/date-time-picker.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
@@ -200,6 +201,12 @@ export class AdjustmentSeatRequestComponent {
       return;
     }
 
+    if (node.id === 'plan-cuentas-contables') {
+      this.closeFloatingPanels();
+      void this.router.navigate(['/procesos/plan-cuentas-contables']);
+      return;
+    }
+
     if (!node.children?.length) {
       this.activeNavigation = 'Proceso';
     }
@@ -242,14 +249,12 @@ export class MessageBoxComponent {
 @Component({
   selector: 'empty-section',
   standalone: true,
-  imports: [IconComponent, MessageBoxComponent],
+  imports: [ButtonComponent, MessageBoxComponent],
   template: `
     <section class="grid gap-siaf-md">
       <div class="flex min-h-10 items-center justify-between gap-siaf-md">
         <h3 class="m-0 text-sm font-bold uppercase text-text">{{ title }}</h3>
-        <button class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-white transition hover:bg-[var(--sys-color-bg-brand-accent)]" type="button" [attr.aria-label]="title">
-          <siaf-icon [name]="actionIcon" [size]="24" />
-        </button>
+        <siaf-button variant="accent" size="md" [icon]="actionIcon" [ariaLabel]="title" [iconOnly]="true" />
       </div>
       <message-box text="No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección." />
     </section>

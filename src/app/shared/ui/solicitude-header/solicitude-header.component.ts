@@ -74,6 +74,26 @@ const CREATOR_HEADER_CONFIG: Partial<Record<SolicitudeHeaderState, SolicitudeHea
     showEdit: true,
     showVerify: true
   },
+  verified: {
+    type: 'readonly',
+    showTag: false,
+    tagLabel: '',
+    tagTone: 'accent',
+    saveVariant: 'secondary',
+    showDelete: false,
+    showEdit: false,
+    showVerify: false
+  },
+  deleted: {
+    type: 'readonly',
+    showTag: false,
+    tagLabel: '',
+    tagTone: 'accent',
+    saveVariant: 'secondary',
+    showDelete: false,
+    showEdit: false,
+    showVerify: false
+  },
   readonly: {
     type: 'readonly',
     showTag: false,

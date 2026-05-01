@@ -30,43 +30,56 @@ type DocumentRow = {
   entity: string;
 };
 
-const ADJUSTMENT_SEAT_PROCESS_ID = 'registro-asiento-ajuste';
-const ADJUSTMENT_SEAT_PROCESS_ROUTE = '/procesos/registro-asiento-ajuste';
-const ADJUSTMENT_SEAT_REQUEST_ROUTE = '/procesos/registro-asiento-ajuste/solicitud';
-const ADJUSTMENT_SEAT_REQUEST_LABEL = 'Solicitud de registro de asiento de ajuste';
-const ADJUSTMENT_SEAT_ACTION_TYPES = ['Creación', 'Reversión'];
-const ADJUSTMENT_SEAT_CREATE_DOCUMENT_OPTIONS: CreateDocumentProcessOption[] = [
+const CHART_ACCOUNTS_PROCESS_ID = 'plan-cuentas-contables';
+const CHART_ACCOUNTS_PROCESS_ROUTE = '/procesos/plan-cuentas-contables';
+const CHART_ACCOUNTS_REQUEST_ROUTE = '/procesos/plan-cuentas-contables/solicitud';
+const CHART_ACCOUNTS_BULK_REQUEST_ROUTE = '/procesos/plan-cuentas-contables/carga-masiva/solicitud';
+const CHART_ACCOUNTS_REQUEST_LABEL = 'Solicitud de Cuentas Contables';
+const CHART_ACCOUNTS_BULK_REQUEST_LABEL = 'Solicitud de carga masiva de plan de cuentas contables';
+const CHART_ACCOUNTS_ACTION_TYPES = ['Creación', 'Modificación'];
+const CHART_ACCOUNTS_BULK_ACTION_TYPES = ['Creación'];
+const CHART_ACCOUNTS_CREATE_DOCUMENT_OPTIONS: CreateDocumentProcessOption[] = [
   {
-    id: ADJUSTMENT_SEAT_PROCESS_ID,
-    label: 'Proceso de registro de asiento de ajuste',
-    route: ADJUSTMENT_SEAT_REQUEST_ROUTE,
-    documents: [ADJUSTMENT_SEAT_REQUEST_LABEL],
-    actionTypes: ADJUSTMENT_SEAT_ACTION_TYPES
+    id: CHART_ACCOUNTS_PROCESS_ID,
+    label: 'Plan de Cuentas Contables',
+    route: CHART_ACCOUNTS_REQUEST_ROUTE,
+    documents: [CHART_ACCOUNTS_REQUEST_LABEL, CHART_ACCOUNTS_BULK_REQUEST_LABEL],
+    documentOptions: [
+      {
+        label: CHART_ACCOUNTS_REQUEST_LABEL,
+        route: CHART_ACCOUNTS_REQUEST_ROUTE,
+        actionTypes: CHART_ACCOUNTS_ACTION_TYPES
+      },
+      {
+        label: CHART_ACCOUNTS_BULK_REQUEST_LABEL,
+        route: CHART_ACCOUNTS_BULK_REQUEST_ROUTE,
+        actionTypes: CHART_ACCOUNTS_BULK_ACTION_TYPES
+      }
+    ],
+    actionTypes: ['Creación', 'Modificación']
   }
 ];
 
-const getAdjustmentSeatPathHref = (nodeId: string): string => {
-  if (nodeId === ADJUSTMENT_SEAT_PROCESS_ID) {
-    return ADJUSTMENT_SEAT_PROCESS_ROUTE;
+const getChartAccountsPathHref = (nodeId: string): string => {
+  if (nodeId === CHART_ACCOUNTS_PROCESS_ID) {
+    return CHART_ACCOUNTS_PROCESS_ROUTE;
   }
 
   return '/panel';
 };
 
-const buildAdjustmentSeatBreadcrumbs = (currentLabel: string): BreadcrumbItem[] => [
-  ...findProcessPathById(ADJUSTMENT_SEAT_PROCESS_ID).map((node) => ({ label: node.label, href: getAdjustmentSeatPathHref(node.id) })),
+const buildChartAccountsBreadcrumbs = (currentLabel: string): BreadcrumbItem[] => [
+  ...findProcessPathById(CHART_ACCOUNTS_PROCESS_ID).map((node) => ({ label: node.label, href: getChartAccountsPathHref(node.id) })),
   { label: currentLabel }
 ];
 
 type RecordRow = {
   selected?: boolean;
   status: 'Activo';
-  accountingDocument: string;
-  institutionalScope: string;
-  adjustmentClassCode: string;
-  adjustmentDetailCode: string;
-  totalDebit: string;
-  totalCredit: string;
+  accountCode: string;
+  accountName: string;
+  level: string;
+  nature: string;
 };
 
 type AppliedCustomFilter = {
@@ -78,7 +91,7 @@ type AppliedCustomFilter = {
 };
 
 @Component({
-  selector: 'siaf-adjustment-seat-documents',
+  selector: 'siaf-chart-accounts-documents',
   standalone: true,
   imports: [BreadcrumbComponent, ButtonComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, IconComponent, MobileNavigationMenuComponent, ModalComponent, NavbarComponent, PaginationComponent, ProcessMenuTreeComponent, RouterLink, SidebarComponent, SnackbarComponent, TrayDocumentsViewComponent, TrayMenuComponent],
   template: `
@@ -163,7 +176,7 @@ type AppliedCustomFilter = {
 
           <header class="flex min-h-[72px] flex-col gap-siaf-sm px-siaf-md pb-siaf-xs pt-siaf-sm md:flex-row md:items-start md:justify-between">
             <div class="min-w-0">
-              <h1 class="m-0 text-sm font-bold uppercase leading-normal text-text">Proceso de registro de asiento de ajuste</h1>
+              <h1 class="m-0 text-sm font-bold uppercase leading-normal text-text">Plan de Cuentas Contables</h1>
               <p class="m-0 text-[10px] font-medium uppercase leading-normal tracking-[0.66px] text-text-muted">Documentos y registros</p>
             </div>
 
@@ -446,7 +459,7 @@ type AppliedCustomFilter = {
                           />
                         </td>
                         <td class="max-w-[260px] px-siaf-md py-siaf-sm">
-                          <a class="line-clamp-2 text-sm leading-normal text-text hover:text-brand-primary" routerLink="/procesos/registro-asiento-ajuste/formulario">{{ row.document }}</a>
+                          <a class="line-clamp-2 text-sm leading-normal text-text hover:text-brand-primary" [routerLink]="row.document === chartAccountsBulkRequestLabel ? chartAccountsBulkRequestRoute : chartAccountsRequestRoute">{{ row.document }}</a>
                         </td>
                         <td class="px-siaf-md py-siaf-sm">{{ row.number }}</td>
                         <td class="px-siaf-md py-siaf-sm">{{ row.actionType }}</td>
@@ -473,17 +486,15 @@ type AppliedCustomFilter = {
                     <tr class="bg-[rgba(32,32,32,0.12)] text-[10px] font-bold uppercase text-text">
                       <th class="w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
                       <th class="w-[110px] px-siaf-md py-siaf-sm">Estado</th>
-                      <th class="w-[150px] px-siaf-md py-siaf-sm">Doc conta.</th>
-                      <th class="w-[180px] px-siaf-md py-siaf-sm">Ámbito institucional</th>
-                      <th class="w-[190px] px-siaf-md py-siaf-sm">Código de clase de ajuste</th>
-                      <th class="w-[190px] px-siaf-md py-siaf-sm">Código de detalle de a...</th>
-                      <th class="w-[110px] px-siaf-md py-siaf-sm text-right">Total d...</th>
-                      <th class="w-[110px] px-siaf-md py-siaf-sm text-right">Total h...</th>
+                      <th class="w-[160px] px-siaf-md py-siaf-sm">Código de cuenta</th>
+                      <th class="w-[320px] px-siaf-md py-siaf-sm">Nombre de cuenta</th>
+                      <th class="w-[120px] px-siaf-md py-siaf-sm">Nivel</th>
+                      <th class="w-[160px] px-siaf-md py-siaf-sm">Naturaleza</th>
                       <th class="sticky right-0 w-14 rounded-r-siaf-sm bg-[rgba(32,32,32,0.12)] px-siaf-sm py-siaf-sm"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    @for (row of recordRows; track row.accountingDocument) {
+                    @for (row of recordRows; track row.accountCode) {
                       <tr class="h-12 border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-surface hover:bg-[rgba(1,72,153,0.04)]">
                         <td class="px-siaf-sm py-siaf-xs"><input class="size-4 accent-brand-primary" type="checkbox" [checked]="row.selected" /></td>
                         <td class="px-siaf-md py-siaf-sm">
@@ -492,12 +503,10 @@ type AppliedCustomFilter = {
                             {{ row.status }}
                           </span>
                         </td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.accountingDocument }}</td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.institutionalScope }}</td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.adjustmentClassCode }}</td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.adjustmentDetailCode }}</td>
-                        <td class="px-siaf-md py-siaf-sm text-right">{{ row.totalDebit }}</td>
-                        <td class="px-siaf-md py-siaf-sm text-right">{{ row.totalCredit }}</td>
+                        <td class="px-siaf-md py-siaf-sm">{{ row.accountCode }}</td>
+                        <td class="px-siaf-md py-siaf-sm">{{ row.accountName }}</td>
+                        <td class="px-siaf-md py-siaf-sm">{{ row.level }}</td>
+                        <td class="px-siaf-md py-siaf-sm">{{ row.nature }}</td>
                         <td class="sticky right-0 bg-surface px-siaf-sm py-siaf-xs shadow-[-4px_0_8px_rgba(0,0,0,0.08)]">
                           <button class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Historial de documento" title="Historial de documento" (click)="openRecordHistory(row)">
                             <siaf-icon name="history" [size]="20" />
@@ -546,7 +555,7 @@ type AppliedCustomFilter = {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdjustmentSeatDocumentsComponent {
+export class ChartAccountsDocumentsComponent {
   activeNavigation: SidebarNavigation = 'Proceso';
   activeTab: ActiveTab = 'documents';
   createDocumentPopoverOpen = false;
@@ -572,11 +581,11 @@ export class AdjustmentSeatDocumentsComponent {
   approvalSnackbarOpen = false;
   approvalSnackbarNumbers = '';
   selectedHistorySummary: DocumentHistorySummary = {
-    document: ADJUSTMENT_SEAT_REQUEST_LABEL,
+    document: CHART_ACCOUNTS_REQUEST_LABEL,
     number: '0004',
     actionType: 'Creación'
   };
-  readonly createDocumentProcessOptions = ADJUSTMENT_SEAT_CREATE_DOCUMENT_OPTIONS;
+  readonly createDocumentProcessOptions = CHART_ACCOUNTS_CREATE_DOCUMENT_OPTIONS;
   createDocumentDocument = '';
   createDocumentActionType = '';
 
@@ -602,8 +611,8 @@ export class AdjustmentSeatDocumentsComponent {
   readonly filterValorOptions = [
     { label: 'Elaborado', value: 'Elaborado' },
     { label: 'Verificado', value: 'Verificado' },
-    { label: 'Creacion', value: 'Creacion' },
-    { label: 'Reversion', value: 'Reversion' },
+    { label: 'Creación', value: 'Creación' },
+    { label: 'Modificación', value: 'Modificación' },
     { label: 'Sistema Nacional de Contabilidad', value: 'Sistema Nacional de Contabilidad' }
   ];
 
@@ -618,27 +627,31 @@ export class AdjustmentSeatDocumentsComponent {
 
   constructor(private readonly router: Router) {}
 
+  readonly chartAccountsRequestRoute = CHART_ACCOUNTS_REQUEST_ROUTE;
+  readonly chartAccountsBulkRequestRoute = CHART_ACCOUNTS_BULK_REQUEST_ROUTE;
+  readonly chartAccountsBulkRequestLabel = CHART_ACCOUNTS_BULK_REQUEST_LABEL;
+
   readonly breadcrumbs: BreadcrumbItem[] = [
     { label: 'Inicio', href: '/panel' },
-    ...buildAdjustmentSeatBreadcrumbs('Documentos y registros')
+    ...buildChartAccountsBreadcrumbs('Documentos y registros')
   ];
 
   readonly rows: DocumentRow[] = [
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0004', actionType: 'Creación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '15/06/2024', entity: '009 - Ministerio de Economía y Finanzas' },
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0003', actionType: 'Creación', status: 'Verificado', system: 'Sistema Nacional de Contabilidad', date: '20/01/2024', entity: '009 - Ministerio de Economía y Finanzas' },
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0002', actionType: 'Creación', status: 'Verificado', system: 'Sistema Nacional de Contabilidad', date: '15/12/2023', entity: '009 - Ministerio de Economía y Finanzas' },
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0001', actionType: 'Creación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '20/11/2023', entity: '009 - Ministerio de Economía y Finanzas' }
+    { document: CHART_ACCOUNTS_REQUEST_LABEL, number: '0004', actionType: 'Modificación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '15/06/2024', entity: '009 - Ministerio de Economía y Finanzas' },
+    { document: CHART_ACCOUNTS_BULK_REQUEST_LABEL, number: '0003', actionType: 'Creación', status: 'Verificado', system: 'Sistema Nacional de Contabilidad', date: '20/01/2024', entity: '009 - Ministerio de Economía y Finanzas' },
+    { document: CHART_ACCOUNTS_REQUEST_LABEL, number: '0002', actionType: 'Creación', status: 'Verificado', system: 'Sistema Nacional de Contabilidad', date: '15/12/2023', entity: '009 - Ministerio de Economía y Finanzas' },
+    { document: CHART_ACCOUNTS_REQUEST_LABEL, number: '0001', actionType: 'Creación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '20/11/2023', entity: '009 - Ministerio de Economía y Finanzas' }
   ];
 
   readonly statusFilterOptions: DocumentRow['status'][] = ['Elaborado', 'Verificado'];
-  readonly actionTypeFilterOptions = ['Creación', 'Reversión'];
+  readonly actionTypeFilterOptions = ['Creación', 'Modificación'];
 
   readonly recordRows: RecordRow[] = [
-    { status: 'Activo', accountingDocument: '093-2026-05', institutionalScope: 'EPP', adjustmentClassCode: 'CLASE DE AJUSTE', adjustmentDetailCode: 'DETALLE DE AJUSTE', totalDebit: '237,000', totalCredit: '237,000' },
-    { status: 'Activo', accountingDocument: '093-2026-04', institutionalScope: 'EPP', adjustmentClassCode: 'CLASE DE AJUSTE', adjustmentDetailCode: 'DETALLE DE AJUSTE', totalDebit: '237,000', totalCredit: '237,000' },
-    { status: 'Activo', accountingDocument: '093-2026-03', institutionalScope: 'EPP', adjustmentClassCode: 'CLASE DE AJUSTE', adjustmentDetailCode: 'DETALLE DE AJUSTE', totalDebit: '237,000', totalCredit: '237,000' },
-    { status: 'Activo', accountingDocument: '093-2026-02', institutionalScope: 'EPP', adjustmentClassCode: 'CLASE DE AJUSTE', adjustmentDetailCode: 'DETALLE DE AJUSTE', totalDebit: '237,000', totalCredit: '237,000' },
-    { status: 'Activo', accountingDocument: '093-2026-01', institutionalScope: 'EPP', adjustmentClassCode: 'CLASE DE AJUSTE', adjustmentDetailCode: 'DETALLE DE AJUSTE', totalDebit: '237,000', totalCredit: '237,000' }
+    { status: 'Activo', accountCode: '1101', accountName: 'Caja y bancos', level: '2', nature: 'Deudora' },
+    { status: 'Activo', accountCode: '110101', accountName: 'Caja', level: '3', nature: 'Deudora' },
+    { status: 'Activo', accountCode: '110102', accountName: 'Bancos', level: '3', nature: 'Deudora' },
+    { status: 'Activo', accountCode: '2101', accountName: 'Cuentas por pagar', level: '2', nature: 'Acreedora' },
+    { status: 'Activo', accountCode: '3101', accountName: 'Patrimonio institucional', level: '2', nature: 'Acreedora' }
   ];
 
   readonly rowsPerPageOptions = [10, 25, 50, 100];
@@ -691,9 +704,14 @@ export class AdjustmentSeatDocumentsComponent {
         type: 'select',
         required: true,
         value: this.createDocumentActionType,
-        options: this.createDocumentProcessOptions[0].actionTypes
+        options: this.createDocumentActionTypeOptions,
+        disabled: !this.createDocumentDocument
       }
     ];
+  }
+
+  get createDocumentActionTypeOptions(): string[] {
+    return this.createDocumentProcessOptions[0].documentOptions?.find((document) => document.label === this.createDocumentDocument)?.actionTypes || [];
   }
 
   get createDocumentAcceptDisabled(): boolean {
@@ -892,7 +910,7 @@ export class AdjustmentSeatDocumentsComponent {
   onCreateDocumentAccepted(selection?: CreateDocumentAccepted): void {
     this.closeCreateDocumentPopover();
     this.closeFloatingPanels();
-    void this.router.navigate([selection?.route || ADJUSTMENT_SEAT_REQUEST_ROUTE]);
+    void this.router.navigate([selection?.route || CHART_ACCOUNTS_REQUEST_ROUTE]);
   }
 
   openDocumentHistory(row: DocumentRow): void {
@@ -919,8 +937,8 @@ export class AdjustmentSeatDocumentsComponent {
     this.statusFilterMenuOpen = false;
     this.actionTypeFilterMenuOpen = false;
     this.selectedHistorySummary = {
-      document: ADJUSTMENT_SEAT_REQUEST_LABEL,
-      number: row.accountingDocument,
+      document: CHART_ACCOUNTS_REQUEST_LABEL,
+      number: row.accountCode,
       actionType: 'Creación'
     };
     this.documentHistoryOpen = true;
@@ -1023,6 +1041,7 @@ export class AdjustmentSeatDocumentsComponent {
   onCreateDocumentFieldChange(selection: CreateDocumentSelection): void {
     if (selection.placeholder === 'Documento') {
       this.createDocumentDocument = selection.value;
+      this.createDocumentActionType = '';
       return;
     }
 

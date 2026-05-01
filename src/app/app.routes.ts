@@ -25,6 +25,20 @@ export const routes: Routes = [
     path: 'procesos/registro-asiento-ajuste/formulario',
     loadComponent: () => import('./features/adjustment-seat-form/adjustment-seat-form.component').then((m) => m.AdjustmentSeatFormComponent)
   },
+  {
+    path: 'procesos/plan-cuentas-contables',
+    loadComponent: () => import('./features/chart-accounts-documents/chart-accounts-documents.component').then((m) => m.ChartAccountsDocumentsComponent)
+  },
+  {
+    path: 'procesos/plan-cuentas-contables/solicitud',
+    redirectTo: 'procesos/plan-cuentas-contables',
+    pathMatch: 'full'
+  },
+  {
+    path: 'procesos/plan-cuentas-contables/carga-masiva/solicitud',
+    redirectTo: 'procesos/plan-cuentas-contables',
+    pathMatch: 'full'
+  },
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   { path: '**', redirectTo: 'login' }
 ];
