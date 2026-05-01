@@ -4,6 +4,20 @@ Aplicación web para la gestión de procesos financieros y contables del Estado 
 
 ---
 
+## Cambios recientes
+
+- Se estandarizó la cabecera de solicitudes con `role` + `state` para reutilizarla por rol y estado del documento.
+- Se agregó `siaf-flow-status-tag` para mostrar estados oficiales del documento con colores del UI Kit mediante tokens CSS.
+- Se documentó una plantilla de prompts para construir pantallas y flujos como piezas reutilizables.
+- Se limpió `src/app` para evitar colores hexadecimales directos en clases o estilos de componentes.
+- Se reforzó la regla de usar tokens semánticos antes de agregar nuevos valores visuales.
+
+Documento de referencia:
+
+- `docs/plantilla-prompts-pantallas-siaf.md`
+
+---
+
 ## Tecnologías
 
 | Herramienta | Versión |
@@ -48,6 +62,8 @@ src/
 │   └── figma/             # Assets exportados desde Figma
 └── styles/
     └── tokens/            # Variables CSS del sistema de diseño
+docs/
+└── plantilla-prompts-pantallas-siaf.md
 ```
 
 ---
@@ -149,11 +165,86 @@ Todos los componentes usan el selector prefix `siaf-` y `ChangeDetectionStrategy
 | DocumentHistoryPanelComponent | `siaf-document-history-panel` | Panel lateral con historial de cambios de un documento. |
 | AnnulmentModalComponent | `siaf-annulment-modal` | Modal especializado para anulación de documentos. |
 | ProcessMenuTreeComponent | `siaf-process-menu-tree` | Árbol de navegación de procesos del sistema. |
-| SolicitudeHeaderComponent | `siaf-solicitude-header` | Cabecera de una solicitud con datos de identificación. |
+| SolicitudeHeaderComponent | `siaf-solicitude-header` | Cabecera de una solicitud. Soporta matriz `role` + `state` para controlar etiquetas, botones y modo lectura/edición. |
+| FlowStatusTagComponent | `siaf-flow-status-tag` | Etiqueta de estado del documento basada en los estados oficiales del UI Kit y tokens CSS. |
 | SummaryCardComponent | `siaf-summary-card` | Tarjeta resumen de estado de proceso. |
 | TrayMenuComponent | `siaf-tray-menu` | Menú lateral de bandeja de documentos. |
 | TrayDocumentsViewComponent | `siaf-tray-documents-view` | Vista de documentos de una bandeja seleccionada. |
 | MobileNavigationMenuComponent | `siaf-mobile-navigation-menu` | Menú de navegación para pantallas móviles. |
+
+---
+
+## Estados, roles y flujos
+
+### Header de solicitud
+
+`siaf-solicitude-header` separa el rol del usuario del estado visual/de negocio:
+
+```html
+<siaf-solicitude-header
+  role="creator"
+  [state]="solicitudeHeaderState"
+  heading="Solicitud de registro de asiento de ajuste"
+  secondaryText="Creación"
+/>
+```
+
+Roles soportados:
+
+| Rol | Valor |
+|---|---|
+| Creador | `creator` |
+| Revisor | `reviewer` |
+| Aprobador | `approver` |
+
+Estados soportados:
+
+`new`, `edit`, `readonly`, `elaborated`, `registered`, `verified`, `validated`, `reviewed`, `generated`, `in_process`, `authorized`, `signed`, `approved`, `accepted`, `published`, `processed`, `observed`, `pending`, `failed`, `deleted`, `rejected`, `annulled`.
+
+La matriz actual implementada cubre el rol `creator` en los estados `new`, `edit`, `elaborated` y `readonly`. Los demás estados quedan tipados para futuras variantes por rol.
+
+### Estados oficiales de documento
+
+`siaf-flow-status-tag` muestra los estados oficiales del UI Kit:
+
+```html
+<siaf-flow-status-tag status="Elaborado" size="standard" />
+```
+
+Estados disponibles:
+
+| Tono | Estados |
+|---|---|
+| Default | Elaborado, Registrado |
+| Info | Verificado, Validado, Revisado, Generado, En proceso |
+| Success | Autorizado, Firmado, Aprobado, Aceptado, Publicado, Procesado |
+| Warning | Observado, Pendiente, Fallido |
+| Danger | Eliminado, Rechazado, Anulado |
+
+Regla de implementación:
+
+- El estado del documento controla el tag visual y el estado de negocio.
+- El estado del header controla botones, permisos y si la pantalla está en modo edición o lectura.
+- Si ambos coinciden, puede usarse un solo estado en el prompt; si no coinciden, deben indicarse por separado.
+
+### Guía para nuevos prompts
+
+Para solicitar nuevas pantallas o flujos, usar:
+
+```md
+Rol:
+Estado del documento:
+Estado del header:
+Pantalla o flujo:
+Referencia Figma:
+Botones visibles:
+Botones ocultos:
+Campos editables:
+Campos solo lectura:
+Acción al guardar / aprobar / observar / rechazar:
+```
+
+La guía completa está en `docs/plantilla-prompts-pantallas-siaf.md`.
 
 ---
 
@@ -191,20 +282,42 @@ Combinan múltiples componentes base para casos de uso recurrentes entre feature
 
 ```css
 /* Marca */
---sys-color-bg-brand-primary     /* Azul institucional #004899 */
---sys-color-bg-brand-accent      /* Rojo de acción #E6375D — botones primarios */
+--sys-color-bg-brand-primary
+--sys-color-bg-brand-accent
 
 /* Superficies */
 --sys-color-bg-surfaces-surface
 --sys-color-bg-surfaces-surface-high
 --sys-color-bg-surfaces-surface-lowest
 
+/* Estados de feedback */
+--sys-color-bg-feedback-dark-default
+--sys-color-bg-feedback-dark-info
+--sys-color-bg-feedback-dark-success
+--sys-color-bg-feedback-dark-warning
+--sys-color-bg-feedback-dark-danger
+--sys-color-bg-feedback-light-info
+--sys-color-bg-feedback-light-success
+--sys-color-bg-feedback-light-warning
+--sys-color-bg-feedback-light-danger
+
 /* Texto */
 --sys-color-text-neutral-high
 --sys-color-text-neutral-medium
 --sys-color-text-neutral-low
 --sys-color-text-neutral-disabled
+--sys-color-text-feedback-info
+--sys-color-text-feedback-success
+--sys-color-text-feedback-warning
+--sys-color-text-feedback-danger
 ```
+
+Reglas:
+
+- No usar hex directos en `src/app`.
+- No usar clases arbitrarias de Tailwind con valores hexadecimales en componentes.
+- Usar tokens semánticos `--sys-color-*` o aliases Tailwind existentes.
+- Si falta un token, actualizar los tokens desde Figma antes de hardcodear un valor.
 
 ### Alias Tailwind
 
