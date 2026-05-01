@@ -109,7 +109,7 @@ Gestión completa de asientos de ajuste contable con dos tabs:
 - **Documentos** — Tabla con columnas: Documento, Número, Tipo de acción, Estado, Sistema, Fecha, Entidad. Acciones: verificar selección, ver historial, crear documento.
 - **Registros** — Tabla con columnas: Estado, Doc. contable, Ámbito institucional, Código clase ajuste, Código detalle ajuste, Total débito, Total crédito.
 
-Funcionalidades: búsqueda, filtros predefinidos, filtros personalizados dinámicos, paginación configurable (10/25/50/100), selección múltiple, modal de confirmación y snackbar de resultado.
+Funcionalidades: búsqueda, filtros predefinidos, filtros personalizados dinámicos, paginación configurable (10/25/50/100), selección múltiple, ocultar/mostrar columnas desde sidepanel, modal de confirmación y snackbar de resultado.
 
 ### `/procesos/plan-cuentas-contables` — Documentos y registros
 Pantalla del clasificador **Plan de Cuentas Contables** con la misma estructura transversal de documentos y registros.
@@ -117,6 +117,7 @@ Pantalla del clasificador **Plan de Cuentas Contables** con la misma estructura 
 - **Documentos** — Grilla con `Solicitud de Cuentas Contables` y `Solicitud de carga masiva de plan de cuentas contables`.
 - **Crear documento** — La acción depende del documento: `Solicitud de Cuentas Contables` permite `Creación` y `Modificación`; la carga masiva permite solo `Creación`.
 - **Registros** — Tabla con código de cuenta, nombre de cuenta, nivel y naturaleza.
+- **Columnas** — El menú de tres puntos abre la opción `Ocultar o mostrar columnas`; al seleccionarla se muestra un sidepanel para configurar la visibilidad de la grilla activa.
 
 ---
 
@@ -180,7 +181,10 @@ Todos los componentes usan el selector prefix `siaf-` y `ChangeDetectionStrategy
 | AnnulmentModalComponent | `siaf-annulment-modal` | Modal especializado para anulación de documentos. |
 | ProcessMenuTreeComponent | `siaf-process-menu-tree` | Árbol de navegación de procesos del sistema. |
 | SolicitudePageLayoutComponent | `siaf-solicitude-page-layout` | Layout transversal para pantallas de solicitud. Centraliza breadcrumb, header, gaps y padding del formulario. |
+| SolicitudeFormCardComponent | `siaf-solicitude-form-card` | Card transversal de solicitud. Centraliza título, acciones, padding y gap interno. |
+| SolicitudeInfoCardComponent | `siaf-solicitude-info-card` | Card transversal para datos generales de una solicitud. |
 | SolicitudeHeaderComponent | `siaf-solicitude-header` | Cabecera de una solicitud. Soporta matriz `role` + `state` para controlar etiquetas, botones y modo lectura/edición. |
+| UploadSidePanelComponent | `siaf-upload-side-panel` | Sidenav transversal para cargar documentos desde acciones con ícono `file_upload`. |
 | FlowStatusTagComponent | `siaf-flow-status-tag` | Etiqueta de estado del documento basada en los estados oficiales del UI Kit y tokens CSS. |
 | SummaryCardComponent | `siaf-summary-card` | Tarjeta resumen de estado de proceso. |
 | TrayMenuComponent | `siaf-tray-menu` | Menú lateral de bandeja de documentos. |

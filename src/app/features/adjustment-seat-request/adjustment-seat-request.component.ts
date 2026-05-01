@@ -16,9 +16,9 @@ import { SolicitudeHeaderState } from '../../shared/ui/solicitude-header/solicit
 import { SolicitudePageLayoutComponent } from '../../shared/ui/solicitude-page-layout/solicitude-page-layout.component';
 import { SnackbarComponent, SnackbarVariant } from '../../shared/ui/snackbar/snackbar.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
-import { UploaderComponent } from '../../shared/ui/uploader/uploader.component';
 import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
 import { TrayMenuComponent } from '../../shared/ui/tray-menu/tray-menu.component';
+import { UploadSidePanelComponent } from '../../shared/ui/upload-side-panel/upload-side-panel.component';
 
 type ReadonlyField = {
   label: string;
@@ -96,12 +96,12 @@ type PeriodoGroup = {
     NavbarComponent,
     PaginationComponent,
     ProcessMenuTreeComponent,
-    UploaderComponent,
     SidebarComponent,
     SolicitudePageLayoutComponent,
     SnackbarComponent,
     TrayDocumentsViewComponent,
     TrayMenuComponent,
+    UploadSidePanelComponent,
     forwardRef(() => ReadonlyFieldComponent),
     forwardRef(() => TextAreaControlComponent)
   ],
@@ -536,51 +536,12 @@ type PeriodoGroup = {
       </siaf-solicitude-page-layout>
       }
 
-      <!-- Panel cargar documento de sustento (420px desde la derecha) -->
-      @if (uploadPanelOpen()) {
-        <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="upload-panel-title" (click)="uploadPanelOpen.set(false)">
-          <aside class="absolute bottom-0 right-0 top-0 flex w-full max-w-[420px] flex-col overflow-hidden bg-surface shadow-[0_16px_22px_rgba(0,0,0,0.14),0_6px_30px_rgba(0,0,0,0.12),0_8px_10px_rgba(0,0,0,0.2)] rounded-siaf-md" (click)="$event.stopPropagation()">
-
-            <!-- Header -->
-            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
-              <h2 id="upload-panel-title" class="m-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Cargar Documento de Sustento</h2>
-              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Cerrar" (click)="uploadPanelOpen.set(false)">
-                <siaf-icon name="close" [size]="24" />
-              </button>
-            </header>
-
-            <!-- Cuerpo -->
-            <div class="min-h-0 flex-1 overflow-y-auto bg-surface px-siaf-xl py-siaf-md">
-              <div class="flex flex-col gap-siaf-md">
-
-                <p class="m-0 text-sm leading-normal text-text">
-                  Sube un archivo .PDF en el formato correcto.
-                </p>
-
-                <siaf-uploader
-                  accept=".pdf"
-                  hint="Se permiten archivos de 10 MB como máximo"
-                  [maxSizeMb]="10"
-                  (fileSelected)="uploadedFile.set($event)"
-                  (allDone)="uploadedFile.set($event[0])"
-                />
-
-                <p class="m-0 truncate text-sm text-text">Solo admite archivos .pdf</p>
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="flex shrink-0 items-center justify-end gap-siaf-xs border-t border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-sm">
-              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] px-siaf-md py-siaf-xs text-sm font-medium text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" (click)="uploadPanelOpen.set(false)">
-                Cancelar
-              </button>
-              <siaf-button variant="primary" size="md" [disabled]="!uploadedFile()" (click)="uploadPanelOpen.set(false)">
-                Aceptar
-              </siaf-button>
-            </div>
-          </aside>
-        </section>
-      }
+      <siaf-upload-side-panel
+        [open]="uploadPanelOpen()"
+        (closed)="uploadPanelOpen.set(false)"
+        (fileSelected)="uploadedFile.set($event)"
+        (confirmed)="onUploadConfirmed($event)"
+      />
 
       <!-- Panel seleccionar código de detalle de ajuste -->
       @if (detalleAjustePanelOpen()) {
@@ -1217,6 +1178,11 @@ export class AdjustmentSeatRequestComponent {
     if (bytes < 1024) return `${bytes}B`;
     if (bytes < 1048576) return `${Math.round(bytes / 1024)}kb`;
     return `${(bytes / 1048576).toFixed(1)}MB`;
+  }
+
+  onUploadConfirmed(file: File): void {
+    this.uploadedFile.set(file);
+    this.uploadPanelOpen.set(false);
   }
 
   onDragOver(event: DragEvent): void {

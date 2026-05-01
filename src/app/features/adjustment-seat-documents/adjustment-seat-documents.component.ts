@@ -28,6 +28,19 @@ type DocumentRow = {
   system: string;
   date: string;
   entity: string;
+  creator?: string;
+  subject?: string;
+  catId?: string;
+  entityCode?: string;
+  requesterArea?: string;
+  fileNumber?: string;
+  evaluationDate?: string;
+  evaluationUser?: string;
+  approvalDate?: string;
+  approvalUser?: string;
+  subdocumentCount?: string;
+  accountingStatus?: string;
+  accountingDate?: string;
 };
 
 const ADJUSTMENT_SEAT_PROCESS_ID = 'registro-asiento-ajuste';
@@ -75,6 +88,13 @@ type AppliedCustomFilter = {
   campoLabel: string;
   condicion: string;
   valor: string;
+};
+
+type ColumnOption = {
+  key: string;
+  label: string;
+  visibility: 'visible' | 'hidden' | 'internal';
+  group: 'default' | 'more' | 'internal';
 };
 
 @Component({
@@ -240,7 +260,7 @@ type AppliedCustomFilter = {
                 <div class="flex shrink-0 items-center justify-end gap-siaf-xs">
                   <div class="relative">
                     <button
-                      class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]"
+                      class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]"
                       type="button"
                       aria-label="Campos"
                       [class.bg-surface-muted]="fieldsMenuOpen"
@@ -268,7 +288,7 @@ type AppliedCustomFilter = {
                   </div>
                   <div class="relative">
                     <button
-                      class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]"
+                      class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]"
                       type="button"
                       aria-label="Favorito"
                       [class.bg-surface-muted]="favoriteMenuOpen"
@@ -293,9 +313,29 @@ type AppliedCustomFilter = {
                       </div>
                     }
                   </div>
-                  <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Mas opciones">
-                    <siaf-icon name="more_vert" [size]="24" />
-                  </button>
+                  <div class="relative">
+                    <button
+                      class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]"
+                      type="button"
+                      aria-label="Mas opciones"
+                      [class.bg-surface-muted]="moreOptionsMenuOpen"
+                      (click)="toggleMoreOptionsMenu()"
+                    >
+                      <siaf-icon name="more_vert" [size]="24" />
+                    </button>
+
+                    @if (moreOptionsMenuOpen) {
+                      <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar mas opciones" (click)="closeMoreOptionsMenu()"></button>
+                      <div
+                        class="absolute right-0 top-12 z-30 w-[280px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]"
+                        (click)="$event.stopPropagation()"
+                      >
+                        <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="openColumnPanel()">
+                          Ocultar o mostrar columnas
+                        </button>
+                      </div>
+                    }
+                  </div>
                 </div>
               </div>
 
@@ -397,7 +437,7 @@ type AppliedCustomFilter = {
                   </button>
                 }
                 <button
-                  class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]"
+                  class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]"
                   type="button"
                   aria-label="Agregar filtro"
                   [class.bg-surface-muted]="customFilterOpen"
@@ -420,18 +460,29 @@ type AppliedCustomFilter = {
 
             @if (activeTab === 'documents') {
               <div class="min-w-0 overflow-x-auto">
-                <table class="w-full min-w-[1010px] border-collapse text-left text-sm">
+                <table class="w-full min-w-[2360px] border-collapse text-left text-sm">
                   <thead>
-                    <tr class="bg-[rgba(32,32,32,0.12)] text-[10px] font-bold uppercase text-text">
+                    <tr class="bg-surface-high text-[10px] font-bold uppercase text-text">
                       <th class="w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
-                      <th class="w-[260px] px-siaf-md py-siaf-sm">Documento</th>
-                      <th class="w-[100px] px-siaf-md py-siaf-sm">Número</th>
-                      <th class="w-[130px] px-siaf-md py-siaf-sm">Tipo de acción</th>
-                      <th class="w-[110px] px-siaf-md py-siaf-sm">Estado</th>
-                      <th class="w-[120px] px-siaf-md py-siaf-sm">Sistema</th>
-                      <th class="w-[130px] px-siaf-md py-siaf-sm">Fecha de re...</th>
-                      <th class="w-[280px] px-siaf-md py-siaf-sm">Entidad</th>
-                      <th class="sticky right-0 w-14 rounded-r-siaf-sm bg-[rgba(32,32,32,0.12)] px-siaf-sm py-siaf-sm"></th>
+                      @if (isColumnVisible('document')) { <th class="w-[360px] px-siaf-md py-siaf-sm">Documento</th> }
+                      @if (isColumnVisible('number')) { <th class="w-[140px] px-siaf-md py-siaf-sm">Número</th> }
+                      @if (isColumnVisible('actionType')) { <th class="w-[210px] px-siaf-md py-siaf-sm">Tipo de Operación</th> }
+                      @if (isColumnVisible('status')) { <th class="w-[150px] px-siaf-md py-siaf-sm">Estado</th> }
+                      @if (isColumnVisible('system')) { <th class="w-[260px] px-siaf-md py-siaf-sm">Sistemas Nacionales</th> }
+                      @if (isColumnVisible('date')) { <th class="w-[190px] px-siaf-md py-siaf-sm">Fecha de registro</th> }
+                      @if (isColumnVisible('creator')) { <th class="w-[210px] px-siaf-md py-siaf-sm">Creador</th> }
+                      @if (isColumnVisible('subject')) { <th class="w-[280px] px-siaf-md py-siaf-sm">Asunto/Motivo</th> }
+                      @if (isColumnVisible('catId')) { <th class="w-[190px] px-siaf-md py-siaf-sm">ID CAT CLAS Y CAT</th> }
+                      @if (isColumnVisible('entityCode')) { <th class="w-[180px] px-siaf-md py-siaf-sm">Código Entidad</th> }
+                      @if (isColumnVisible('requesterArea')) { <th class="w-[240px] px-siaf-md py-siaf-sm">Area Solicitante</th> }
+                      @if (isColumnVisible('entity')) { <th class="w-[360px] px-siaf-md py-siaf-sm">Entidad</th> }
+                      @if (isColumnVisible('fileNumber')) { <th class="w-[180px] px-siaf-md py-siaf-sm">Expediente</th> }
+                      @if (isColumnVisible('evaluationDate')) { <th class="w-[210px] px-siaf-md py-siaf-sm">Fecha de evaluación</th> }
+                      @if (isColumnVisible('evaluationUser')) { <th class="w-[240px] px-siaf-md py-siaf-sm">Usuario de evaluación</th> }
+                      @if (isColumnVisible('approvalDate')) { <th class="w-[210px] px-siaf-md py-siaf-sm">Fecha de aprobación</th> }
+                      @if (isColumnVisible('approvalUser')) { <th class="w-[240px] px-siaf-md py-siaf-sm">Usuario de aprobación</th> }
+                      @if (isColumnVisible('subdocumentCount')) { <th class="w-[240px] px-siaf-md py-siaf-sm">Cantidad de Subdocumentos</th> }
+                      <th class="sticky right-0 w-14 rounded-r-siaf-sm border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm shadow-[-4px_0_8px_rgba(0,0,0,0.08)]"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -445,19 +496,34 @@ type AppliedCustomFilter = {
                             (change)="toggleDocumentSelection(row, $event)"
                           />
                         </td>
-                        <td class="max-w-[260px] px-siaf-md py-siaf-sm">
-                          <a class="line-clamp-2 text-sm leading-normal text-text hover:text-brand-primary" routerLink="/procesos/registro-asiento-ajuste/formulario">{{ row.document }}</a>
-                        </td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.number }}</td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.actionType }}</td>
-                        <td class="px-siaf-md py-siaf-sm">
-                          <span class="inline-flex min-h-6 items-center rounded-siaf-sm px-siaf-xs text-xs text-white" [class.bg-[var(--sys-color-bg-status-flow-status-elaborado)]]="row.status === 'Elaborado'" [class.bg-[var(--sys-color-bg-status-flow-status-verificado)]]="row.status === 'Verificado'">{{ row.status }}</span>
-                        </td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.system }}</td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.date }}</td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.entity }}</td>
-                        <td class="sticky right-0 bg-surface px-siaf-sm py-siaf-xs shadow-[-4px_0_8px_rgba(0,0,0,0.08)]">
-                          <button class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Historial de documento" title="Historial de documento" (click)="openDocumentHistory(row)">
+                        @if (isColumnVisible('document')) {
+                          <td class="max-w-[360px] px-siaf-md py-siaf-sm">
+                            <a class="line-clamp-2 text-sm leading-normal text-text hover:text-brand-primary" routerLink="/procesos/registro-asiento-ajuste/formulario">{{ row.document }}</a>
+                          </td>
+                        }
+                        @if (isColumnVisible('number')) { <td class="px-siaf-md py-siaf-sm">{{ row.number }}</td> }
+                        @if (isColumnVisible('actionType')) { <td class="px-siaf-md py-siaf-sm">{{ row.actionType }}</td> }
+                        @if (isColumnVisible('status')) {
+                          <td class="px-siaf-md py-siaf-sm">
+                            <span class="inline-flex min-h-6 items-center rounded-siaf-sm px-siaf-xs text-xs text-white" [class.bg-[var(--sys-color-bg-status-flow-status-elaborado)]]="row.status === 'Elaborado'" [class.bg-[var(--sys-color-bg-status-flow-status-verificado)]]="row.status === 'Verificado'">{{ row.status }}</span>
+                          </td>
+                        }
+                        @if (isColumnVisible('system')) { <td class="px-siaf-md py-siaf-sm">{{ row.system }}</td> }
+                        @if (isColumnVisible('date')) { <td class="px-siaf-md py-siaf-sm">{{ row.date }}</td> }
+                        @if (isColumnVisible('creator')) { <td class="px-siaf-md py-siaf-sm">{{ row.creator }}</td> }
+                        @if (isColumnVisible('subject')) { <td class="px-siaf-md py-siaf-sm">{{ row.subject }}</td> }
+                        @if (isColumnVisible('catId')) { <td class="px-siaf-md py-siaf-sm">{{ row.catId }}</td> }
+                        @if (isColumnVisible('entityCode')) { <td class="px-siaf-md py-siaf-sm">{{ row.entityCode }}</td> }
+                        @if (isColumnVisible('requesterArea')) { <td class="px-siaf-md py-siaf-sm">{{ row.requesterArea }}</td> }
+                        @if (isColumnVisible('entity')) { <td class="px-siaf-md py-siaf-sm">{{ row.entity }}</td> }
+                        @if (isColumnVisible('fileNumber')) { <td class="px-siaf-md py-siaf-sm">{{ row.fileNumber }}</td> }
+                        @if (isColumnVisible('evaluationDate')) { <td class="px-siaf-md py-siaf-sm">{{ row.evaluationDate }}</td> }
+                        @if (isColumnVisible('evaluationUser')) { <td class="px-siaf-md py-siaf-sm">{{ row.evaluationUser }}</td> }
+                        @if (isColumnVisible('approvalDate')) { <td class="px-siaf-md py-siaf-sm">{{ row.approvalDate }}</td> }
+                        @if (isColumnVisible('approvalUser')) { <td class="px-siaf-md py-siaf-sm">{{ row.approvalUser }}</td> }
+                        @if (isColumnVisible('subdocumentCount')) { <td class="px-siaf-md py-siaf-sm">{{ row.subdocumentCount }}</td> }
+                        <td class="sticky right-0 border-l border-[var(--sys-color-divider-strong)] bg-surface px-siaf-sm py-siaf-xs shadow-[-4px_0_8px_rgba(0,0,0,0.08)]">
+                          <button class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]" type="button" aria-label="Historial de documento" title="Historial de documento" (click)="openDocumentHistory(row)">
                             <siaf-icon name="history" [size]="20" />
                           </button>
                         </td>
@@ -468,38 +534,40 @@ type AppliedCustomFilter = {
               </div>
             } @else {
               <div class="min-w-0 overflow-x-auto">
-                <table class="w-full min-w-[1010px] border-collapse text-left text-sm">
+                <table class="w-full min-w-[1480px] border-collapse text-left text-sm">
                   <thead>
-                    <tr class="bg-[rgba(32,32,32,0.12)] text-[10px] font-bold uppercase text-text">
+                    <tr class="bg-surface-high text-[10px] font-bold uppercase text-text">
                       <th class="w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
-                      <th class="w-[110px] px-siaf-md py-siaf-sm">Estado</th>
-                      <th class="w-[150px] px-siaf-md py-siaf-sm">Doc conta.</th>
-                      <th class="w-[180px] px-siaf-md py-siaf-sm">Ámbito institucional</th>
-                      <th class="w-[190px] px-siaf-md py-siaf-sm">Código de clase de ajuste</th>
-                      <th class="w-[190px] px-siaf-md py-siaf-sm">Código de detalle de a...</th>
-                      <th class="w-[110px] px-siaf-md py-siaf-sm text-right">Total d...</th>
-                      <th class="w-[110px] px-siaf-md py-siaf-sm text-right">Total h...</th>
-                      <th class="sticky right-0 w-14 rounded-r-siaf-sm bg-[rgba(32,32,32,0.12)] px-siaf-sm py-siaf-sm"></th>
+                      @if (isColumnVisible('status')) { <th class="w-[150px] px-siaf-md py-siaf-sm">Estado</th> }
+                      @if (isColumnVisible('accountingDocument')) { <th class="w-[210px] px-siaf-md py-siaf-sm">Doc contable</th> }
+                      @if (isColumnVisible('institutionalScope')) { <th class="w-[240px] px-siaf-md py-siaf-sm">Ámbito institucional</th> }
+                      @if (isColumnVisible('adjustmentClassCode')) { <th class="w-[280px] px-siaf-md py-siaf-sm">Código de clase de ajuste</th> }
+                      @if (isColumnVisible('adjustmentDetailCode')) { <th class="w-[300px] px-siaf-md py-siaf-sm">Código de detalle de ajuste</th> }
+                      @if (isColumnVisible('totalDebit')) { <th class="w-[160px] px-siaf-md py-siaf-sm text-right">Total debe</th> }
+                      @if (isColumnVisible('totalCredit')) { <th class="w-[160px] px-siaf-md py-siaf-sm text-right">Total haber</th> }
+                      <th class="sticky right-0 w-14 rounded-r-siaf-sm border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm shadow-[-4px_0_8px_rgba(0,0,0,0.08)]"></th>
                     </tr>
                   </thead>
                   <tbody>
                     @for (row of recordRows; track row.accountingDocument) {
                       <tr class="h-12 border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-surface hover:bg-[rgba(1,72,153,0.04)]">
                         <td class="px-siaf-sm py-siaf-xs"><input class="size-4 accent-brand-primary" type="checkbox" [checked]="row.selected" /></td>
-                        <td class="px-siaf-md py-siaf-sm">
-                          <span class="inline-flex min-h-6 items-center gap-siaf-xs rounded-siaf-sm border border-[var(--sys-color-border-feedback-info)] bg-[var(--sys-color-bg-status-record-status-activo)] px-siaf-xs text-[var(--sys-color-text-feedback-info)]">
-                            <siaf-icon name="check_circle" [size]="16" />
-                            {{ row.status }}
-                          </span>
-                        </td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.accountingDocument }}</td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.institutionalScope }}</td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.adjustmentClassCode }}</td>
-                        <td class="px-siaf-md py-siaf-sm">{{ row.adjustmentDetailCode }}</td>
-                        <td class="px-siaf-md py-siaf-sm text-right">{{ row.totalDebit }}</td>
-                        <td class="px-siaf-md py-siaf-sm text-right">{{ row.totalCredit }}</td>
-                        <td class="sticky right-0 bg-surface px-siaf-sm py-siaf-xs shadow-[-4px_0_8px_rgba(0,0,0,0.08)]">
-                          <button class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Historial de documento" title="Historial de documento" (click)="openRecordHistory(row)">
+                        @if (isColumnVisible('status')) {
+                          <td class="px-siaf-md py-siaf-sm">
+                            <span class="inline-flex min-h-6 items-center gap-siaf-xs rounded-siaf-sm border border-[var(--sys-color-border-feedback-info)] bg-[var(--sys-color-bg-status-record-status-activo)] px-siaf-xs text-[var(--sys-color-text-feedback-info)]">
+                              <siaf-icon name="check_circle" [size]="16" />
+                              {{ row.status }}
+                            </span>
+                          </td>
+                        }
+                        @if (isColumnVisible('accountingDocument')) { <td class="px-siaf-md py-siaf-sm">{{ row.accountingDocument }}</td> }
+                        @if (isColumnVisible('institutionalScope')) { <td class="px-siaf-md py-siaf-sm">{{ row.institutionalScope }}</td> }
+                        @if (isColumnVisible('adjustmentClassCode')) { <td class="px-siaf-md py-siaf-sm">{{ row.adjustmentClassCode }}</td> }
+                        @if (isColumnVisible('adjustmentDetailCode')) { <td class="px-siaf-md py-siaf-sm">{{ row.adjustmentDetailCode }}</td> }
+                        @if (isColumnVisible('totalDebit')) { <td class="px-siaf-md py-siaf-sm text-right">{{ row.totalDebit }}</td> }
+                        @if (isColumnVisible('totalCredit')) { <td class="px-siaf-md py-siaf-sm text-right">{{ row.totalCredit }}</td> }
+                        <td class="sticky right-0 border-l border-[var(--sys-color-divider-strong)] bg-surface px-siaf-sm py-siaf-xs shadow-[-4px_0_8px_rgba(0,0,0,0.08)]">
+                          <button class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]" type="button" aria-label="Historial de documento" title="Historial de documento" (click)="openRecordHistory(row)">
                             <siaf-icon name="history" [size]="20" />
                           </button>
                         </td>
@@ -542,6 +610,62 @@ type AppliedCustomFilter = {
         </section>
       </section>
       }
+
+      @if (columnPanelOpen) {
+        <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="columns-panel-title" (click)="closeColumnPanel()">
+          <aside class="absolute bottom-0 right-0 top-0 flex w-full max-w-[420px] flex-col overflow-hidden bg-surface shadow-siaf-lg" (click)="$event.stopPropagation()">
+            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-default)] px-siaf-xl">
+              <h2 id="columns-panel-title" class="m-0 flex-1 text-base font-bold uppercase tracking-[0.02px] text-text">Ocultar o mostrar columnas</h2>
+              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]" type="button" aria-label="Cerrar" (click)="closeColumnPanel()">
+                <siaf-icon name="close" [size]="24" />
+              </button>
+            </header>
+
+            <div class="min-h-0 flex-1 overflow-y-auto border-y border-[var(--sys-color-divider-strong)] bg-[var(--sys-color-bg-surfaces-surface-highest)] px-siaf-xl py-siaf-md">
+              <div class="flex flex-col gap-siaf-lg">
+                <label class="flex min-h-12 cursor-pointer items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm uppercase text-[var(--sys-color-text-neutral-medium)]">
+                  <input class="size-4 accent-brand-primary" type="checkbox" [checked]="allDraftColumnsSelected" (change)="toggleAllDraftColumns($event)" />
+                  Seleccionar todo
+                </label>
+                <section class="grid gap-siaf-xs">
+                  <h3 class="m-0 px-[18px] text-xs font-normal uppercase text-[var(--sys-color-text-neutral-medium)]">Predeterminado</h3>
+                  @for (column of defaultColumnOptions; track column.key) {
+                    <label class="flex min-h-12 cursor-pointer items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted">
+                      <input class="size-4 accent-brand-primary" type="checkbox" [checked]="isDraftColumnVisible(column.key)" (change)="toggleDraftColumnVisibility(column.key, $event)" />
+                      {{ column.label }}
+                    </label>
+                  }
+                </section>
+                <section class="grid gap-siaf-xs">
+                  <h3 class="m-0 px-[18px] text-xs font-normal uppercase text-[var(--sys-color-text-neutral-medium)]">Más columnas</h3>
+                  @for (column of moreColumnOptions; track column.key) {
+                    <label class="flex min-h-12 cursor-pointer items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted">
+                      <input class="size-4 accent-brand-primary" type="checkbox" [checked]="isDraftColumnVisible(column.key)" (change)="toggleDraftColumnVisibility(column.key, $event)" />
+                      {{ column.label }}
+                    </label>
+                  }
+                </section>
+                @if (internalColumnOptions.length) {
+                  <section class="grid gap-siaf-xs">
+                    <h3 class="m-0 px-[18px] text-xs font-normal uppercase text-[var(--sys-color-text-neutral-medium)]">Interno</h3>
+                    @for (column of internalColumnOptions; track column.key) {
+                      <label class="flex min-h-12 items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm text-text-muted">
+                        <input class="size-4" type="checkbox" disabled />
+                        {{ column.label }}
+                      </label>
+                    }
+                  </section>
+                }
+              </div>
+            </div>
+
+            <footer class="flex shrink-0 items-center justify-end gap-siaf-xs px-siaf-md py-siaf-sm">
+              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] px-siaf-md py-siaf-xs text-sm font-medium text-text transition hover:bg-surface-muted" type="button" (click)="closeColumnPanel()">Cancelar</button>
+              <siaf-button variant="primary" size="md" [disabled]="!columnsPanelDirty" (click)="applyColumnPanel()">Aplicar</siaf-button>
+            </footer>
+          </aside>
+        </section>
+      }
     </main>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -553,6 +677,8 @@ export class AdjustmentSeatDocumentsComponent {
   customFilterOpen = false;
   fieldsMenuOpen = false;
   favoriteMenuOpen = false;
+  moreOptionsMenuOpen = false;
+  columnPanelOpen = false;
   statusFilterMenuOpen = false;
   selectedStatusFilter = '';
   actionTypeFilterMenuOpen = false;
@@ -616,6 +742,43 @@ export class AdjustmentSeatDocumentsComponent {
     { label: 'Entidad' }
   ];
 
+  readonly documentColumnOptions: ColumnOption[] = [
+    { key: 'document', label: 'Documento', visibility: 'visible', group: 'default' },
+    { key: 'number', label: 'Número', visibility: 'visible', group: 'default' },
+    { key: 'actionType', label: 'Tipo de Operación', visibility: 'visible', group: 'default' },
+    { key: 'status', label: 'Estado', visibility: 'visible', group: 'default' },
+    { key: 'system', label: 'Sistemas Nacionales', visibility: 'visible', group: 'default' },
+    { key: 'date', label: 'Fecha de registro', visibility: 'visible', group: 'default' },
+    { key: 'creator', label: 'Creador', visibility: 'hidden', group: 'more' },
+    { key: 'subject', label: 'Asunto/Motivo', visibility: 'hidden', group: 'more' },
+    { key: 'catId', label: 'ID CAT CLAS Y CAT', visibility: 'visible', group: 'more' },
+    { key: 'entityCode', label: 'Código Entidad', visibility: 'visible', group: 'more' },
+    { key: 'requesterArea', label: 'Area Solicitante', visibility: 'visible', group: 'more' },
+    { key: 'entity', label: 'Entidad', visibility: 'visible', group: 'more' },
+    { key: 'fileNumber', label: 'Expediente', visibility: 'hidden', group: 'more' },
+    { key: 'evaluationDate', label: 'Fecha de evaluación', visibility: 'hidden', group: 'more' },
+    { key: 'evaluationUser', label: 'Usuario de evaluación', visibility: 'hidden', group: 'more' },
+    { key: 'approvalDate', label: 'Fecha de aprobación', visibility: 'hidden', group: 'more' },
+    { key: 'approvalUser', label: 'Usuario de aprobación', visibility: 'hidden', group: 'more' },
+    { key: 'subdocumentCount', label: 'Cantidad de Subdocumentos', visibility: 'visible', group: 'more' },
+    { key: 'accountingStatus', label: 'Estado de Contabilización', visibility: 'internal', group: 'internal' },
+    { key: 'accountingDate', label: 'Fecha de contabilización', visibility: 'internal', group: 'internal' }
+  ];
+
+  readonly recordColumnOptions: ColumnOption[] = [
+    { key: 'status', label: 'Estado', visibility: 'visible', group: 'default' },
+    { key: 'accountingDocument', label: 'Doc conta.', visibility: 'visible', group: 'default' },
+    { key: 'institutionalScope', label: 'Ámbito institucional', visibility: 'visible', group: 'default' },
+    { key: 'adjustmentClassCode', label: 'Código de clase de ajuste', visibility: 'visible', group: 'default' },
+    { key: 'adjustmentDetailCode', label: 'Código de detalle de ajuste', visibility: 'visible', group: 'default' },
+    { key: 'totalDebit', label: 'Total debe', visibility: 'visible', group: 'default' },
+    { key: 'totalCredit', label: 'Total haber', visibility: 'visible', group: 'default' }
+  ];
+
+  hiddenDocumentColumns = new Set(this.documentColumnOptions.filter((column) => column.visibility !== 'visible').map((column) => column.key));
+  hiddenRecordColumns = new Set(this.recordColumnOptions.filter((column) => column.visibility !== 'visible').map((column) => column.key));
+  draftHiddenColumns = new Set<string>();
+
   constructor(private readonly router: Router) {}
 
   readonly breadcrumbs: BreadcrumbItem[] = [
@@ -624,10 +787,10 @@ export class AdjustmentSeatDocumentsComponent {
   ];
 
   readonly rows: DocumentRow[] = [
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0004', actionType: 'Creación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '15/06/2024', entity: '009 - Ministerio de Economía y Finanzas' },
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0003', actionType: 'Creación', status: 'Verificado', system: 'Sistema Nacional de Contabilidad', date: '20/01/2024', entity: '009 - Ministerio de Economía y Finanzas' },
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0002', actionType: 'Creación', status: 'Verificado', system: 'Sistema Nacional de Contabilidad', date: '15/12/2023', entity: '009 - Ministerio de Economía y Finanzas' },
-    { document: 'Solicitud de registro de asiento de ajuste', number: '0001', actionType: 'Creación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '20/11/2023', entity: '009 - Ministerio de Economía y Finanzas' }
+    { document: 'Solicitud de registro de asiento de ajuste', number: '0004', actionType: 'Creación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '15/06/2024', entity: '009 - Ministerio de Economía y Finanzas', creator: 'Juan Doe', subject: 'Registro de ajuste contable', catId: 'CA', entityCode: '009', requesterArea: 'DGCP', fileNumber: 'EXP-0004', evaluationDate: '16/06/2024', evaluationUser: 'Evaluador 1', approvalDate: '17/06/2024', approvalUser: 'Aprobador 1', subdocumentCount: '2', accountingStatus: 'Pendiente', accountingDate: '18/06/2024' },
+    { document: 'Solicitud de registro de asiento de ajuste', number: '0003', actionType: 'Creación', status: 'Verificado', system: 'Sistema Nacional de Contabilidad', date: '20/01/2024', entity: '009 - Ministerio de Economía y Finanzas', creator: 'Maria Doe', subject: 'Verificación de asiento', catId: 'CA', entityCode: '009', requesterArea: 'DGCP', fileNumber: 'EXP-0003', evaluationDate: '21/01/2024', evaluationUser: 'Evaluador 2', approvalDate: '22/01/2024', approvalUser: 'Aprobador 2', subdocumentCount: '1', accountingStatus: 'Procesado', accountingDate: '23/01/2024' },
+    { document: 'Solicitud de registro de asiento de ajuste', number: '0002', actionType: 'Creación', status: 'Verificado', system: 'Sistema Nacional de Contabilidad', date: '15/12/2023', entity: '009 - Ministerio de Economía y Finanzas', creator: 'Juan Doe', subject: 'Ajuste de saldos iniciales', catId: 'CA', entityCode: '009', requesterArea: 'DGCP', fileNumber: 'EXP-0002', evaluationDate: '16/12/2023', evaluationUser: 'Evaluador 1', approvalDate: '17/12/2023', approvalUser: 'Aprobador 1', subdocumentCount: '3', accountingStatus: 'Procesado', accountingDate: '18/12/2023' },
+    { document: 'Solicitud de registro de asiento de ajuste', number: '0001', actionType: 'Creación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '20/11/2023', entity: '009 - Ministerio de Economía y Finanzas', creator: 'Maria Doe', subject: 'Apertura de asiento de ajuste', catId: 'CA', entityCode: '009', requesterArea: 'DGCP', fileNumber: 'EXP-0001', evaluationDate: '21/11/2023', evaluationUser: 'Evaluador 2', approvalDate: '22/11/2023', approvalUser: 'Aprobador 2', subdocumentCount: '2', accountingStatus: 'Pendiente', accountingDate: '23/11/2023' }
   ];
 
   readonly statusFilterOptions: DocumentRow['status'][] = ['Elaborado', 'Verificado'];
@@ -663,6 +826,43 @@ export class AdjustmentSeatDocumentsComponent {
 
   get canVerifySelectedDocuments(): boolean {
     return this.rows.some((row) => row.selected && row.status === 'Elaborado');
+  }
+
+  get activeColumnOptions(): ColumnOption[] {
+    return this.activeTab === 'documents' ? this.documentColumnOptions : this.recordColumnOptions;
+  }
+
+  get selectableColumnOptions(): ColumnOption[] {
+    return this.activeColumnOptions.filter((column) => column.visibility !== 'internal');
+  }
+
+  get defaultColumnOptions(): ColumnOption[] {
+    return this.selectableColumnOptions.filter((column) => column.group === 'default');
+  }
+
+  get moreColumnOptions(): ColumnOption[] {
+    return this.selectableColumnOptions.filter((column) => column.group === 'more');
+  }
+
+  get internalColumnOptions(): ColumnOption[] {
+    return this.activeColumnOptions.filter((column) => column.visibility === 'internal');
+  }
+
+  get visibleColumnCount(): number {
+    return this.activeColumnOptions.filter((column) => this.isColumnVisible(column.key)).length;
+  }
+
+  get allDraftColumnsSelected(): boolean {
+    return this.selectableColumnOptions.every((column) => !this.draftHiddenColumns.has(column.key));
+  }
+
+  get columnsPanelDirty(): boolean {
+    const hiddenColumns = this.currentHiddenColumns;
+    return this.selectableColumnOptions.some((column) => hiddenColumns.has(column.key) !== this.draftHiddenColumns.has(column.key));
+  }
+
+  private get currentHiddenColumns(): Set<string> {
+    return this.activeTab === 'documents' ? this.hiddenDocumentColumns : this.hiddenRecordColumns;
   }
 
   get selectedElaboradoDocumentsCount(): number {
@@ -703,6 +903,7 @@ export class AdjustmentSeatDocumentsComponent {
   selectTab(tab: ActiveTab): void {
     this.activeTab = tab;
     this.page = 1;
+    this.closeMoreOptionsMenu();
   }
 
   toggleDocumentSelection(row: DocumentRow, event: Event): void {
@@ -869,6 +1070,75 @@ export class AdjustmentSeatDocumentsComponent {
     this.statusFilterMenuOpen = false;
     this.actionTypeFilterMenuOpen = false;
     this.fieldsMenuOpen = !this.fieldsMenuOpen;
+  }
+
+  toggleMoreOptionsMenu(): void {
+    this.closeFloatingPanels();
+    this.createDocumentPopoverOpen = false;
+    this.customFilterOpen = false;
+    this.fieldsMenuOpen = false;
+    this.favoriteMenuOpen = false;
+    this.statusFilterMenuOpen = false;
+    this.actionTypeFilterMenuOpen = false;
+    this.moreOptionsMenuOpen = !this.moreOptionsMenuOpen;
+  }
+
+  closeMoreOptionsMenu(): void {
+    this.moreOptionsMenuOpen = false;
+  }
+
+  isColumnVisible(columnKey: string): boolean {
+    const column = this.activeColumnOptions.find((option) => option.key === columnKey);
+    return column?.visibility !== 'internal' && !this.currentHiddenColumns.has(columnKey);
+  }
+
+  openColumnPanel(): void {
+    this.draftHiddenColumns = new Set(this.currentHiddenColumns);
+    this.moreOptionsMenuOpen = false;
+    this.columnPanelOpen = true;
+  }
+
+  closeColumnPanel(): void {
+    this.columnPanelOpen = false;
+  }
+
+  isDraftColumnVisible(columnKey: string): boolean {
+    return !this.draftHiddenColumns.has(columnKey);
+  }
+
+  toggleDraftColumnVisibility(columnKey: string, event: Event): void {
+    event.stopPropagation();
+
+    if (!this.draftHiddenColumns.has(columnKey) && this.selectableColumnOptions.filter((column) => !this.draftHiddenColumns.has(column.key)).length <= 1) {
+      (event.target as HTMLInputElement).checked = true;
+      return;
+    }
+
+    if (this.draftHiddenColumns.has(columnKey)) {
+      this.draftHiddenColumns.delete(columnKey);
+    } else {
+      this.draftHiddenColumns.add(columnKey);
+    }
+  }
+
+  toggleAllDraftColumns(event: Event): void {
+    if ((event.target as HTMLInputElement).checked) {
+      this.draftHiddenColumns = new Set<string>();
+      return;
+    }
+
+    const [, ...remainingColumns] = this.selectableColumnOptions;
+    this.draftHiddenColumns = new Set(remainingColumns.map((column) => column.key));
+  }
+
+  applyColumnPanel(): void {
+    if (this.activeTab === 'documents') {
+      this.hiddenDocumentColumns = new Set(this.draftHiddenColumns);
+    } else {
+      this.hiddenRecordColumns = new Set(this.draftHiddenColumns);
+    }
+
+    this.closeColumnPanel();
   }
 
   closeFieldsMenu(): void {

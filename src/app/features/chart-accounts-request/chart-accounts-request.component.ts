@@ -9,14 +9,12 @@ import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
 import { findProcessPathById, ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
+import { SolicitudeFormCardComponent } from '../../shared/ui/solicitude-form-card/solicitude-form-card.component';
+import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../shared/ui/solicitude-info-card/solicitude-info-card.component';
 import { SolicitudePageLayoutComponent } from '../../shared/ui/solicitude-page-layout/solicitude-page-layout.component';
 import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
 import { TrayMenuComponent } from '../../shared/ui/tray-menu/tray-menu.component';
-
-type ReadonlyField = {
-  label: string;
-  value: string;
-};
+import { UploadSidePanelComponent } from '../../shared/ui/upload-side-panel/upload-side-panel.component';
 
 const CHART_ACCOUNTS_PROCESS_ID = 'plan-cuentas-contables';
 const CHART_ACCOUNTS_PROCESS_ROUTE = '/procesos/plan-cuentas-contables';
@@ -45,9 +43,12 @@ const buildChartAccountsBreadcrumbs = (currentLabel: string): BreadcrumbItem[] =
     NavbarComponent,
     ProcessMenuTreeComponent,
     SidebarComponent,
+    SolicitudeFormCardComponent,
+    SolicitudeInfoCardComponent,
     SolicitudePageLayoutComponent,
     TrayDocumentsViewComponent,
-    TrayMenuComponent
+    TrayMenuComponent,
+    UploadSidePanelComponent
   ],
   template: `
     <main class="min-h-screen bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
@@ -109,36 +110,20 @@ const buildChartAccountsBreadcrumbs = (currentLabel: string): BreadcrumbItem[] =
           (returned)="goToDocuments()"
           (canceled)="goToDocuments()"
         >
-          <section class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
-            <div class="grid gap-siaf-xs">
-              @for (field of entityFields; track field.label) {
-                <div class="grid min-h-6 gap-siaf-xs md:grid-cols-[140px_1fr]">
-                  <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">{{ field.label }}</span>
-                  <strong class="min-w-0 text-sm font-bold leading-6 text-text">{{ field.value }}</strong>
-                </div>
-              }
-            </div>
-          </section>
+          <siaf-solicitude-info-card [fields]="entityFields" />
 
-          <section class="rounded-siaf-md bg-surface">
-            <header class="flex min-h-14 items-center justify-between gap-siaf-md px-siaf-lg pt-siaf-md">
-              <h2 class="m-0 text-base font-bold uppercase tracking-[0.02px] text-text">Lista de cuentas contables</h2>
+          <siaf-solicitude-form-card title="Lista de cuentas contables">
+            <ng-container card-actions>
               <siaf-button variant="accent" size="md" icon="add" [iconOnly]="true" ariaLabel="Crear registro de cuenta contable" />
-            </header>
+            </ng-container>
 
-            <div class="px-siaf-lg py-siaf-md">
-              <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">Por favor, haga clic en el botón (+) para crear una cuenta contable.</p>
-              </div>
+            <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+              <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">Por favor, haga clic en el botón (+) para crear una cuenta contable.</p>
             </div>
-          </section>
+          </siaf-solicitude-form-card>
 
-          <section class="rounded-siaf-md bg-surface">
-            <header class="flex min-h-14 items-center px-siaf-lg pt-siaf-md">
-              <h2 class="m-0 text-base font-bold uppercase tracking-[0.02px] text-text">Solicitud proveniente de entidad externa</h2>
-            </header>
-
-            <div class="flex flex-col gap-siaf-md px-siaf-lg py-siaf-md">
+          <siaf-solicitude-form-card title="Solicitud proveniente de entidad externa">
+            <section class="grid gap-siaf-md">
               <div class="flex flex-wrap items-center gap-siaf-md">
                 <h3 class="m-0 text-sm font-bold text-text">¿La solicitud proviene de una entidad externa?</h3>
                 <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
@@ -151,25 +136,18 @@ const buildChartAccountsBreadcrumbs = (currentLabel: string): BreadcrumbItem[] =
                 </label>
               </div>
 
-              <section class="grid gap-siaf-md">
-                <div class="flex min-h-10 items-center justify-between gap-siaf-md">
-                  <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar nombre de la entidad proveniente</h3>
-                  <siaf-button variant="accent" size="md" icon="search" [iconOnly]="true" ariaLabel="Buscar nombre de la entidad proveniente" [disabled]="externalOrigin() !== 'si'" />
-                </div>
+              <div class="flex min-h-10 items-center justify-between gap-siaf-md">
+                <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar nombre de la entidad proveniente</h3>
+                <siaf-button variant="accent" size="md" icon="search" [iconOnly]="true" ariaLabel="Buscar nombre de la entidad proveniente" [disabled]="externalOrigin() !== 'si'" />
+              </div>
 
-                <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                  <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ninguna Entidad. Haga clic en el botón para realizar una selección.</p>
-                </div>
-              </section>
-            </div>
-          </section>
+              <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ninguna Entidad. Haga clic en el botón para realizar una selección.</p>
+              </div>
+            </section>
+          </siaf-solicitude-form-card>
 
-          <section class="rounded-siaf-md bg-surface">
-            <header class="flex min-h-14 items-center px-siaf-lg pt-siaf-md">
-              <h2 class="m-0 text-base font-bold uppercase tracking-[0.02px] text-text">Justificación del sustento</h2>
-            </header>
-
-            <div class="flex flex-col gap-siaf-lg px-siaf-lg py-siaf-md">
+          <siaf-solicitude-form-card title="Justificación del sustento">
               <label class="flex min-h-[76px] flex-col gap-siaf-xxs">
                 <span class="sr-only">Justificación del requerimiento solicitado</span>
                 <textarea
@@ -185,17 +163,37 @@ const buildChartAccountsBreadcrumbs = (currentLabel: string): BreadcrumbItem[] =
               <div class="flex flex-col gap-siaf-xs">
                 <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                   <h3 class="m-0 text-sm font-bold uppercase text-text">Documento de sustento</h3>
-                  <siaf-button variant="accent" size="md" icon="file_upload" [iconOnly]="true" ariaLabel="Subir documento de sustento" />
+                  <siaf-button variant="accent" size="md" icon="file_upload" [iconOnly]="true" ariaLabel="Subir documento de sustento" (click)="uploadPanelOpen.set(true)" />
                 </div>
 
-                <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                  <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">No se han adjuntado archivos. Por favor, haga clic en el botón para subir un archivo.</p>
-                </div>
+                @if (uploadedFile()) {
+                  <div class="flex items-center gap-siaf-sm rounded-siaf-md border border-border bg-surface p-siaf-md">
+                    <siaf-icon name="description" [size]="32" class="shrink-0 text-text-muted" />
+                    <span class="min-w-0 flex-1 truncate text-sm font-bold text-text">{{ uploadedFile()!.name }}</span>
+                    <span class="shrink-0 text-xs text-text-muted">{{ formatFileSize(uploadedFile()!.size) }}</span>
+                    <button class="inline-flex size-6 items-center justify-center rounded-siaf-sm transition hover:bg-surface-muted" type="button" aria-label="Reemplazar archivo" (click)="uploadPanelOpen.set(true)">
+                      <siaf-icon name="repeat" [size]="24" class="text-text-muted" />
+                    </button>
+                    <button class="inline-flex size-6 items-center justify-center rounded-siaf-sm transition hover:bg-surface-muted" type="button" aria-label="Quitar archivo" (click)="uploadedFile.set(null)">
+                      <siaf-icon name="cancel" [size]="24" class="text-text-muted" />
+                    </button>
+                  </div>
+                } @else {
+                  <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                    <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">No se han adjuntado archivos. Por favor, haga clic en el botón para subir un archivo.</p>
+                  </div>
+                }
               </div>
-            </div>
-          </section>
+          </siaf-solicitude-form-card>
         </siaf-solicitude-page-layout>
       }
+
+      <siaf-upload-side-panel
+        [open]="uploadPanelOpen()"
+        (closed)="uploadPanelOpen.set(false)"
+        (confirmed)="onUploadConfirmed($event)"
+      />
+
     </main>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -210,13 +208,15 @@ export class ChartAccountsRequestComponent {
   sidebarCreateDocumentOpen = false;
   readonly externalOrigin = signal<'si' | 'no' | ''>('');
   readonly justification = signal('');
+  readonly uploadPanelOpen = signal(false);
+  readonly uploadedFile = signal<File | null>(null);
 
   readonly breadcrumbs: BreadcrumbItem[] = [
     { label: 'Inicio', href: '/panel' },
     ...buildChartAccountsBreadcrumbs('Solicitud de Cuentas Contables')
   ];
 
-  readonly entityFields: ReadonlyField[] = [
+  readonly entityFields: SolicitudeInfoField[] = [
     { label: 'Fecha', value: '19/08/2025    08:00:59' },
     { label: 'Órgano de línea', value: 'DIRECCIÓN GENERAL DE CONTABILIDAD PÚBLICA' },
     { label: 'Entidad', value: 'MINISTERIO DE ECONOMIA Y FINANZAS' }
@@ -316,6 +316,17 @@ export class ChartAccountsRequestComponent {
 
   inputValue(event: Event): string {
     return (event.target as HTMLTextAreaElement).value;
+  }
+
+  onUploadConfirmed(file: File): void {
+    this.uploadedFile.set(file);
+    this.uploadPanelOpen.set(false);
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1048576) return `${Math.round(bytes / 1024)}kb`;
+    return `${(bytes / 1048576).toFixed(1)}MB`;
   }
 
   private isDesktopViewport(): boolean {

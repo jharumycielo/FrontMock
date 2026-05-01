@@ -227,7 +227,10 @@ Cuando pidas una pantalla, puedes indicar estas piezas:
 | Sidebar | `siaf-sidebar` | Navegacion principal con Procesos, Bandeja y Crear. |
 | Breadcrumb | `siaf-breadcrumb` | Ruta segun arbol de procesos o seccion actual. |
 | Layout solicitud | `siaf-solicitude-page-layout` | Estructura transversal para breadcrumb, header, gaps y padding de formularios de solicitud. |
+| Card de formulario | `siaf-solicitude-form-card` | Card transversal de formulario. Centraliza titulo, acciones, padding interno y gap. |
+| Card de datos | `siaf-solicitude-info-card` | Card transversal para datos generales de la solicitud. |
 | Header solicitud | `siaf-solicitude-header` | Encabezado de formularios de solicitud. |
+| Panel de carga | `siaf-upload-side-panel` | Sidenav transversal para cargar documentos desde botones con icono `file_upload`. |
 | Tag de estado de flujo | `siaf-flow-status-tag` | Estado visual del documento usando colores del UI Kit. |
 | Crear documento | `siaf-create-document` | Panel lateral desde el boton Crear. |
 | Arbol procesos | `siaf-process-menu-tree` | Menu de procesos desde el sidebar. |
@@ -250,9 +253,12 @@ Toda pantalla de creacion, edicion o lectura de una solicitud debe usar `siaf-so
 Reglas:
 
 - No redefinir gaps o paddings principales dentro de cada proceso.
+- No crear cards manuales con `rounded-siaf-md bg-surface`; usar `siaf-solicitude-form-card` o `siaf-solicitude-info-card`.
 - El proceso solo debe enviar `breadcrumbs`, `role`, `state`, `heading`, `secondaryText` y estados de botones.
 - El contenido interno del formulario se proyecta dentro del layout.
 - Si Figma cambia el espaciado general de solicitudes, modificar `siaf-solicitude-page-layout`, no cada pantalla.
+- Si Figma cambia el espaciado o header de las cards, modificar `siaf-solicitude-form-card`, no cada pantalla.
+- Si una card incluye accion de carga con icono `file_upload`, abrir `siaf-upload-side-panel`.
 
 Uso:
 
@@ -266,7 +272,17 @@ Uso:
   [saveDisabled]="!isFormValid"
   [verifyDisabled]="!isReadOnly"
 >
-  <!-- Secciones internas del formulario -->
+  <siaf-solicitude-info-card [fields]="entityFields" />
+
+  <siaf-solicitude-form-card title="Lista de cuentas contables">
+    <!-- Contenido interno de la card -->
+  </siaf-solicitude-form-card>
+
+  <siaf-upload-side-panel
+    [open]="uploadPanelOpen()"
+    (closed)="uploadPanelOpen.set(false)"
+    (confirmed)="onUploadConfirmed($event)"
+  />
 </siaf-solicitude-page-layout>
 ```
 
@@ -359,6 +375,16 @@ Columnas:
 - Fecha de registro
 - Entidad
 
+Visibilidad de columnas:
+- El boton de tres puntos (`more_vert`) de la barra de busqueda no abre la lista directamente.
+- Primero debe abrir un menu corto con una sola opcion: `Ocultar o mostrar columnas`.
+- Al hacer click en esa opcion debe abrirse un **sidepanel** lateral angosto, no un sidenav.
+- El sidepanel debe incluir `Seleccionar todo`, grupo `Predeterminado`, grupo `Mas columnas`, grupo `Interno` si aplica, botones `Cancelar` y `Aplicar`.
+- La visibilidad se aplica solo al confirmar con `Aplicar`; `Cancelar` descarta cambios.
+- Debe existir al menos una columna visible.
+- La columna sticky de historial debe mantener `border-l`, sombra lateral y fondo solido de cabecera/celda para indicar que hay contenido horizontal scrolleable.
+- Las tablas deben permitir scroll horizontal y usar anchos amplios para evitar truncar encabezados o datos importantes.
+
 Filas de ejemplo:
 - Documento:
   Numero:
@@ -388,6 +414,11 @@ Columnas:
 - Columna 1:
 - Columna 2:
 - Columna 3:
+
+Reglas de columnas:
+- Debe reutilizar el mismo patron de visibilidad de columnas que el tab Documentos.
+- Las opciones del sidepanel deben salir de la configuracion de columnas de la grilla activa.
+- Si se agregan nuevas columnas en el futuro, deben agregarse tambien a la configuracion de visibilidad.
 
 Filas de ejemplo:
 - Campo 1:
