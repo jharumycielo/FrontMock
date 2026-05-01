@@ -32,3 +32,4 @@ export { UploaderComponent } from './uploader/uploader.component';
 export { ListComponent } from './list/list.component';
 export { ReadonlyComponent } from './readonly/readonly.component';
 export { TextFieldComponent } from './text-field/text-field.component';
+export { DocumentsRecordsPageComponent } from './documents-records-page/documents-records-page.component';
