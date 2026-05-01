@@ -31,8 +31,7 @@ export const routes: Routes = [
   },
   {
     path: 'procesos/plan-cuentas-contables/solicitud',
-    redirectTo: 'procesos/plan-cuentas-contables',
-    pathMatch: 'full'
+    loadComponent: () => import('./features/chart-accounts-request/chart-accounts-request.component').then((m) => m.ChartAccountsRequestComponent)
   },
   {
     path: 'procesos/plan-cuentas-contables/carga-masiva/solicitud',

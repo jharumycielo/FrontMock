@@ -226,6 +226,7 @@ Cuando pidas una pantalla, puedes indicar estas piezas:
 | Navbar | `siaf-navbar` | Todas las pantallas internas. |
 | Sidebar | `siaf-sidebar` | Navegacion principal con Procesos, Bandeja y Crear. |
 | Breadcrumb | `siaf-breadcrumb` | Ruta segun arbol de procesos o seccion actual. |
+| Layout solicitud | `siaf-solicitude-page-layout` | Estructura transversal para breadcrumb, header, gaps y padding de formularios de solicitud. |
 | Header solicitud | `siaf-solicitude-header` | Encabezado de formularios de solicitud. |
 | Tag de estado de flujo | `siaf-flow-status-tag` | Estado visual del documento usando colores del UI Kit. |
 | Crear documento | `siaf-create-document` | Panel lateral desde el boton Crear. |
@@ -235,6 +236,39 @@ Cuando pidas una pantalla, puedes indicar estas piezas:
 | Modal | `siaf-modal` | Confirmaciones y decisiones bloqueantes. |
 | Snackbar | `siaf-snackbar` | Confirmaciones no bloqueantes. |
 | Paginacion | `siaf-pagination` | Tablas con resultados. |
+
+## Layout transversal de solicitud
+
+Toda pantalla de creacion, edicion o lectura de una solicitud debe usar `siaf-solicitude-page-layout`. Este componente centraliza:
+
+- Breadcrumb.
+- Header de solicitud.
+- Padding externo del formulario.
+- Gap entre secciones.
+- Desplazamiento lateral cuando se abre el sidebar de Procesos, Bandeja o Crear documento.
+
+Reglas:
+
+- No redefinir gaps o paddings principales dentro de cada proceso.
+- El proceso solo debe enviar `breadcrumbs`, `role`, `state`, `heading`, `secondaryText` y estados de botones.
+- El contenido interno del formulario se proyecta dentro del layout.
+- Si Figma cambia el espaciado general de solicitudes, modificar `siaf-solicitude-page-layout`, no cada pantalla.
+
+Uso:
+
+```html
+<siaf-solicitude-page-layout
+  [breadcrumbs]="breadcrumbs"
+  role="creator"
+  [state]="solicitudeHeaderState"
+  heading="Solicitud de registro de asiento de ajuste"
+  secondaryText="Creacion"
+  [saveDisabled]="!isFormValid"
+  [verifyDisabled]="!isReadOnly"
+>
+  <!-- Secciones internas del formulario -->
+</siaf-solicitude-page-layout>
+```
 
 ## Crear documento transversal
 

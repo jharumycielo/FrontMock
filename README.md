@@ -179,6 +179,7 @@ Todos los componentes usan el selector prefix `siaf-` y `ChangeDetectionStrategy
 | DocumentHistoryPanelComponent | `siaf-document-history-panel` | Panel lateral con historial de cambios de un documento. |
 | AnnulmentModalComponent | `siaf-annulment-modal` | Modal especializado para anulación de documentos. |
 | ProcessMenuTreeComponent | `siaf-process-menu-tree` | Árbol de navegación de procesos del sistema. |
+| SolicitudePageLayoutComponent | `siaf-solicitude-page-layout` | Layout transversal para pantallas de solicitud. Centraliza breadcrumb, header, gaps y padding del formulario. |
 | SolicitudeHeaderComponent | `siaf-solicitude-header` | Cabecera de una solicitud. Soporta matriz `role` + `state` para controlar etiquetas, botones y modo lectura/edición. |
 | FlowStatusTagComponent | `siaf-flow-status-tag` | Etiqueta de estado del documento basada en los estados oficiales del UI Kit y tokens CSS. |
 | SummaryCardComponent | `siaf-summary-card` | Tarjeta resumen de estado de proceso. |

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Output, forwardRef, Input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { BreadcrumbComponent, BreadcrumbItem } from '../../shared/components/breadcrumb/breadcrumb.component';
+import { BreadcrumbItem } from '../../shared/components/breadcrumb/breadcrumb.component';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
 import { CreateDocumentComponent } from '../../shared/ui/create-document/create-document.component';
@@ -12,7 +12,8 @@ import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation
 import { NavbarComponent } from '../../layout/navbar/navbar.component';
 import { findProcessPathById, ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
-import { SolicitudeHeaderComponent, SolicitudeHeaderState } from '../../shared/ui/solicitude-header/solicitude-header.component';
+import { SolicitudeHeaderState } from '../../shared/ui/solicitude-header/solicitude-header.component';
+import { SolicitudePageLayoutComponent } from '../../shared/ui/solicitude-page-layout/solicitude-page-layout.component';
 import { SnackbarComponent, SnackbarVariant } from '../../shared/ui/snackbar/snackbar.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { UploaderComponent } from '../../shared/ui/uploader/uploader.component';
@@ -83,7 +84,6 @@ type PeriodoGroup = {
   selector: 'siaf-adjustment-seat-request',
   standalone: true,
   imports: [
-    BreadcrumbComponent,
     ButtonComponent,
     CreateDocumentComponent,
     DateTimePickerComponent,
@@ -98,7 +98,7 @@ type PeriodoGroup = {
     ProcessMenuTreeComponent,
     UploaderComponent,
     SidebarComponent,
-    SolicitudeHeaderComponent,
+    SolicitudePageLayoutComponent,
     SnackbarComponent,
     TrayDocumentsViewComponent,
     TrayMenuComponent,
@@ -151,27 +151,24 @@ type PeriodoGroup = {
           <siaf-tray-documents-view [title]="selectedTrayItem" />
         </section>
       } @else {
-      <section class="min-w-0 transition-[padding] duration-200 lg:pl-16" [class.lg:pl-[364px]]="trayMenuOpen" [class.lg:pl-[434px]]="processMenuOpen || sidebarCreateDocumentOpen">
-        <section class="border-b border-[var(--sys-color-divider-default)] bg-surface">
-          <siaf-breadcrumb class="block" [items]="breadcrumbs" />
-          <siaf-solicitude-header
-            role="creator"
-            [state]="solicitudeHeaderState"
-            heading="Solicitud de registro de asiento de ajuste"
-            secondaryText="Creación"
-            [showReturn]="true"
-            [saveDisabled]="!isFormValid"
-            [verifyDisabled]="!isReadOnly"
-            (returned)="goToDocuments()"
-            (canceled)="goToDocuments()"
-            (saved)="openSaveModal()"
-            (edited)="enableEditing()"
-            (verified)="openVerifyModal()"
-            (deleted)="openDeleteModal()"
-          />
-        </section>
-
-        <section class="flex flex-col gap-siaf-md p-siaf-md sm:p-siaf-lg">
+      <siaf-solicitude-page-layout
+        [breadcrumbs]="breadcrumbs"
+        role="creator"
+        [state]="solicitudeHeaderState"
+        heading="Solicitud de registro de asiento de ajuste"
+        secondaryText="Creación"
+        [showReturn]="true"
+        [saveDisabled]="!isFormValid"
+        [verifyDisabled]="!isReadOnly"
+        [trayMenuOpen]="trayMenuOpen"
+        [floatingPanelOpen]="processMenuOpen || sidebarCreateDocumentOpen"
+        (returned)="goToDocuments()"
+        (canceled)="goToDocuments()"
+        (saved)="openSaveModal()"
+        (edited)="enableEditing()"
+        (verified)="openVerifyModal()"
+        (deleted)="openDeleteModal()"
+      >
           @if (isElaborated) {
             <section class="grid gap-siaf-md xl:grid-cols-[1fr_360px]">
               <article class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
@@ -536,8 +533,7 @@ type PeriodoGroup = {
               </div>
             </div>
           </section>
-        </section>
-      </section>
+      </siaf-solicitude-page-layout>
       }
 
       <!-- Panel cargar documento de sustento (420px desde la derecha) -->
