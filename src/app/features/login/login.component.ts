@@ -2,15 +2,14 @@ import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { ButtonComponent } from '../../shared/ui/button/button.component';
-import { IconComponent } from '../../shared/ui/icon/icon.component';
+import { TextFieldComponent } from '../../shared/ui/text-field/text-field.component';
 
-type LoginField = 'user' | 'password';
 type LoginTab = 'entidades' | 'proveedores';
 
 @Component({
   selector: 'siaf-login',
   standalone: true,
-  imports: [ButtonComponent, IconComponent, RouterLink],
+  imports: [ButtonComponent, TextFieldComponent, RouterLink],
   template: `
     <main class="flex min-h-screen bg-[var(--sys-color-bg-surfaces-surface)] text-text lg:h-screen lg:overflow-hidden">
       <section class="hidden h-screen flex-[0_0_50%] overflow-hidden lg:block" aria-hidden="true">
@@ -77,66 +76,29 @@ type LoginTab = 'entidades' | 'proveedores';
             <form class="flex w-full flex-col items-center gap-5" aria-label="Inicio de sesión">
 
               <!-- Input Usuario -->
-              <label class="relative block w-full">
-                @if (isFieldFloating('user')) {
-                  <span class="absolute left-3 top-[-10px] z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal text-[var(--sys-color-text-neutral-low)]">
-                    Usuario
-                  </span>
-                }
-                <span
-                  class="flex min-h-10 items-center gap-siaf-xs rounded-siaf-md border bg-surface px-siaf-md py-siaf-xs transition focus-within:border-2 focus-within:border-[rgba(1,72,153,0.8)]"
-                  [class.border-[var(--sys-color-border-states-enabled)]]="!isFieldSuccess('user')"
-                  [class.border-[var(--sys-color-border-feedback-success)]]="isFieldSuccess('user')"
-                  [class.border-2]="isFieldSuccess('user')"
-                >
-                  <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium)]" name="mail" [size]="24" />
-                  <input
-                    class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)] outline-none placeholder:text-[var(--sys-color-text-neutral-low)]"
-                    type="email"
-                    [placeholder]="isFieldFloating('user') ? '' : 'Usuario'"
-                    [value]="userValue"
-                    autocomplete="username"
-                    (focus)="focusedField = 'user'"
-                    (blur)="focusedField = ''"
-                    (input)="userValue = inputValue($event)"
-                  />
-                </span>
-              </label>
+              <siaf-text-field
+                class="block w-full"
+                label="Usuario"
+                type="email"
+                leadingIcon="mail"
+                autocomplete="username"
+                [value]="userValue"
+                (valueChange)="userValue = textFieldValue($event)"
+              />
 
               <!-- Input Contraseña -->
-              <label class="relative block w-full">
-                @if (isFieldFloating('password')) {
-                  <span class="absolute left-3 top-[-10px] z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal text-[var(--sys-color-text-neutral-low)]">
-                    Contraseña
-                  </span>
-                }
-                <span
-                  class="flex min-h-10 items-center gap-siaf-xs rounded-siaf-md border bg-surface px-siaf-md py-siaf-xs transition focus-within:border-2 focus-within:border-[rgba(1,72,153,0.8)]"
-                  [class.border-[rgba(32,32,32,0.4)]]="!isFieldSuccess('password')"
-                  [class.border-[var(--sys-color-border-feedback-success)]]="isFieldSuccess('password')"
-                  [class.border-2]="isFieldSuccess('password')"
-                >
-                  <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium)]" name="lock" [size]="24" />
-                  <input
-                    class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)] outline-none placeholder:text-[var(--sys-color-text-neutral-low)]"
-                    [type]="showPassword() ? 'text' : 'password'"
-                    [placeholder]="isFieldFloating('password') ? '' : 'Contraseña'"
-                    [value]="passwordValue"
-                    autocomplete="current-password"
-                    (focus)="focusedField = 'password'"
-                    (blur)="focusedField = ''"
-                    (input)="passwordValue = inputValue($event)"
-                  />
-                  <button
-                    class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[rgba(32,32,32,0.08)] active:bg-[rgba(32,32,32,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
-                    type="button"
-                    [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-                    (click)="togglePassword()"
-                  >
-                    <siaf-icon [name]="showPassword() ? 'visibility_off' : 'visibility'" [size]="24" />
-                  </button>
-                </span>
-              </label>
+              <siaf-text-field
+                class="block w-full"
+                label="Contraseña"
+                [type]="showPassword() ? 'text' : 'password'"
+                leadingIcon="lock"
+                [trailingIcon]="showPassword() ? 'visibility_off' : 'visibility'"
+                [trailingButtonLabel]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                autocomplete="current-password"
+                [value]="passwordValue"
+                (valueChange)="passwordValue = textFieldValue($event)"
+                (trailingAction)="togglePassword()"
+              />
 
               <!-- Botón Iniciar sesión -->
               <a class="block w-full" routerLink="/panel">
@@ -237,7 +199,6 @@ type LoginTab = 'entidades' | 'proveedores';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginComponent {
-  focusedField: LoginField | '' = '';
   userValue = '';
   passwordValue = '';
   readonly activeTab = signal<LoginTab>('entidades');
@@ -250,20 +211,11 @@ export class LoginComponent {
     void this.router.navigate(['/login/recuperar-contrasena']);
   }
 
-  isFieldFloating(field: LoginField): boolean {
-    return this.focusedField === field || Boolean(field === 'user' ? this.userValue : this.passwordValue);
-  }
-
-  isFieldSuccess(field: LoginField): boolean {
-    const value = field === 'user' ? this.userValue : this.passwordValue;
-    return this.focusedField !== field && Boolean(value);
-  }
-
   togglePassword(): void {
     this.showPassword.update((v) => !v);
   }
 
-  inputValue(event: Event): string {
-    return (event.target as HTMLInputElement).value;
+  textFieldValue(value: string | number | string[]): string {
+    return Array.isArray(value) ? value.join(', ') : String(value);
   }
 }

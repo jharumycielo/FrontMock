@@ -1,11 +1,12 @@
-import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, Output } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+
+import { TextFieldComponent } from '../text-field/text-field.component';
 
 @Component({
   selector: 'siaf-input',
   standalone: true,
-  imports: [NgClass],
+  imports: [TextFieldComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -14,30 +15,16 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
     }
   ],
   template: `
-    <label class="grid gap-1.5">
-      @if (label) {
-        <span class="text-sm font-medium text-text">{{ label }}</span>
-      }
-
-      <input
-        class="h-10 w-full rounded-siaf-md border bg-surface px-3 text-sm text-text outline-none transition placeholder:text-text-muted focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-text-muted"
-        [ngClass]="error ? 'border-[var(--sys-color-border-feedback-danger)] focus:border-[var(--sys-color-border-feedback-danger)] focus:ring-[var(--sys-color-border-feedback-danger)]' : 'border-border'"
-        [type]="type"
-        [placeholder]="placeholder"
-        [disabled]="disabled"
-        [value]="value"
-        (input)="onInput($event)"
-        (blur)="markTouched()"
-      />
-
-      @if (hint && !error) {
-        <span class="text-xs text-text-muted">{{ hint }}</span>
-      }
-
-      @if (error) {
-        <span class="text-xs text-[var(--sys-color-text-feedback-danger)]">{{ error }}</span>
-      }
-    </label>
+    <siaf-text-field
+      [label]="label"
+      [placeholder]="placeholder"
+      [hint]="hint"
+      [error]="error"
+      [value]="value"
+      [type]="normalizedType"
+      [disabled]="disabled"
+      (valueChange)="onValueChange($event)"
+    />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -57,6 +44,10 @@ export class InputComponent implements ControlValueAccessor {
 
   constructor(private readonly cdr: ChangeDetectorRef) {}
 
+  get normalizedType(): 'text' | 'number' | 'email' | 'correo' | 'password' {
+    return this.type === 'number' || this.type === 'email' || this.type === 'correo' || this.type === 'password' ? this.type : 'text';
+  }
+
   writeValue(value: string | null): void {
     this.value = value ?? '';
     this.cdr.markForCheck();
@@ -75,14 +66,11 @@ export class InputComponent implements ControlValueAccessor {
     this.cdr.markForCheck();
   }
 
-  onInput(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.value = value;
-    this.valueChange.emit(value);
-    this.onChange(value);
-  }
-
-  markTouched(): void {
+  onValueChange(value: string | number | string[]): void {
+    const nextValue = Array.isArray(value) ? value.join(', ') : String(value);
+    this.value = nextValue;
+    this.valueChange.emit(nextValue);
+    this.onChange(nextValue);
     this.onTouched();
   }
 }

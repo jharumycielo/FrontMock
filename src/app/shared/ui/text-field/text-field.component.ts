@@ -9,7 +9,7 @@ export interface TextFieldOption {
   value: string;
 }
 
-type TextFieldType = 'text' | 'number' | 'email' | 'correo' | 'select' | 'select-multiple';
+type TextFieldType = 'text' | 'number' | 'email' | 'correo' | 'password' | 'select' | 'select-multiple';
 type TextFieldState = 'enabled' | 'error' | 'success';
 
 @Component({
@@ -65,17 +65,38 @@ type TextFieldState = 'enabled' | 'error' | 'success';
             </div>
           }
         } @else {
-          <input
-            class="h-10 w-full rounded-siaf-md border bg-surface px-siaf-md text-sm text-text outline-none transition placeholder:text-[var(--sys-color-text-neutral-low)] disabled:cursor-not-allowed disabled:border-[var(--sys-color-border-states-disabled)] disabled:bg-[var(--sys-color-bg-surfaces-disabled)] disabled:text-[var(--sys-color-text-neutral-disabled)]"
+          <span
+            class="flex h-10 w-full items-center gap-siaf-xs rounded-siaf-md border bg-surface px-siaf-md text-sm text-text outline-none transition disabled:cursor-not-allowed disabled:border-[var(--sys-color-border-states-disabled)] disabled:bg-[var(--sys-color-bg-surfaces-disabled)] disabled:text-[var(--sys-color-text-neutral-disabled)]"
             [class]="controlClass"
-            [type]="inputType"
-            [placeholder]="floatingLabel ? '' : labelText"
-            [disabled]="disabled"
-            [value]="internalValue"
-            (focus)="focused = true"
-            (blur)="onBlur()"
-            (input)="onInput($event)"
-          />
+          >
+            @if (leadingIcon) {
+              <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium)]" [name]="leadingIcon" [size]="24" />
+            }
+
+            <input
+              class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)] outline-none placeholder:text-[var(--sys-color-text-neutral-low)] disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)]"
+              [type]="inputType"
+              [placeholder]="floatingLabel ? '' : labelText"
+              [disabled]="disabled"
+              [value]="internalValue"
+              [attr.autocomplete]="autocomplete || null"
+              (focus)="focused = true"
+              (blur)="onBlur()"
+              (input)="onInput($event)"
+            />
+
+            @if (trailingIcon) {
+              <button
+                class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[rgba(32,32,32,0.08)] active:bg-[rgba(32,32,32,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)]"
+                type="button"
+                [disabled]="disabled"
+                [attr.aria-label]="trailingButtonLabel || null"
+                (click)="onTrailingAction($event)"
+              >
+                <siaf-icon [name]="trailingIcon" [size]="24" />
+              </button>
+            }
+          </span>
         }
       </span>
 
@@ -100,8 +121,13 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
   @Input() type: TextFieldType = 'text';
   @Input() options: TextFieldOption[] = [];
   @Input() disabled = false;
+  @Input() leadingIcon = '';
+  @Input() trailingIcon = '';
+  @Input() trailingButtonLabel = '';
+  @Input() autocomplete = '';
 
   @Output() valueChange = new EventEmitter<string | number | string[]>();
+  @Output() trailingAction = new EventEmitter<void>();
 
   focused = false;
   selectOpen = false;
@@ -144,14 +170,14 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
     }
 
     if (this.effectiveState === 'error') {
-      return 'border-2 border-[var(--sys-color-border-feedback-danger)] hover:border-[var(--sys-color-border-feedback-danger)] focus:border-[var(--sys-color-border-feedback-danger)] focus:ring-0';
+      return 'border-2 border-[var(--sys-color-border-feedback-danger)] hover:border-[var(--sys-color-border-feedback-danger)] focus:border-[var(--sys-color-border-feedback-danger)] focus-within:border-[var(--sys-color-border-feedback-danger)] focus:ring-0';
     }
 
     if (this.effectiveState === 'success') {
-      return 'border-2 border-[var(--sys-color-border-feedback-success)] hover:border-[var(--sys-color-border-feedback-success)] focus:border-[var(--sys-color-border-feedback-success)] focus:ring-0';
+      return 'border-2 border-[var(--sys-color-border-feedback-success)] hover:border-[var(--sys-color-border-feedback-success)] focus:border-[var(--sys-color-border-feedback-success)] focus-within:border-[var(--sys-color-border-feedback-success)] focus:ring-0';
     }
 
-    return 'border-[var(--sys-color-border-states-enabled)] hover:border-2 hover:border-[var(--sys-color-border-states-hover)] focus:border-2 focus:border-[var(--sys-color-border-states-focus)] focus:ring-0';
+    return 'border-[var(--sys-color-border-states-enabled)] hover:border-2 hover:border-[var(--sys-color-border-states-hover)] focus:border-2 focus:border-[var(--sys-color-border-states-focus)] focus-within:border-2 focus-within:border-[var(--sys-color-border-states-focus)] focus:ring-0';
   }
 
   get labelClass(): string {
@@ -186,7 +212,7 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
     return this.type === 'select' || this.type === 'select-multiple';
   }
 
-  get inputType(): 'text' | 'number' | 'email' {
+  get inputType(): 'text' | 'number' | 'email' | 'password' {
     if (this.type === 'correo') {
       return 'email';
     }
@@ -243,6 +269,12 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
     const value = (event.target as HTMLInputElement).value;
     this.internalValue = value;
     this.emitValue(value);
+  }
+
+  onTrailingAction(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.trailingAction.emit();
   }
 
   toggleSelect(): void {
