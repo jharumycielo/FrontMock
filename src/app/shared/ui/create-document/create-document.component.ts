@@ -54,7 +54,8 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
   imports: [ButtonComponent, IconComponent, NgClass, SelectOptionsComponent],
   template: `
     <section
-      class="flex flex-col items-start bg-surface shadow-[0_1px_3px_rgba(0,0,0,0.20),0_2px_1px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.14)]"
+      class="flex flex-col items-start bg-surface"
+      [class.shadow-[0_1px_3px_rgba(0,0,0,0.20),0_2px_1px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.14)]]="variant === 'dropdown'"
       [ngClass]="variantClass"
       aria-label="Crear documento"
     >
@@ -257,7 +258,7 @@ export class CreateDocumentComponent {
   get variantClass(): string {
     return this.variant === 'dropdown'
       ? 'w-full max-w-[360px] rounded-siaf-md py-siaf-xs'
-      : 'h-[calc(100vh-56px)] w-screen rounded-siaf-md border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] lg:max-w-[370px]';
+      : 'h-[calc(100vh-56px)] w-screen border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] lg:max-w-[370px]';
   }
 
   toggleSelect(field: CreateDocumentField): void {
