@@ -29,6 +29,7 @@ export { StepsComponent } from './steps/steps.component';
 export { DateTimePickerComponent } from './date-time-picker/date-time-picker.component';
 export { TreeViewComponent } from './tree-view/tree-view.component';
 export { UploaderComponent } from './uploader/uploader.component';
+export { UploadedFileCardComponent } from './uploaded-file-card/uploaded-file-card.component';
 export { ListComponent } from './list/list.component';
 export { ReadonlyComponent } from './readonly/readonly.component';
 export { TextFieldComponent } from './text-field/text-field.component';

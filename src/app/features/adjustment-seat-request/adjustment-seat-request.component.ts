@@ -18,6 +18,7 @@ import { SnackbarComponent, SnackbarVariant } from '../../shared/ui/snackbar/sna
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
 import { TrayMenuComponent } from '../../shared/ui/tray-menu/tray-menu.component';
+import { UploadedFileCardComponent } from '../../shared/ui/uploaded-file-card/uploaded-file-card.component';
 import { UploadSidePanelComponent } from '../../shared/ui/upload-side-panel/upload-side-panel.component';
 
 type ReadonlyField = {
@@ -101,6 +102,7 @@ type PeriodoGroup = {
     SnackbarComponent,
     TrayDocumentsViewComponent,
     TrayMenuComponent,
+    UploadedFileCardComponent,
     UploadSidePanelComponent,
     forwardRef(() => ReadonlyFieldComponent),
     forwardRef(() => TextAreaControlComponent)
@@ -499,34 +501,7 @@ type PeriodoGroup = {
                 </div>
 
                 @if (uploadedFile()) {
-                  <!-- Card del archivo cargado — estado "Done" del Figma -->
-                  <div class="flex items-center gap-siaf-sm rounded-siaf-md border border-border bg-surface p-siaf-md">
-                    <siaf-icon name="description" [size]="32" class="shrink-0 text-text-muted" />
-                    <div class="flex min-w-0 flex-1 flex-col leading-normal text-text">
-                      <span class="truncate text-sm font-bold">{{ uploadedFile()!.name }}</span>
-                      <span class="text-xs text-text-muted">{{ formatFileSize(uploadedFile()!.size) }}</span>
-                    </div>
-                    @if (!isReadOnly) {
-                    <div class="flex shrink-0 items-center gap-1">
-                      <button
-                        class="inline-flex size-6 items-center justify-center rounded-siaf-sm transition hover:bg-surface-muted"
-                        type="button"
-                        aria-label="Reemplazar archivo"
-                        (click)="uploadPanelOpen.set(true)"
-                      >
-                        <siaf-icon name="repeat" [size]="24" class="text-text-muted" />
-                      </button>
-                      <button
-                        class="inline-flex size-6 items-center justify-center rounded-siaf-sm transition hover:bg-surface-muted"
-                        type="button"
-                        aria-label="Quitar archivo"
-                        (click)="uploadedFile.set(null)"
-                      >
-                        <siaf-icon name="cancel" [size]="24" class="text-text-muted" />
-                      </button>
-                    </div>
-                    }
-                  </div>
+                  <siaf-uploaded-file-card [file]="uploadedFile()" [readonly]="isReadOnly" (replace)="uploadPanelOpen.set(true)" (removed)="uploadedFile.set(null)" />
                 } @else {
                   <message-box text="No se han adjuntado archivos. Por favor, haga clic en el botón para subir un archivo." />
                 }

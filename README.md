@@ -6,6 +6,11 @@ Aplicación web para la gestión de procesos financieros y contables del Estado 
 
 ## Cambios recientes
 
+- Se unificaron los campos de texto sobre `siaf-text-field`; `siaf-input` queda como wrapper compatible.
+- `siaf-text-field` ahora soporta icono inicial, accion derecha, `password`, autocomplete, selects y estados visuales.
+- El login usa `siaf-text-field` para usuario y contrasena, incluyendo iconos y boton de mostrar/ocultar contrasena.
+- Se agrego el flujo de aprobacion multiple desde `Documentos y registros`: seleccion de documentos elaborados, modal de confirmacion, cambio a verificado y snackbar de resultado.
+- Se implemento la seccion Bandeja del sidebar con vista responsive y reutilizacion de filtros personalizados.
 - Se estandarizó la cabecera de solicitudes con `role` + `state` para reutilizarla por rol y estado del documento.
 - Se agregó `siaf-flow-status-tag` para mostrar estados oficiales del documento con colores del UI Kit mediante tokens CSS.
 - Se documentó una plantilla de prompts para construir pantallas y flujos como piezas reutilizables.
@@ -38,13 +43,13 @@ Documento de referencia:
 ## Instalación y desarrollo
 
 ```bash
-nvm use
 npm install
 npm start          # http://localhost:4200
 npm run build      # Build de producción
 ```
 
-> El proyecto fija Node.js en `.nvmrc` para mantener builds reproducibles con Angular/esbuild.
+> El proyecto requiere Node.js `>=20.19.0 <21` y npm `>=10`, declarado en `package.json`.
+> Se recomienda usar Node 20 LTS para mantener compatibilidad con Angular 20.
 
 ---
 
@@ -130,7 +135,8 @@ Todos los componentes usan el selector prefix `siaf-` y `ChangeDetectionStrategy
 | Componente | Selector | Descripción |
 |---|---|---|
 | ButtonComponent | `siaf-button` | Variantes: `primary`, `secondary`, `ghost`, `danger`, `accent`. Tamaños: `sm`, `md`, `lg`. Soporte de ícono y estado de carga. |
-| TextFieldComponent | `siaf-text-field` | Input con etiqueta flotante. Tipos: `text`, `number`, `email`, `select`, `select-multiple`. Estados: enabled, error, success. |
+| TextFieldComponent | `siaf-text-field` | Campo base para formularios con etiqueta flotante. Tipos: `text`, `number`, `email`, `correo`, `password`, `select`, `select-multiple`. Soporta icono inicial, accion derecha, autocomplete y estados `enabled`, `error`, `success`. |
+| InputComponent | `siaf-input` | Wrapper compatible de `siaf-text-field`. Usar `siaf-text-field` para nuevos desarrollos. |
 | CheckboxComponent | `siaf-checkbox` | Casilla de verificación con label. |
 | RadioComponent | `siaf-radio` | Botón de opción. |
 | SwitchComponent | `siaf-switch` | Toggle on/off. |
