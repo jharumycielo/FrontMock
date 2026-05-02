@@ -602,6 +602,10 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   documentRoute(row: DocumentsRecordsRow): string {
+    if (typeof row['linkRoute'] === 'string') {
+      return row['linkRoute'];
+    }
+
     const documentOption = this.config.createDocumentOptions[0]?.documentOptions?.find((document) => document.label === row['document']);
     return documentOption?.route || this.config.defaultRequestRoute;
   }
