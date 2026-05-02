@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, inject, Input, Output } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface RadioOption {
@@ -41,6 +41,8 @@ export interface RadioOption {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RadioComponent implements ControlValueAccessor {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   @Input() label = '';
   @Input() name = 'radio-group';
   @Input() value = '';
@@ -51,8 +53,6 @@ export class RadioComponent implements ControlValueAccessor {
 
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
-
-  constructor(private readonly cdr: ChangeDetectorRef) {}
 
   writeValue(value: string | null): void {
     this.value = value ?? '';

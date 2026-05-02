@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { IconComponent } from '../icon/icon.component';
@@ -112,6 +112,8 @@ type TextFieldState = 'enabled' | 'error' | 'success';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TextFieldComponent implements OnChanges, ControlValueAccessor {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   @Input() label = '';
   @Input() placeholder = '';
   @Input() hint = '';
@@ -135,8 +137,6 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
 
   private onChange: (value: string | number | string[]) => void = () => undefined;
   private onTouched: () => void = () => undefined;
-
-  constructor(private readonly cdr: ChangeDetectorRef) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['value']) {

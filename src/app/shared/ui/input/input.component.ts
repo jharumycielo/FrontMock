@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, inject, Input, Output } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { TextFieldComponent } from '../text-field/text-field.component';
@@ -29,6 +29,8 @@ import { TextFieldComponent } from '../text-field/text-field.component';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InputComponent implements ControlValueAccessor {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   @Input() label = '';
   @Input() placeholder = '';
   @Input() hint = '';
@@ -41,8 +43,6 @@ export class InputComponent implements ControlValueAccessor {
 
   private onChange: (value: string) => void = () => undefined;
   private onTouched: () => void = () => undefined;
-
-  constructor(private readonly cdr: ChangeDetectorRef) {}
 
   get normalizedType(): 'text' | 'number' | 'email' | 'correo' | 'password' {
     return this.type === 'number' || this.type === 'email' || this.type === 'correo' || this.type === 'password' ? this.type : 'text';

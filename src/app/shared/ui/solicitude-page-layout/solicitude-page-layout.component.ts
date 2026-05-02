@@ -9,7 +9,7 @@ import { SolicitudeHeaderComponent, SolicitudeHeaderRole, SolicitudeHeaderState 
   imports: [BreadcrumbComponent, SolicitudeHeaderComponent],
   template: `
     <section
-      class="min-w-0 transition-[padding] duration-200 lg:pl-16"
+      class="min-w-0"
       [class.lg:pl-[364px]]="trayMenuOpen"
       [class.lg:pl-[434px]]="floatingPanelOpen"
     >
@@ -32,7 +32,7 @@ import { SolicitudeHeaderComponent, SolicitudeHeaderRole, SolicitudeHeaderState 
         />
       </section>
 
-      <section class="flex flex-col gap-siaf-md p-siaf-md sm:p-siaf-lg">
+      <section class="flex flex-col gap-siaf-md p-siaf-md">
         <ng-content />
       </section>
     </section>

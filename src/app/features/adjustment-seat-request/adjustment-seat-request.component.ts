@@ -1,23 +1,21 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Output, forwardRef, Input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { BreadcrumbItem } from '../../shared/components/breadcrumb/breadcrumb.component';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { ModalComponent } from '../../shared/ui/modal/modal.component';
-import { CreateDocumentComponent } from '../../shared/ui/create-document/create-document.component';
 import { DateTimePickerComponent } from '../../shared/ui/date-time-picker/date-time-picker.component';
+import { EmptySectionComponent } from '../../shared/ui/empty-section/empty-section.component';
 import { FlowStatus, FlowStatusTagComponent } from '../../shared/ui/flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
-import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation-menu/mobile-navigation-menu.component';
-import { NavbarComponent } from '../../layout/navbar/navbar.component';
-import { findProcessPathById, ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
-import { SidebarComponent, SidebarNavigation } from '../../layout/sidebar/sidebar.component';
+import { MessageBoxComponent } from '../../shared/ui/message-box/message-box.component';
+import { findProcessPathById } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
 import { SolicitudeHeaderState } from '../../shared/ui/solicitude-header/solicitude-header.component';
 import { SolicitudePageLayoutComponent } from '../../shared/ui/solicitude-page-layout/solicitude-page-layout.component';
 import { SnackbarComponent, SnackbarVariant } from '../../shared/ui/snackbar/snackbar.component';
-import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
-import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
-import { TrayMenuComponent } from '../../shared/ui/tray-menu/tray-menu.component';
+import { PaginationComponent } from '../../shared/ui/pagination/pagination.component';
+import { ReadonlyFieldComponent } from '../../shared/ui/readonly-field/readonly-field.component';
+import { TextAreaControlComponent } from '../../shared/ui/text-area-control/text-area-control.component';
 import { UploadedFileCardComponent } from '../../shared/ui/uploaded-file-card/uploaded-file-card.component';
 import { UploadSidePanelComponent } from '../../shared/ui/upload-side-panel/upload-side-panel.component';
 
@@ -86,73 +84,22 @@ type PeriodoGroup = {
   standalone: true,
   imports: [
     ButtonComponent,
-    CreateDocumentComponent,
     DateTimePickerComponent,
+    EmptySectionComponent,
     FlowStatusTagComponent,
-    forwardRef(() => EmptySectionComponent),
     IconComponent,
-    forwardRef(() => MessageBoxComponent),
+    MessageBoxComponent,
     ModalComponent,
-    MobileNavigationMenuComponent,
-    NavbarComponent,
     PaginationComponent,
-    ProcessMenuTreeComponent,
-    SidebarComponent,
     SolicitudePageLayoutComponent,
     SnackbarComponent,
-    TrayDocumentsViewComponent,
-    TrayMenuComponent,
     UploadedFileCardComponent,
     UploadSidePanelComponent,
-    forwardRef(() => ReadonlyFieldComponent),
-    forwardRef(() => TextAreaControlComponent)
+    ReadonlyFieldComponent,
+    TextAreaControlComponent
   ],
   template: `
-    <main class="min-h-screen bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
-      <siaf-navbar class="sticky top-0 z-30 block" userName="Juan Doe Perez Perez" officeName="ENTIDAD ESTADO" (menuClicked)="onNavbarMenuClicked()" />
-
-      <aside class="fixed bottom-0 left-0 top-14 z-20 hidden lg:block">
-        <siaf-sidebar
-          [navigation]="activeNavigation"
-          [buttonHelp]="true"
-          (created)="openSidebarCreateDocument()"
-          (navigationChanged)="onSidebarNavigationChange($event)"
-        />
-      </aside>
-
-      @if (mobileNavigationOpen) {
-        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:hidden">
-          <siaf-mobile-navigation-menu
-            [navigation]="activeNavigation"
-            (created)="openSidebarCreateDocumentFromMobileMenu()"
-            (navigationChanged)="onMobileNavigationChange($event)"
-          />
-        </div>
-      }
-
-      @if (processMenuOpen) {
-        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
-          <siaf-process-menu-tree (nodeSelected)="onProcessNodeSelected($event)" />
-        </div>
-      }
-
-      @if (trayMenuOpen) {
-        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
-          <siaf-tray-menu [selectedItem]="selectedTrayItem" (selected)="onTrayItemSelected($event)" />
-        </div>
-      }
-
-      @if (sidebarCreateDocumentOpen) {
-        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
-          <siaf-create-document (accepted)="goToRequest()" (canceled)="closeFloatingPanels()" />
-        </div>
-      }
-
-      @if (trayContentOpen) {
-        <section class="min-w-0 transition-[padding] duration-200 lg:pl-16" [class.lg:pl-[364px]]="trayMenuOpen" [class.lg:pl-[434px]]="processMenuOpen || sidebarCreateDocumentOpen">
-          <siaf-tray-documents-view [title]="selectedTrayItem" />
-        </section>
-      } @else {
+    <div class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
       <siaf-solicitude-page-layout
         [breadcrumbs]="breadcrumbs"
         role="creator"
@@ -162,8 +109,6 @@ type PeriodoGroup = {
         [showReturn]="true"
         [saveDisabled]="!isFormValid"
         [verifyDisabled]="!isReadOnly"
-        [trayMenuOpen]="trayMenuOpen"
-        [floatingPanelOpen]="processMenuOpen || sidebarCreateDocumentOpen"
         (returned)="goToDocuments()"
         (canceled)="goToDocuments()"
         (saved)="openSaveModal()"
@@ -509,7 +454,6 @@ type PeriodoGroup = {
             </div>
           </section>
       </siaf-solicitude-page-layout>
-      }
 
       <siaf-upload-side-panel
         [open]="uploadPanelOpen()"
@@ -865,18 +809,14 @@ type PeriodoGroup = {
           (closed)="saveSnackbarOpen = false"
         />
       </div>
-    </main>
+    </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AdjustmentSeatRequestComponent {
-  activeNavigation: SidebarNavigation = 'Proceso';
-  processMenuOpen = false;
-  trayMenuOpen = false;
-  trayContentOpen = false;
-  mobileNavigationOpen = false;
-  selectedTrayItem = 'Borradores';
-  sidebarCreateDocumentOpen = false;
+  private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   isReadOnly = false;
   isElaborated = false;
   isVerified = false;
@@ -980,8 +920,6 @@ export class AdjustmentSeatRequestComponent {
       ]
     }
   ];
-
-  constructor(private readonly router: Router, private readonly cdr: ChangeDetectorRef) {}
 
   openPeriodoPanel(): void {
     if (this.isReadOnly) {
@@ -1290,195 +1228,11 @@ export class AdjustmentSeatRequestComponent {
     { label: 'Entidad/ U.E/ ...', value: 'NOMBRE DE LA ENTIDAD/ U.E/ ...' }
   ];
 
-  openSidebarCreateDocument(): void {
-    this.mobileNavigationOpen = false;
-    this.processMenuOpen = false;
-    this.trayMenuOpen = false;
-    this.trayContentOpen = false;
-    this.sidebarCreateDocumentOpen = true;
-  }
-
-  openSidebarCreateDocumentFromMobileMenu(): void {
-    this.mobileNavigationOpen = false;
-    this.openSidebarCreateDocument();
-  }
-
-  onSidebarNavigationChange(navigation: SidebarNavigation): void {
-    if (navigation === 'Panel') {
-      this.activeNavigation = 'Panel';
-      this.trayContentOpen = false;
-      this.closeFloatingPanels();
-      void this.router.navigate(['/panel']);
-      return;
-    }
-
-    this.activeNavigation = navigation;
-    this.sidebarCreateDocumentOpen = false;
-    this.processMenuOpen = navigation === 'Proceso';
-    this.trayMenuOpen = navigation === 'Bandeja';
-  }
-
-  onMobileNavigationChange(navigation: SidebarNavigation): void {
-    this.mobileNavigationOpen = false;
-    this.onSidebarNavigationChange(navigation);
-  }
-
-  onNavbarMenuClicked(): void {
-    if (this.hasFloatingPanel) {
-      this.closeFloatingPanels();
-      return;
-    }
-
-    this.mobileNavigationOpen = !this.mobileNavigationOpen;
-  }
-
-  onTrayItemSelected(item: string): void {
-    this.selectedTrayItem = item;
-    this.activeNavigation = 'Bandeja';
-    this.trayMenuOpen = this.isDesktopViewport();
-    this.trayContentOpen = true;
-  }
-
-  onProcessNodeSelected(node: ProcessMenuNode): void {
-    if (node.id === 'registro-asiento-ajuste') {
-      this.closeFloatingPanels();
-      void this.router.navigate(['/procesos/registro-asiento-ajuste']);
-      return;
-    }
-
-    if (node.id === 'plan-cuentas-contables') {
-      this.closeFloatingPanels();
-      void this.router.navigate(['/procesos/plan-cuentas-contables']);
-      return;
-    }
-
-    if (!node.children?.length) {
-      this.activeNavigation = 'Proceso';
-    }
-  }
-
-  closeFloatingPanels(): void {
-    this.mobileNavigationOpen = false;
-    this.processMenuOpen = false;
-    this.trayMenuOpen = false;
-    this.sidebarCreateDocumentOpen = false;
-  }
-
   goToDocuments(): void {
     void this.router.navigate(['/procesos/registro-asiento-ajuste']);
   }
 
   goToRequest(): void {
-    this.closeFloatingPanels();
     void this.router.navigate(['/procesos/registro-asiento-ajuste/solicitud']);
-  }
-
-  get hasFloatingPanel(): boolean {
-    return this.processMenuOpen || this.trayMenuOpen || this.sidebarCreateDocumentOpen;
-  }
-
-  private isDesktopViewport(): boolean {
-    return typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
-  }
-}
-
-@Component({
-  selector: 'message-box',
-  standalone: true,
-  template: `
-    <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-      <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">{{ text }}</p>
-    </div>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class MessageBoxComponent {
-  @Input()
-  text = '';
-}
-
-@Component({
-  selector: 'empty-section',
-  standalone: true,
-  imports: [ButtonComponent, MessageBoxComponent],
-  template: `
-    <section class="grid gap-siaf-md">
-      <div class="flex min-h-10 items-center justify-between gap-siaf-md">
-        <h3 class="m-0 text-sm font-bold uppercase text-text">{{ title }}</h3>
-        <siaf-button
-          variant="accent"
-          size="md"
-          [icon]="actionIcon"
-          [ariaLabel]="title"
-          [iconOnly]="true"
-          [disabled]="disabled"
-          (click)="actionClicked.emit()"
-        />
-      </div>
-      <message-box text="No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección." />
-    </section>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class EmptySectionComponent {
-  @Input() title = '';
-  @Input() actionIcon = 'search';
-  @Input() disabled = false;
-  @Output() actionClicked = new EventEmitter<void>();
-}
-
-@Component({
-  selector: 'readonly-field',
-  standalone: true,
-  template: `
-    <div class="relative flex min-h-10 items-center rounded-siaf-md bg-surface px-siaf-md py-siaf-xs">
-      <span class="absolute -top-2.5 left-3 z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium text-text-muted">
-        {{ caption }}
-      </span>
-      <span class="min-w-0 text-sm leading-normal tracking-[0.0249px] text-text">{{ value }}</span>
-    </div>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class ReadonlyFieldComponent {
-  @Input() caption = '';
-  @Input() value = '';
-}
-
-@Component({
-  selector: 'text-area-control',
-  standalone: true,
-  template: `
-    <section class="grid gap-siaf-md">
-      @if (title) {
-        <h3 class="m-0 text-sm font-bold uppercase text-text">{{ title }}</h3>
-      }
-      <label class="flex min-h-[60px] items-start rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface px-siaf-md py-siaf-xs">
-        <textarea
-          class="min-h-11 flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-text-muted disabled:text-text-muted"
-          maxlength="500"
-          [placeholder]="placeholder"
-          [value]="value"
-          [disabled]="disabled"
-          (input)="onInput($event)"
-        ></textarea>
-      </label>
-      <span class="-mt-siaf-md text-right text-xs text-text-muted">{{ charCount }}/500</span>
-    </section>
-  `,
-  changeDetection: ChangeDetectionStrategy.OnPush
-})
-export class TextAreaControlComponent {
-  @Input() title = '';
-  @Input() placeholder = '';
-  @Input() value = '';
-  @Input() disabled = false;
-  @Output() valueChange = new EventEmitter<string>();
-  charCount = 0;
-
-  onInput(event: Event): void {
-    const value = (event.target as HTMLTextAreaElement).value;
-    this.charCount = value.length;
-    this.valueChange.emit(value);
   }
 }

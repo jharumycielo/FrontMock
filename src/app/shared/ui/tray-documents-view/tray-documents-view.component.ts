@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../components/custom-filter/custom-filter.component';
 import { FlowStatusTagComponent } from '../flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../icon/icon.component';
-import { PaginationComponent } from '../../components/pagination/pagination.component';
+import { PaginationComponent } from '../pagination/pagination.component';
 
 type TrayDocumentRow = {
   document: string;

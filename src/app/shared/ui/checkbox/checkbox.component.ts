@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, forwardRef, inject, Input, Output } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
@@ -32,6 +32,8 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CheckboxComponent implements ControlValueAccessor {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   @Input() label = '';
   @Input() description = '';
   @Input() checked = false;
@@ -41,8 +43,6 @@ export class CheckboxComponent implements ControlValueAccessor {
 
   private onChange: (value: boolean) => void = () => undefined;
   private onTouched: () => void = () => undefined;
-
-  constructor(private readonly cdr: ChangeDetectorRef) {}
 
   writeValue(value: boolean | null): void {
     this.checked = !!value;

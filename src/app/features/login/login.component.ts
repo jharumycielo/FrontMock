@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { ButtonComponent } from '../../shared/ui/button/button.component';
@@ -199,13 +199,13 @@ type LoginTab = 'entidades' | 'proveedores';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginComponent {
+  private readonly router = inject(Router);
+
   userValue = '';
   passwordValue = '';
   readonly activeTab = signal<LoginTab>('entidades');
   readonly showPassword = signal(false);
   readonly jnePopover = signal(false);
-
-  constructor(private readonly router: Router) {}
 
   goToRecuperarContrasena(): void {
     void this.router.navigate(['/login/recuperar-contrasena']);

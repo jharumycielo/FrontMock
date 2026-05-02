@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 
 import { ButtonComponent } from '../button/button.component';
 import { IconComponent } from '../icon/icon.component';
@@ -168,6 +168,8 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CreateDocumentComponent {
+  private readonly cdr = inject(ChangeDetectorRef);
+
   @Input() variant: CreateDocumentVariant = 'sidenav';
   @Input() title = 'Crear documento';
   @Input() acceptDisabled = false;
@@ -182,8 +184,6 @@ export class CreateDocumentComponent {
   @Output() accepted = new EventEmitter<CreateDocumentAccepted>();
   @Output() fieldSelected = new EventEmitter<string>();
   @Output() fieldValueChange = new EventEmitter<CreateDocumentSelection>();
-
-  constructor(private readonly cdr: ChangeDetectorRef) {}
 
   get resolvedFields(): CreateDocumentField[] {
     if (this.fields.length > 0) {

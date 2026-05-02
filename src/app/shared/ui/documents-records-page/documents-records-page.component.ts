@@ -1,23 +1,18 @@
-import { NgClass } from '@angular/common';
-import { ChangeDetectionStrategy, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Router } from '@angular/router';
 
-import { NavbarComponent } from '../../../layout/navbar/navbar.component';
-import { SidebarComponent, SidebarNavigation } from '../../../layout/sidebar/sidebar.component';
 import { BreadcrumbComponent } from '../../components/breadcrumb/breadcrumb.component';
 import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../components/custom-filter/custom-filter.component';
-import { PaginationComponent } from '../../components/pagination/pagination.component';
+import { PaginationComponent } from '../pagination/pagination.component';
 import type { DocumentsRecordsColumn, DocumentsRecordsConfig, DocumentsRecordsRow, DocumentsRecordsTab } from '../../types/documents-records.types';
 import { ButtonComponent } from '../button/button.component';
+import { ColumnVisibilityPanelComponent } from '../column-visibility-panel/column-visibility-panel.component';
 import { CreateDocumentAccepted, CreateDocumentComponent, CreateDocumentField, CreateDocumentSelection } from '../create-document/create-document.component';
 import { DocumentHistoryPanelComponent, DocumentHistorySummary } from '../document-history-panel/document-history-panel.component';
+import { DocumentsRecordsSelectionChange, DocumentsRecordsTableComponent } from '../documents-records-table/documents-records-table.component';
 import { IconComponent } from '../icon/icon.component';
-import { MobileNavigationMenuComponent } from '../mobile-navigation-menu/mobile-navigation-menu.component';
 import { ModalComponent } from '../modal/modal.component';
-import { ProcessMenuNode, ProcessMenuTreeComponent } from '../process-menu-tree/process-menu-tree.component';
 import { SnackbarComponent } from '../snackbar/snackbar.component';
-import { TrayDocumentsViewComponent } from '../tray-documents-view/tray-documents-view.component';
-import { TrayMenuComponent } from '../tray-menu/tray-menu.component';
 
 type AppliedCustomFilter = {
   id: string;
@@ -30,48 +25,9 @@ type AppliedCustomFilter = {
 @Component({
   selector: 'siaf-documents-records-page',
   standalone: true,
-  imports: [BreadcrumbComponent, ButtonComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, IconComponent, MobileNavigationMenuComponent, ModalComponent, NavbarComponent, NgClass, PaginationComponent, ProcessMenuTreeComponent, RouterLink, SidebarComponent, SnackbarComponent, TrayDocumentsViewComponent, TrayMenuComponent],
+  imports: [BreadcrumbComponent, ButtonComponent, ColumnVisibilityPanelComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, DocumentsRecordsTableComponent, IconComponent, ModalComponent, PaginationComponent, SnackbarComponent],
   template: `
-    <main class="min-h-screen bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
-      <siaf-navbar class="sticky top-0 z-30 block" userName="Usuario rol creador" officeName="ENTIDAD ESTADO" (menuClicked)="onNavbarMenuClicked()" />
-
-      <aside class="fixed bottom-0 left-0 top-14 z-20 hidden lg:block">
-        <siaf-sidebar
-          [navigation]="activeNavigation"
-          [buttonHelp]="true"
-          (created)="openSidebarCreateDocument()"
-          (navigationChanged)="onSidebarNavigationChange($event)"
-        />
-      </aside>
-
-      @if (mobileNavigationOpen) {
-        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:hidden">
-          <siaf-mobile-navigation-menu
-            [navigation]="activeNavigation"
-            (created)="openSidebarCreateDocumentFromMobileMenu()"
-            (navigationChanged)="onMobileNavigationChange($event)"
-          />
-        </div>
-      }
-
-      @if (processMenuOpen) {
-        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
-          <siaf-process-menu-tree (nodeSelected)="onProcessNodeSelected($event)" />
-        </div>
-      }
-
-      @if (trayMenuOpen) {
-        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
-          <siaf-tray-menu [selectedItem]="selectedTrayItem" (selected)="onTrayItemSelected($event)" />
-        </div>
-      }
-
-      @if (sidebarCreateDocumentOpen) {
-        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
-          <siaf-create-document [processOptions]="config.createDocumentOptions" (accepted)="onCreateDocumentAccepted($event)" (canceled)="closeFloatingPanels()" />
-        </div>
-      }
-
+    <div class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
       <siaf-document-history-panel
         [open]="documentHistoryOpen"
         [summary]="selectedHistorySummary"
@@ -102,12 +58,7 @@ type AppliedCustomFilter = {
         </siaf-snackbar>
       </div>
 
-      @if (trayContentOpen) {
-        <section class="min-w-0 transition-[padding] duration-200 lg:pl-16" [class.lg:pl-[364px]]="trayMenuOpen" [class.lg:pl-[434px]]="processMenuOpen || sidebarCreateDocumentOpen">
-          <siaf-tray-documents-view [title]="selectedTrayItem" />
-        </section>
-      } @else {
-        <section class="min-w-0 transition-[padding] duration-200 lg:pl-16" [class.lg:pl-[364px]]="trayMenuOpen" [class.lg:pl-[434px]]="processMenuOpen || sidebarCreateDocumentOpen">
+        <section class="min-w-0">
           <section class="bg-surface">
             <siaf-breadcrumb class="block" [items]="config.breadcrumbs" />
 
@@ -289,49 +240,16 @@ type AppliedCustomFilter = {
                 </div>
               </div>
 
-              <div class="min-w-0 overflow-x-auto">
-                <table class="w-full border-collapse text-left text-sm" [ngClass]="activeTab === 'documents' ? config.documentTableMinWidthClass : config.recordTableMinWidthClass">
-                  <thead>
-                    <tr class="bg-surface-high text-[10px] font-bold uppercase text-text">
-                      <th class="w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
-                      @for (column of visibleColumns; track column.key) {
-                        <th class="px-siaf-md py-siaf-sm" [ngClass]="[column.widthClass || 'w-[180px]', column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left']">{{ column.label }}</th>
-                      }
-                      <th class="sticky right-0 w-14 rounded-r-siaf-sm border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm shadow-[-4px_0_8px_rgba(0,0,0,0.08)]"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (row of visibleRows; track rowTrackValue(row, $index)) {
-                      <tr class="border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-surface hover:bg-[rgba(1,72,153,0.04)]" [class.h-12]="activeTab === 'records'">
-                        <td class="h-[58px] px-siaf-sm py-siaf-xs">
-                          <input class="size-4 accent-brand-primary" type="checkbox" [checked]="row.selected" (change)="toggleRowSelection(row, $event)" />
-                        </td>
-                        @for (column of visibleColumns; track column.key) {
-                          <td class="px-siaf-md py-siaf-sm" [ngClass]="[column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left', column.kind === 'document-link' ? 'max-w-[360px]' : '']">
-                            @if (column.kind === 'document-link') {
-                              <a class="line-clamp-2 text-sm leading-normal text-text hover:text-brand-primary" [routerLink]="documentRoute(row)">{{ row[column.key] }}</a>
-                            } @else if (column.kind === 'flow-status') {
-                              <span class="inline-flex min-h-6 items-center rounded-siaf-sm px-siaf-xs text-xs text-white" [class.bg-[var(--sys-color-bg-status-flow-status-elaborado)]]="row[column.key] === 'Elaborado'" [class.bg-[var(--sys-color-bg-status-flow-status-verificado)]]="row[column.key] === 'Verificado'">{{ row[column.key] }}</span>
-                            } @else if (column.kind === 'record-status') {
-                              <span class="inline-flex min-h-6 items-center gap-siaf-xs rounded-siaf-sm border border-[var(--sys-color-border-feedback-info)] bg-[var(--sys-color-bg-status-record-status-activo)] px-siaf-xs text-[var(--sys-color-text-feedback-info)]">
-                                <siaf-icon name="check_circle" [size]="16" />
-                                {{ row[column.key] }}
-                              </span>
-                            } @else {
-                              {{ row[column.key] }}
-                            }
-                          </td>
-                        }
-                        <td class="sticky right-0 border-l border-[var(--sys-color-divider-strong)] bg-surface px-siaf-sm py-siaf-xs shadow-[-4px_0_8px_rgba(0,0,0,0.08)]">
-                          <button class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]" type="button" aria-label="Historial de documento" title="Historial de documento" (click)="openHistory(row)">
-                            <siaf-icon name="history" [size]="20" />
-                          </button>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
+              <siaf-documents-records-table
+                [activeTab]="activeTab"
+                [columns]="visibleColumns"
+                [rows]="visibleRows"
+                [minWidthClass]="activeTab === 'documents' ? config.documentTableMinWidthClass : config.recordTableMinWidthClass"
+                [recordTrackKey]="config.recordTrackKey"
+                [documentRoute]="documentRoute"
+                (selectionChanged)="toggleRowSelection($event)"
+                (historyOpened)="openHistory($event)"
+              />
 
               <siaf-pagination
                 navigation="Activate"
@@ -364,71 +282,28 @@ type AppliedCustomFilter = {
             }
           </section>
         </section>
-      }
-
-      @if (columnPanelOpen) {
-        <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="columns-panel-title" (click)="closeColumnPanel()">
-          <aside class="absolute bottom-0 right-0 top-0 flex w-full max-w-[420px] flex-col overflow-hidden bg-surface shadow-siaf-lg" (click)="$event.stopPropagation()">
-            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-default)] px-siaf-xl">
-              <h2 id="columns-panel-title" class="m-0 flex-1 text-base font-bold uppercase tracking-[0.02px] text-text">Ocultar o mostrar columnas</h2>
-              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]" type="button" aria-label="Cerrar" (click)="closeColumnPanel()">
-                <siaf-icon name="close" [size]="24" />
-              </button>
-            </header>
-
-            <div class="min-h-0 flex-1 overflow-y-auto border-y border-[var(--sys-color-divider-strong)] bg-[var(--sys-color-bg-surfaces-surface-highest)] px-siaf-xl py-siaf-md">
-              <div class="flex flex-col gap-siaf-lg">
-                <label class="flex min-h-12 cursor-pointer items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm uppercase text-[var(--sys-color-text-neutral-medium)]">
-                  <input class="size-4 accent-brand-primary" type="checkbox" [checked]="allDraftColumnsSelected" (change)="toggleAllDraftColumns($event)" />
-                  Seleccionar todo
-                </label>
-                <section class="grid gap-siaf-xs">
-                  <h3 class="m-0 px-[18px] text-xs font-normal uppercase text-[var(--sys-color-text-neutral-medium)]">Predeterminado</h3>
-                  @for (column of defaultColumnOptions; track column.key) {
-                    <label class="flex min-h-12 cursor-pointer items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted">
-                      <input class="size-4 accent-brand-primary" type="checkbox" [checked]="isDraftColumnVisible(column.key)" (change)="toggleDraftColumnVisibility(column.key, $event)" />
-                      {{ column.label }}
-                    </label>
-                  }
-                </section>
-                <section class="grid gap-siaf-xs">
-                  <h3 class="m-0 px-[18px] text-xs font-normal uppercase text-[var(--sys-color-text-neutral-medium)]">Más columnas</h3>
-                  @for (column of moreColumnOptions; track column.key) {
-                    <label class="flex min-h-12 cursor-pointer items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted">
-                      <input class="size-4 accent-brand-primary" type="checkbox" [checked]="isDraftColumnVisible(column.key)" (change)="toggleDraftColumnVisibility(column.key, $event)" />
-                      {{ column.label }}
-                    </label>
-                  }
-                </section>
-                @if (internalColumnOptions.length) {
-                  <section class="grid gap-siaf-xs">
-                    <h3 class="m-0 px-[18px] text-xs font-normal uppercase text-[var(--sys-color-text-neutral-medium)]">Interno</h3>
-                    @for (column of internalColumnOptions; track column.key) {
-                      <label class="flex min-h-12 items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm text-text-muted">
-                        <input class="size-4" type="checkbox" disabled />
-                        {{ column.label }}
-                      </label>
-                    }
-                  </section>
-                }
-              </div>
-            </div>
-
-            <footer class="flex shrink-0 items-center justify-end gap-siaf-xs px-siaf-md py-siaf-sm">
-              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] px-siaf-md py-siaf-xs text-sm font-medium text-text transition hover:bg-surface-muted" type="button" (click)="closeColumnPanel()">Cancelar</button>
-              <siaf-button variant="primary" size="md" [disabled]="!columnsPanelDirty" (click)="applyColumnPanel()">Aplicar</siaf-button>
-            </footer>
-          </aside>
-        </section>
-      }
-    </main>
+      <siaf-column-visibility-panel
+        [open]="columnPanelOpen"
+        [allSelected]="allDraftColumnsSelected"
+        [dirty]="columnsPanelDirty"
+        [defaultColumns]="defaultColumnOptions"
+        [moreColumns]="moreColumnOptions"
+        [internalColumns]="internalColumnOptions"
+        [isColumnVisible]="isDraftColumnVisible"
+        (closed)="closeColumnPanel()"
+        (applied)="applyColumnPanel()"
+        (toggleAll)="toggleAllDraftColumns($event)"
+        (toggleColumn)="toggleDraftColumnVisibility($event.key, $event.event)"
+      />
+    </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DocumentsRecordsPageComponent implements OnChanges {
+  private readonly router = inject(Router);
+
   @Input({ required: true }) config!: DocumentsRecordsConfig;
 
-  activeNavigation: SidebarNavigation = 'Proceso';
   activeTab: DocumentsRecordsTab = 'documents';
   createDocumentPopoverOpen = false;
   customFilterOpen = false;
@@ -443,12 +318,6 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   appliedCustomFilters: AppliedCustomFilter[] = [];
   customFilterInitialRows: FilterRow[] = [];
   editingCustomFilterId = '';
-  processMenuOpen = false;
-  trayMenuOpen = false;
-  trayContentOpen = false;
-  mobileNavigationOpen = false;
-  selectedTrayItem = 'Borradores';
-  sidebarCreateDocumentOpen = false;
   documentHistoryOpen = false;
   verifyModalOpen = false;
   approvalSnackbarOpen = false;
@@ -473,8 +342,6 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   private customFilterSequence = 0;
   rowsPerPage = 25;
   page = 1;
-
-  constructor(private readonly router: Router) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (!changes['config'] || !this.config) {
@@ -592,23 +459,18 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     this.closeMoreOptionsMenu();
   }
 
-  toggleRowSelection(row: DocumentsRecordsRow, event: Event): void {
-    row.selected = (event.target as HTMLInputElement).checked;
+  toggleRowSelection(change: DocumentsRecordsSelectionChange): void {
+    change.row.selected = change.selected;
   }
 
-  rowTrackValue(row: DocumentsRecordsRow, index: number): string | number {
-    const key = this.activeTab === 'documents' ? 'number' : this.config.recordTrackKey;
-    return String(row[key] ?? index);
-  }
-
-  documentRoute(row: DocumentsRecordsRow): string {
+  documentRoute = (row: DocumentsRecordsRow): string => {
     if (typeof row['linkRoute'] === 'string') {
       return row['linkRoute'];
     }
 
     const documentOption = this.config.createDocumentOptions[0]?.documentOptions?.find((document) => document.label === row['document']);
     return documentOption?.route || this.config.defaultRequestRoute;
-  }
+  };
 
   openVerifyModal(): void {
     if (!this.canVerifySelectedDocuments) {
@@ -649,7 +511,6 @@ export class DocumentsRecordsPageComponent implements OnChanges {
 
   onCreateDocumentAccepted(selection?: CreateDocumentAccepted): void {
     this.closeCreateDocumentPopover();
-    this.closeFloatingPanels();
     void this.router.navigate([selection?.route || this.config.defaultRequestRoute]);
   }
 
@@ -802,9 +663,9 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     this.columnPanelOpen = false;
   }
 
-  isDraftColumnVisible(columnKey: string): boolean {
+  isDraftColumnVisible = (columnKey: string): boolean => {
     return !this.draftHiddenColumns.has(columnKey);
-  }
+  };
 
   toggleDraftColumnVisibility(columnKey: string, event: Event): void {
     event.stopPropagation();
@@ -873,93 +734,12 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     this.documentHistoryOpen = false;
   }
 
-  openSidebarCreateDocument(): void {
-    this.mobileNavigationOpen = false;
-    this.closeToolbarMenus();
-    this.processMenuOpen = false;
-    this.trayMenuOpen = false;
-    this.trayContentOpen = false;
-    this.sidebarCreateDocumentOpen = true;
-  }
-
-  openSidebarCreateDocumentFromMobileMenu(): void {
-    this.mobileNavigationOpen = false;
-    this.openSidebarCreateDocument();
-  }
-
-  onSidebarNavigationChange(navigation: SidebarNavigation): void {
-    if (navigation === 'Panel') {
-      this.activeNavigation = 'Panel';
-      this.trayContentOpen = false;
-      this.closeFloatingPanels();
-      this.closeToolbarMenus();
-      void this.router.navigate(['/panel']);
-      return;
-    }
-
-    this.activeNavigation = navigation;
-    this.sidebarCreateDocumentOpen = false;
-    this.processMenuOpen = navigation === 'Proceso';
-    this.trayMenuOpen = navigation === 'Bandeja';
-  }
-
-  onMobileNavigationChange(navigation: SidebarNavigation): void {
-    this.mobileNavigationOpen = false;
-    this.onSidebarNavigationChange(navigation);
-  }
-
-  onNavbarMenuClicked(): void {
-    if (this.hasFloatingPanel) {
-      this.closeFloatingPanels();
-      return;
-    }
-
-    this.mobileNavigationOpen = !this.mobileNavigationOpen;
-  }
-
-  onTrayItemSelected(item: string): void {
-    this.selectedTrayItem = item;
-    this.activeNavigation = 'Bandeja';
-    this.trayMenuOpen = this.isDesktopViewport();
-    this.trayContentOpen = true;
-  }
-
-  onProcessNodeSelected(node: ProcessMenuNode): void {
-    if (node.id === 'registro-asiento-ajuste') {
-      this.closeFloatingPanels();
-      void this.router.navigate(['/procesos/registro-asiento-ajuste']);
-      return;
-    }
-
-    if (node.id === 'plan-cuentas-contables') {
-      this.closeFloatingPanels();
-      void this.router.navigate(['/procesos/plan-cuentas-contables']);
-      return;
-    }
-
-    if (!node.children?.length) {
-      this.activeNavigation = 'Proceso';
-    }
-  }
-
-  closeFloatingPanels(): void {
-    this.mobileNavigationOpen = false;
-    this.processMenuOpen = false;
-    this.trayMenuOpen = false;
-    this.sidebarCreateDocumentOpen = false;
-  }
-
-  get hasFloatingPanel(): boolean {
-    return this.processMenuOpen || this.trayMenuOpen || this.sidebarCreateDocumentOpen;
-  }
-
   onRowsPerPageChange(value: number): void {
     this.rowsPerPage = value;
     this.page = 1;
   }
 
   private closeToolbarMenus(except: 'status' | 'actionType' | 'favorite' | 'fields' | 'more' | '' = ''): void {
-    this.closeFloatingPanels();
     this.createDocumentPopoverOpen = false;
     this.customFilterOpen = false;
     this.fieldsMenuOpen = except === 'fields' ? this.fieldsMenuOpen : false;
@@ -1017,7 +797,4 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     return rowValue === filterValue;
   }
 
-  private isDesktopViewport(): boolean {
-    return typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
-  }
 }
