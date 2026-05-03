@@ -12,7 +12,11 @@ export type ActionTrackerDetailType =
   | 'observation-comment';
 
 export type ActionTrackerSummary = {
+  /** Etiqueta del rol, ej: 'Elaborado por', 'Verificado por', 'Aprobado por' */
+  label: string;
+  /** Nombre del usuario. Vacío muestra el placeholder "No asignado aún". */
   actionBy: string;
+  /** Fecha/hora. Vacío muestra "Fecha y hora no registradas". */
   date: string;
 };
 
@@ -40,7 +44,7 @@ const DETAIL_LABELS: Record<ActionTrackerDetailType, string> = {
   standalone: true,
   imports: [NgClass],
   template: `
-    <section class="flex w-full max-w-[840px] flex-col items-start gap-siaf-md">
+    <section class="flex w-full flex-col items-start gap-siaf-md">
       @if (variant === 'detail' || showTabs) {
         <div class="w-full overflow-hidden rounded-siaf-md bg-[rgb(32_32_32/0.04)]">
           <div class="flex min-h-10 w-full items-start border-b-2 border-[rgb(32_32_32/0.24)]">
@@ -115,24 +119,36 @@ const DETAIL_LABELS: Record<ActionTrackerDetailType, string> = {
       @if (showSummaryCards) {
         <div class="w-full rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
           <div class="flex w-full flex-wrap items-start gap-siaf-lg">
-            @for (item of summaryItems; track item.actionBy + item.date) {
+            @for (item of summaryItems; track item.label) {
               <div class="flex min-w-[164px] flex-1 flex-col gap-siaf-xs">
                 <div class="flex flex-col gap-siaf-xxs">
                   <span class="truncate text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-text-muted">
-                    ACCION POR
+                    {{ item.label }}
                   </span>
-                  <strong class="text-sm font-bold leading-normal tracking-[-0.02px] text-[var(--sys-color-text-neutral-medium)]">
-                    {{ item.actionBy }}
-                  </strong>
+                  @if (item.actionBy) {
+                    <strong class="min-w-0 text-sm font-bold leading-normal tracking-[-0.02px] text-text">
+                      {{ item.actionBy }}
+                    </strong>
+                  } @else {
+                    <span class="min-w-0 text-sm leading-normal tracking-[0.025px] text-text">
+                      No asignado aún
+                    </span>
+                  }
                 </div>
 
                 <div class="flex flex-col gap-siaf-xxs">
                   <span class="truncate text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-text-muted">
                     FECHA
                   </span>
-                  <strong class="whitespace-pre-line text-sm font-bold leading-normal tracking-[-0.02px] text-[var(--sys-color-text-neutral-medium)]">
-                    {{ item.date }}
-                  </strong>
+                  @if (item.date) {
+                    <strong class="whitespace-pre-line text-sm font-bold leading-normal tracking-[-0.02px] text-text">
+                      {{ item.date }}
+                    </strong>
+                  } @else {
+                    <span class="min-w-0 text-sm leading-normal tracking-[0.025px] text-text">
+                      Fecha y hora no registradas
+                    </span>
+                  }
                 </div>
               </div>
             }
@@ -151,12 +167,7 @@ export class ActionTrackerComponent {
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.';
   @Input() showTabs = false;
   @Input() showSummaryCards = true;
-  @Input() summaryItems: ActionTrackerSummary[] = [
-    { actionBy: 'RICARDO JOHN DOE BUSTAMANTE', date: '19/08/2025\n08:00:59' },
-    { actionBy: 'RICARDO JOHN DOE BUSTAMANTE', date: '19/08/2025\n08:00:59' },
-    { actionBy: 'RICARDO JOHN DOE BUSTAMANTE', date: '19/08/2025\n08:00:59' },
-    { actionBy: 'RICARDO JOHN DOE BUSTAMANTE', date: '19/08/2025\n08:00:59' }
-  ];
+  @Input() summaryItems: ActionTrackerSummary[] = [];
   @Input() historyRows: ActionTrackerHistoryRow[] = [
     {
       iteration: '1',

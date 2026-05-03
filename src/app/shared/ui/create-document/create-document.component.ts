@@ -6,7 +6,7 @@ import { IconComponent } from '../icon/icon.component';
 import { DEFAULT_PROCESS_TREE, ProcessMenuNode } from '../process-menu-tree/process-menu-tree.component';
 import { SelectOption, SelectOptionsComponent } from '../select-options/select-options.component';
 
-export type CreateDocumentVariant = 'sidenav' | 'dropdown';
+export type CreateDocumentVariant = 'sidepanel' | 'dropdown';
 
 export type CreateDocumentField = {
   placeholder: string;
@@ -67,11 +67,11 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
 
       <div
         class="flex w-full items-start"
-        [ngClass]="variant === 'sidenav' ? 'min-h-0 flex-1' : 'bg-[var(--sys-color-bg-surfaces-surface-highest)]'"
+        [ngClass]="variant === 'sidepanel' ? 'min-h-0 flex-1' : 'bg-[var(--sys-color-bg-surfaces-surface-highest)]'"
       >
         <div
           class="flex min-w-0 flex-1 flex-col px-siaf-md"
-          [ngClass]="variant === 'sidenav' ? 'h-full py-siaf-xs' : 'pb-siaf-xs'"
+          [ngClass]="variant === 'sidepanel' ? 'h-full py-siaf-xs' : 'pb-siaf-xs'"
         >
           <div class="flex w-full flex-col gap-siaf-lg">
             @for (field of resolvedFields; track field.placeholder) {
@@ -171,7 +171,7 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
 export class CreateDocumentComponent {
   private readonly cdr = inject(ChangeDetectorRef);
 
-  @Input() variant: CreateDocumentVariant = 'sidenav';
+  @Input() variant: CreateDocumentVariant = 'sidepanel';
   @Input() title = 'Crear documento';
   @Input() acceptDisabled = false;
   @Input() fields: CreateDocumentField[] = [];

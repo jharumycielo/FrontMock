@@ -32,12 +32,10 @@ type TextFieldState = 'enabled' | 'error' | 'success';
           </span>
         }
 
-        @if (isSelect) {
+        @if (type === 'select') {
           <button
-            class="flex w-full items-center rounded-siaf-md border bg-surface px-siaf-md text-left text-sm text-text outline-none transition disabled:cursor-not-allowed disabled:border-[var(--sys-color-border-states-disabled)] disabled:bg-[var(--sys-color-bg-surfaces-disabled)] disabled:text-[var(--sys-color-text-neutral-disabled)]"
+            class="flex h-10 w-full items-center rounded-siaf-md border bg-surface px-siaf-md text-left text-sm text-text outline-none transition disabled:cursor-not-allowed disabled:border-[var(--sys-color-border-states-disabled)] disabled:bg-[var(--sys-color-bg-surfaces-disabled)] disabled:text-[var(--sys-color-text-neutral-disabled)]"
             [class]="controlClass"
-            [class.h-10]="type === 'select'"
-            [class.min-h-28]="type === 'select-multiple'"
             type="button"
             [disabled]="disabled"
             [attr.aria-expanded]="selectOpen"
@@ -59,14 +57,56 @@ type TextFieldState = 'enabled' | 'error' | 'success';
                 [options]="selectOptions"
                 [selectedValue]="selectValue"
                 [selectedValues]="selectValues"
-                [multiple]="type === 'select-multiple'"
+                (selected)="onOptionSelected($event)"
+              />
+            </div>
+          }
+        } @else if (type === 'select-multiple') {
+          <button
+            class="flex min-h-10 w-full flex-wrap items-center gap-siaf-xs rounded-siaf-md px-siaf-md py-siaf-xs text-left text-sm outline-none transition"
+            [class]="controlClass"
+            type="button"
+            [disabled]="disabled"
+            [attr.aria-expanded]="selectOpen"
+            [attr.aria-label]="labelText"
+            aria-haspopup="listbox"
+            (click)="toggleSelect()"
+            (keydown.escape)="closeSelect()"
+          >
+            @if (!hasValue) {
+              <span class="flex-1 text-[var(--sys-color-text-neutral-low)]">{{ labelText }}</span>
+            }
+            @for (val of selectValues; track val) {
+              <span class="inline-flex items-center gap-siaf-xxs rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] px-siaf-xs py-0 text-text">
+                <span class="text-sm leading-6">{{ labelForValue(val) }}</span>
+                <span
+                  class="inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full transition hover:bg-[rgba(32,32,32,0.08)]"
+                  role="button"
+                  tabindex="-1"
+                  [attr.aria-label]="'Quitar ' + labelForValue(val)"
+                  (click)="removeValue($event, val)"
+                >
+                  <siaf-icon name="close" [size]="16" />
+                </span>
+              </span>
+            }
+            <siaf-icon class="ml-auto shrink-0 text-text transition" [class.rotate-180]="selectOpen" name="expand_more" [size]="24" />
+          </button>
+
+          @if (selectOpen) {
+            <button class="fixed inset-0 z-30 cursor-default bg-transparent" type="button" aria-label="Cerrar opciones" (click)="closeSelect()"></button>
+            <div class="absolute left-0 right-0 top-[calc(100%+4px)] z-40">
+              <siaf-select-options
+                [options]="selectOptions"
+                [selectedValues]="selectValues"
+                [multiple]="true"
                 (selected)="onOptionSelected($event)"
               />
             </div>
           }
         } @else {
           <span
-            class="flex h-10 w-full items-center gap-siaf-xs rounded-siaf-md border bg-surface px-siaf-md text-sm text-text outline-none transition disabled:cursor-not-allowed disabled:border-[var(--sys-color-border-states-disabled)] disabled:bg-[var(--sys-color-bg-surfaces-disabled)] disabled:text-[var(--sys-color-text-neutral-disabled)]"
+            class="flex h-10 w-full items-center gap-siaf-xs rounded-siaf-md px-siaf-md text-sm text-text outline-none transition"
             [class]="controlClass"
           >
             @if (leadingIcon) {
@@ -84,6 +124,10 @@ type TextFieldState = 'enabled' | 'error' | 'success';
               (blur)="onBlur()"
               (input)="onInput($event)"
             />
+
+            @if (error && !trailingIcon) {
+              <siaf-icon class="shrink-0 text-[var(--sys-color-text-feedback-danger)]" name="error" [size]="20" aria-hidden="true" />
+            }
 
             @if (trailingIcon) {
               <button
@@ -140,7 +184,7 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['value']) {
-      this.internalValue = this.inputValue;
+      this.internalValue = Array.isArray(this.value) ? this.value : this.inputValue;
     }
   }
 
@@ -166,18 +210,18 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
 
   get controlClass(): string {
     if (this.disabled) {
-      return '';
+      return 'cursor-not-allowed border border-[var(--sys-color-border-states-disabled)] bg-[var(--sys-color-bg-surfaces-disabled)] text-[var(--sys-color-text-neutral-disabled)]';
     }
 
     if (this.effectiveState === 'error') {
-      return 'border-2 border-[var(--sys-color-border-feedback-danger)] hover:border-[var(--sys-color-border-feedback-danger)] focus:border-[var(--sys-color-border-feedback-danger)] focus-within:border-[var(--sys-color-border-feedback-danger)] focus:ring-0';
+      return 'border-2 border-[var(--sys-color-border-feedback-danger)] bg-surface hover:border-[var(--sys-color-border-feedback-danger)] focus:border-[var(--sys-color-border-feedback-danger)] focus-within:border-[var(--sys-color-border-feedback-danger)] focus:ring-0';
     }
 
     if (this.effectiveState === 'success') {
-      return 'border-2 border-[var(--sys-color-border-feedback-success)] hover:border-[var(--sys-color-border-feedback-success)] focus:border-[var(--sys-color-border-feedback-success)] focus-within:border-[var(--sys-color-border-feedback-success)] focus:ring-0';
+      return 'border-2 border-[var(--sys-color-border-feedback-success)] bg-surface hover:border-[var(--sys-color-border-feedback-success)] focus:border-[var(--sys-color-border-feedback-success)] focus-within:border-[var(--sys-color-border-feedback-success)] focus:ring-0';
     }
 
-    return 'border-[var(--sys-color-border-states-enabled)] hover:border-2 hover:border-[var(--sys-color-border-states-hover)] focus:border-2 focus:border-[var(--sys-color-border-states-focus)] focus-within:border-2 focus-within:border-[var(--sys-color-border-states-focus)] focus:ring-0';
+    return 'border border-[var(--sys-color-border-states-enabled)] bg-surface hover:border-2 hover:border-[var(--sys-color-border-states-hover)] focus:border-2 focus:border-[var(--sys-color-border-states-focus)] focus-within:border-2 focus-within:border-[var(--sys-color-border-states-focus)] focus:ring-0';
   }
 
   get labelClass(): string {
@@ -209,7 +253,19 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
   }
 
   get isSelect(): boolean {
-    return this.type === 'select' || this.type === 'select-multiple';
+    return this.type === 'select';
+  }
+
+  labelForValue(value: string): string {
+    return this.options.find((o) => o.value === value)?.label ?? value;
+  }
+
+  removeValue(event: MouseEvent, value: string): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const next = this.selectValues.filter((v) => v !== value);
+    this.internalValue = next;
+    this.emitValue(next);
   }
 
   get inputType(): 'text' | 'number' | 'email' | 'password' {
@@ -284,12 +340,14 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
 
     this.selectOpen = !this.selectOpen;
     this.focused = this.selectOpen;
+    this.cdr.markForCheck();
   }
 
   closeSelect(): void {
     this.selectOpen = false;
     this.focused = false;
     this.onTouched();
+    this.cdr.markForCheck();
   }
 
   onOptionSelected(value: string): void {

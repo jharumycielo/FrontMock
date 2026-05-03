@@ -12,6 +12,7 @@ import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/
 import { TrayMenuComponent } from '../../shared/ui/tray-menu/tray-menu.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { SidebarComponent, SidebarNavigation } from '../sidebar/sidebar.component';
+import { CurrentUserService } from '../../core/auth/current-user.service';
 import { ShellNavigationService } from './shell-navigation.service';
 
 @Component({
@@ -29,7 +30,7 @@ import { ShellNavigationService } from './shell-navigation.service';
   ],
   template: `
     <main class="min-h-screen bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
-      <siaf-navbar class="sticky top-0 z-30 block" userName="Usuario rol creador" officeName="ENTIDAD ESTADO" (menuClicked)="onNavbarMenuClicked()" />
+      <siaf-navbar class="sticky top-0 z-30 block" [userName]="currentUser.name" [officeName]="currentUser.office" (menuClicked)="onNavbarMenuClicked()" />
 
       <aside class="fixed bottom-0 left-0 top-14 z-20 hidden lg:block">
         <siaf-sidebar
@@ -91,6 +92,7 @@ export class AppShellComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly shellNavigation = inject(ShellNavigationService);
+  readonly currentUser = inject(CurrentUserService);
 
   activeNavigation: SidebarNavigation = 'Panel';
   processMenuOpen = false;

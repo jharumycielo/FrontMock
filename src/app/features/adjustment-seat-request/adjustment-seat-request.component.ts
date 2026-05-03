@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { BreadcrumbItem } from '../../shared/components/breadcrumb/breadcrumb.component';
@@ -18,6 +18,8 @@ import { ReadonlyFieldComponent } from '../../shared/ui/readonly-field/readonly-
 import { TextAreaControlComponent } from '../../shared/ui/text-area-control/text-area-control.component';
 import { UploadedFileCardComponent } from '../../shared/ui/uploaded-file-card/uploaded-file-card.component';
 import { UploadSidePanelComponent } from '../../shared/ui/upload-side-panel/upload-side-panel.component';
+import { ActionTrackerComponent, ActionTrackerSummary } from '../../shared/ui/action-tracker/action-tracker.component';
+import { CurrentUserService } from '../../core/auth/current-user.service';
 
 type ReadonlyField = {
   label: string;
@@ -96,7 +98,8 @@ type PeriodoGroup = {
     UploadedFileCardComponent,
     UploadSidePanelComponent,
     ReadonlyFieldComponent,
-    TextAreaControlComponent
+    TextAreaControlComponent,
+    ActionTrackerComponent
   ],
   template: `
     <div class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
@@ -453,6 +456,10 @@ type PeriodoGroup = {
               </div>
             </div>
           </section>
+
+          @if (isReadOnly) {
+            <siaf-action-tracker [showSummaryCards]="true" [showTabs]="false" [summaryItems]="traceabilityItems" />
+          }
       </siaf-solicitude-page-layout>
 
       <siaf-upload-side-panel
@@ -813,14 +820,59 @@ type PeriodoGroup = {
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdjustmentSeatRequestComponent {
+export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly currentUser = inject(CurrentUserService);
+
+  currentDateTime = '';
+  private intervalId: ReturnType<typeof setInterval> | null = null;
+
+  ngOnInit(): void {
+    this.tickDateTime();
+    this.intervalId = setInterval(() => {
+      this.tickDateTime();
+      this.cdr.markForCheck();
+    }, 1000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.intervalId !== null) {
+      clearInterval(this.intervalId);
+    }
+  }
+
+  private tickDateTime(): void {
+    this.currentDateTime = this.formatDateTime(new Date());
+  }
+
+  private formatDateTime(date: Date): string {
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    const hh = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const ss = String(date.getSeconds()).padStart(2, '0');
+    return `${dd}/${mm}/${yyyy}    ${hh}:${min}:${ss}`;
+  }
 
   isReadOnly = false;
   isElaborated = false;
   isVerified = false;
   isDeleted = false;
+
+  elaboradoPor = '';
+  elaboradoFecha = '';
+  verificadoPor = '';
+  verificadoFecha = '';
+
+  get traceabilityItems(): ActionTrackerSummary[] {
+    return [
+      { label: 'Elaborado por', actionBy: this.elaboradoPor, date: this.elaboradoFecha },
+      { label: 'Verificado por', actionBy: this.verificadoPor, date: this.verificadoFecha },
+      { label: 'Aprobado por',   actionBy: '', date: '' }
+    ];
+  }
   saveSnackbarOpen = false;
   snackbarVariant: SnackbarVariant = 'creation-elaborated';
   readonly generatedDocumentNumber = '0001';
@@ -992,6 +1044,8 @@ export class AdjustmentSeatRequestComponent {
     this.isReadOnly = true;
     this.snackbarVariant = 'creation-elaborated';
     this.saveSnackbarOpen = true;
+    this.elaboradoPor = this.currentUser.name.toUpperCase();
+    this.elaboradoFecha = this.formatDateTime(new Date());
     this.cdr.markForCheck();
   }
 
@@ -1008,6 +1062,8 @@ export class AdjustmentSeatRequestComponent {
     this.isReadOnly = true;
     this.snackbarVariant = 'creation-verified';
     this.saveSnackbarOpen = true;
+    this.verificadoPor = this.currentUser.name.toUpperCase();
+    this.verificadoFecha = this.formatDateTime(new Date());
     this.cdr.markForCheck();
   }
 
@@ -1222,11 +1278,13 @@ export class AdjustmentSeatRequestComponent {
     ...buildAdjustmentSeatBreadcrumbs('Solicitud de registro de asiento de ajuste')
   ];
 
-  readonly entityFields: ReadonlyField[] = [
-    { label: 'Fecha', value: '19/08/2025     08:00:59' },
-    { label: 'Ente rector', value: 'DIRECCIÓN GENERAL DE CONTABILIDAD PÚBLICA' },
-    { label: 'Entidad/ U.E/ ...', value: 'NOMBRE DE LA ENTIDAD/ U.E/ ...' }
-  ];
+  get entityFields(): ReadonlyField[] {
+    return [
+      { label: 'Fecha', value: this.currentDateTime },
+      { label: 'Ente rector', value: 'DIRECCIÓN GENERAL DE CONTABILIDAD PÚBLICA' },
+      { label: 'Entidad/ U.E/ ...', value: 'NOMBRE DE LA ENTIDAD/ U.E/ ...' }
+    ];
+  }
 
   goToDocuments(): void {
     void this.router.navigate(['/procesos/registro-asiento-ajuste']);

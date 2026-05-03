@@ -9,9 +9,21 @@ import { findProcessPathById } from '../../shared/ui/process-menu-tree/process-m
 import { SolicitudeFormCardComponent } from '../../shared/ui/solicitude-form-card/solicitude-form-card.component';
 import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../shared/ui/solicitude-info-card/solicitude-info-card.component';
 import { SolicitudePageLayoutComponent } from '../../shared/ui/solicitude-page-layout/solicitude-page-layout.component';
+import { TextAreaControlComponent } from '../../shared/ui/text-area-control/text-area-control.component';
 import { TextFieldComponent, TextFieldOption } from '../../shared/ui/text-field/text-field.component';
 import { UploadedFileCardComponent } from '../../shared/ui/uploaded-file-card/uploaded-file-card.component';
 import { UploadSidePanelComponent } from '../../shared/ui/upload-side-panel/upload-side-panel.component';
+
+type TipoPlanContable = {
+  id: string;
+  nombre: string;
+};
+
+const TIPOS_PLAN_CONTABLE: TipoPlanContable[] = [
+  { id: '1', nombre: 'Plan Contable Gubernamental Único' },
+  { id: '2', nombre: 'Plan Contable General Empresarial' },
+  { id: '3', nombre: 'Manual de Contabilidad para las Empresas del Sistema Financiero' }
+];
 
 const CHART_ACCOUNTS_PROCESS_ID = 'plan-cuentas-contables';
 const CHART_ACCOUNTS_PROCESS_ROUTE = '/procesos/plan-cuentas-contables';
@@ -57,6 +69,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
     SolicitudeFormCardComponent,
     SolicitudeInfoCardComponent,
     SolicitudePageLayoutComponent,
+    TextAreaControlComponent,
     TextFieldComponent,
     UploadedFileCardComponent,
     UploadSidePanelComponent
@@ -75,7 +88,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
           (returned)="goToDocuments()"
           (canceled)="goToDocuments()"
         >
-          <siaf-solicitude-info-card [fields]="entityFields" />
+          <siaf-solicitude-info-card [fields]="entityFields" [liveDate]="true" />
 
           @if (accountingAccountFormOpen()) {
             <section class="rounded-siaf-md bg-surface">
@@ -91,27 +104,47 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                 <section class="grid gap-siaf-md">
                   <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                     <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar tipo plan de cuentas contable</h3>
-                    <siaf-button variant="accent" size="md" icon="search" [iconOnly]="true" ariaLabel="Buscar tipo plan de cuentas contable" />
+                    <siaf-button variant="accent" size="md" icon="search" [iconOnly]="true" ariaLabel="Buscar tipo plan de cuentas contable" (click)="openTipoPlanPanel()" />
                   </div>
-                  <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
-                    <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección.</p>
-                  </div>
+                  @if (selectedTipoPlan()) {
+                    <div class="relative flex min-h-[49px] items-center rounded-siaf-md border border-border px-siaf-xl py-siaf-xs">
+                      <span class="absolute left-[-1px] top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-siaf-sm bg-brand-primary"></span>
+                      <span class="flex-1 text-sm font-bold text-text">{{ selectedTipoPlan()!.nombre }}</span>
+                      <button class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Quitar plan contable" (click)="selectedTipoPlan.set(null)">
+                        <siaf-icon name="close" [size]="20" />
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                      <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">No se ha seleccionado ningún tipo. Haga clic en el botón para realizar una selección.</p>
+                    </div>
+                  }
                 </section>
+
+                @if (newAccountCodeInUse()) {
+                  <div class="flex items-start gap-siaf-sm rounded-siaf-md bg-[var(--sys-color-bg-feedback-light-danger)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-feedback-danger)]">
+                    <siaf-icon class="mt-0.5 shrink-0" name="error" [size]="20" />
+                    <div class="min-w-0 flex-1">
+                      <p class="m-0 text-sm font-bold leading-normal">Código de cuenta ya registrado</p>
+                      <p class="m-0 text-sm leading-normal">El código ingresado ya se encuentra creado en el sistema. Debe crear y registrar otro código.</p>
+                    </div>
+                  </div>
+                }
 
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Nueva cuenta contable</h3>
                   <div class="grid gap-siaf-md lg:grid-cols-[320px_minmax(0,1fr)]">
-                    <siaf-text-field label="Código de la nueva cuenta *" [value]="newAccountCode()" (valueChange)="newAccountCode.set(textFieldValue($event))" />
-                    <siaf-text-field label="Nombre de la cuenta contable *" [value]="newAccountName()" (valueChange)="newAccountName.set(textFieldValue($event))" />
+                    <siaf-text-field label="Código de la nueva cuenta *" [value]="newAccountCode()" [error]="newAccountCodeError()" [disabled]="!selectedTipoPlan()" (valueChange)="onNewAccountCodeChange($event)" />
+                    <siaf-text-field label="Nombre de la cuenta contable *" [value]="newAccountName()" [disabled]="!selectedTipoPlan()" (valueChange)="newAccountName.set(textFieldValue($event))" />
                   </div>
                   <div class="flex flex-wrap items-center gap-siaf-md">
                     <h4 class="m-0 w-[280px] text-sm font-bold text-text">¿Es una cuenta imputable?</h4>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'si'" (change)="newAccountImputable.set('si')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'si'" [disabled]="!selectedTipoPlan()" (change)="newAccountImputable.set('si')" />
                       Si
                     </label>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'no'" (change)="newAccountImputable.set('no')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'no'" [disabled]="!selectedTipoPlan()" (change)="newAccountImputable.set('no')" />
                       No
                     </label>
                   </div>
@@ -120,7 +153,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Asociar código de cuenta contable anterior</h3>
                   <div class="grid gap-siaf-md md:grid-cols-2">
-                    <siaf-text-field label="Código de la cuenta contable" type="select" leadingIcon="search" [options]="previousAccountOptions" [value]="previousAccountCode()" (valueChange)="onPreviousAccountSelected($event)" />
+                    <siaf-text-field label="Código de la cuenta contable" type="select" leadingIcon="search" [options]="previousAccountOptions" [value]="previousAccountCode()" [disabled]="!selectedTipoPlan()" (valueChange)="onPreviousAccountSelected($event)" />
                     <siaf-text-field label="Nombre de la cuenta contable seleccionada" [value]="previousAccountName" [disabled]="true" />
                   </div>
                 </section>
@@ -128,24 +161,24 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Atributos de la cuenta contable</h3>
                   <div class="grid gap-siaf-md lg:grid-cols-3">
-                    <siaf-text-field label="Naturaleza *" type="select" [options]="natureOptions" [value]="accountNature()" (valueChange)="accountNature.set(textFieldValue($event))" />
-                    <siaf-text-field label="Tipo de elemento *" type="select" [options]="elementTypeOptions" [value]="elementType()" (valueChange)="elementType.set(textFieldValue($event))" />
-                    <siaf-text-field label="¿Es monetaria? *" type="select" [options]="yesNoOptions" [value]="monetaryAccount()" (valueChange)="monetaryAccount.set(textFieldValue($event))" />
+                    <siaf-text-field label="Naturaleza *" type="select" [options]="natureOptions" [value]="accountNature()" [disabled]="!selectedTipoPlan()" (valueChange)="accountNature.set(textFieldValue($event))" />
+                    <siaf-text-field label="Tipo de elemento *" type="select" [options]="elementTypeOptions" [value]="elementType()" [disabled]="!selectedTipoPlan()" (valueChange)="elementType.set(textFieldValue($event))" />
+                    <siaf-text-field label="¿Es monetaria? *" type="select" [options]="yesNoOptions" [value]="monetaryAccount()" [disabled]="!selectedTipoPlan()" (valueChange)="monetaryAccount.set(textFieldValue($event))" />
                   </div>
-                  <siaf-text-field label="Ámbito institucional de aplicación *" type="select" [options]="institutionalScopeOptions" [value]="institutionalScope()" (valueChange)="institutionalScope.set(textFieldValue($event))" />
+                  <siaf-text-field label="Ámbito institucional de aplicación *" type="select-multiple" [options]="institutionalScopeOptions" [value]="institutionalScope()" [disabled]="!selectedTipoPlan()" (valueChange)="institutionalScope.set(arrayFieldValue($event))" />
                   <label class="inline-flex min-h-10 items-center gap-siaf-xs text-sm text-text">
-                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="appliesExtraBudgetary()" (change)="appliesExtraBudgetary.set(checkedValue($event))" />
+                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="appliesExtraBudgetary()" [disabled]="!selectedTipoPlan()" (change)="appliesExtraBudgetary.set(checkedValue($event))" />
                     ¿Aplica Extra Presupuestaria? (AEP)
                   </label>
                   <label class="inline-flex min-h-10 items-center gap-siaf-xs text-sm text-text">
-                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="reciprocalAccount()" (change)="reciprocalAccount.set(checkedValue($event))" />
+                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="reciprocalAccount()" [disabled]="!selectedTipoPlan()" (change)="reciprocalAccount.set(checkedValue($event))" />
                     ¿Es Recíproca ? (RECI)
                   </label>
                   <div class="grid gap-siaf-md md:grid-cols-2 xl:grid-cols-4">
-                    <siaf-text-field label="AC Activo" type="select" [options]="activeOptions" [value]="activeCurrent()" (valueChange)="activeCurrent.set(textFieldValue($event))" />
-                    <siaf-text-field label="PC Pasivo" type="select" [options]="passiveOptions" [value]="passiveCurrent()" (valueChange)="passiveCurrent.set(textFieldValue($event))" />
-                    <siaf-text-field label="ANC Activo" type="select" [options]="activeOptions" [value]="activeNonCurrent()" (valueChange)="activeNonCurrent.set(textFieldValue($event))" />
-                    <siaf-text-field label="PNC Pasivo" type="select" [options]="passiveOptions" [value]="passiveNonCurrent()" (valueChange)="passiveNonCurrent.set(textFieldValue($event))" />
+                    <siaf-text-field label="AC Activo" type="select" [options]="activeOptions" [value]="activeCurrent()" [disabled]="!selectedTipoPlan()" (valueChange)="activeCurrent.set(textFieldValue($event))" />
+                    <siaf-text-field label="PC Pasivo" type="select" [options]="passiveOptions" [value]="passiveCurrent()" [disabled]="!selectedTipoPlan()" (valueChange)="passiveCurrent.set(textFieldValue($event))" />
+                    <siaf-text-field label="ANC Activo" type="select" [options]="activeOptions" [value]="activeNonCurrent()" [disabled]="!selectedTipoPlan()" (valueChange)="activeNonCurrent.set(textFieldValue($event))" />
+                    <siaf-text-field label="PNC Pasivo" type="select" [options]="passiveOptions" [value]="passiveNonCurrent()" [disabled]="!selectedTipoPlan()" (valueChange)="passiveNonCurrent.set(textFieldValue($event))" />
                   </div>
                 </section>
 
@@ -154,46 +187,58 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                   <div class="flex flex-wrap items-center gap-siaf-md">
                     <h4 class="m-0 w-[280px] text-sm font-bold text-text">¿Tiene dinámica contable?</h4>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'si'" (change)="hasAccountingDynamics.set('si')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'si'" [disabled]="!selectedTipoPlan()" (change)="hasAccountingDynamics.set('si')" />
                       Si
                     </label>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'no'" (change)="hasAccountingDynamics.set('no')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'no'" [disabled]="!selectedTipoPlan()" (change)="hasAccountingDynamics.set('no')" />
                       No
                     </label>
                   </div>
                   <div class="grid gap-siaf-md md:grid-cols-2">
-                    <label class="flex min-h-[60px] flex-col gap-siaf-xxs">
-                      <textarea class="min-h-[42px] resize-none rounded-siaf-md border border-[var(--sys-color-border-states-disabled)] bg-[var(--sys-color-bg-surfaces-disabled)] px-siaf-md py-siaf-xs text-sm text-text outline-none placeholder:text-[var(--sys-color-text-neutral-low)]" maxlength="4000" placeholder="Se debita por" [value]="debitDescription()" (input)="debitDescription.set(inputValue($event))"></textarea>
-                      <span class="self-end px-siaf-md text-xs text-text-muted">{{ debitDescription().length }}/4000</span>
-                    </label>
-                    <label class="flex min-h-[60px] flex-col gap-siaf-xxs">
-                      <textarea class="min-h-[42px] resize-none rounded-siaf-md border border-[var(--sys-color-border-states-disabled)] bg-[var(--sys-color-bg-surfaces-disabled)] px-siaf-md py-siaf-xs text-sm text-text outline-none placeholder:text-[var(--sys-color-text-neutral-low)]" maxlength="4000" placeholder="Se acredita por" [value]="creditDescription()" (input)="creditDescription.set(inputValue($event))"></textarea>
-                      <span class="self-end px-siaf-md text-xs text-text-muted">{{ creditDescription().length }}/4000</span>
-                    </label>
-                    <label class="flex min-h-[60px] flex-col gap-siaf-xxs">
-                      <textarea class="min-h-[42px] resize-none rounded-siaf-md border border-[var(--sys-color-border-states-disabled)] bg-[var(--sys-color-bg-surfaces-disabled)] px-siaf-md py-siaf-xs text-sm text-text outline-none placeholder:text-[var(--sys-color-text-neutral-low)]" maxlength="4000" placeholder="Objeto" [value]="objectDescription()" (input)="objectDescription.set(inputValue($event))"></textarea>
-                      <span class="self-end px-siaf-md text-xs text-text-muted">{{ objectDescription().length }}/4000</span>
-                    </label>
-                    <label class="flex min-h-[60px] flex-col gap-siaf-xxs">
-                      <textarea class="min-h-[42px] resize-none rounded-siaf-md border border-[var(--sys-color-border-states-disabled)] bg-[var(--sys-color-bg-surfaces-disabled)] px-siaf-md py-siaf-xs text-sm text-text outline-none placeholder:text-[var(--sys-color-text-neutral-low)]" maxlength="4000" placeholder="Saldos" [value]="balanceDescription()" (input)="balanceDescription.set(inputValue($event))"></textarea>
-                      <span class="self-end px-siaf-md text-xs text-text-muted">{{ balanceDescription().length }}/4000</span>
-                    </label>
+                    <text-area-control
+                      placeholder="Se debita por"
+                      [maxlength]="4000"
+                      [value]="debitDescription()"
+                      [disabled]="!selectedTipoPlan() || hasAccountingDynamics() !== 'si'"
+                      (valueChange)="debitDescription.set($event)"
+                    />
+                    <text-area-control
+                      placeholder="Se acredita por"
+                      [maxlength]="4000"
+                      [value]="creditDescription()"
+                      [disabled]="!selectedTipoPlan() || hasAccountingDynamics() !== 'si'"
+                      (valueChange)="creditDescription.set($event)"
+                    />
+                    <text-area-control
+                      placeholder="Objeto"
+                      [maxlength]="4000"
+                      [value]="objectDescription()"
+                      [disabled]="!selectedTipoPlan() || hasAccountingDynamics() !== 'si'"
+                      (valueChange)="objectDescription.set($event)"
+                    />
+                    <text-area-control
+                      placeholder="Saldos"
+                      [maxlength]="4000"
+                      [value]="balanceDescription()"
+                      [disabled]="!selectedTipoPlan() || hasAccountingDynamics() !== 'si'"
+                      (valueChange)="balanceDescription.set($event)"
+                    />
                   </div>
                   <div class="flex flex-wrap items-center gap-siaf-md">
                     <h4 class="m-0 text-sm font-bold text-text">¿Cuenta contable para una entidad del estado?</h4>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="state-entity-account" [checked]="accountForStateEntity() === 'si'" (change)="accountForStateEntity.set('si')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="state-entity-account" [checked]="accountForStateEntity() === 'si'" [disabled]="!selectedTipoPlan()" (change)="accountForStateEntity.set('si')" />
                       Si
                     </label>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="state-entity-account" [checked]="accountForStateEntity() === 'no'" (change)="accountForStateEntity.set('no')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="state-entity-account" [checked]="accountForStateEntity() === 'no'" [disabled]="!selectedTipoPlan()" (change)="accountForStateEntity.set('no')" />
                       No
                     </label>
                   </div>
                   <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                     <h3 class="m-0 text-sm font-bold uppercase text-text">Entidades del estado</h3>
-                    <siaf-button variant="secondary" size="md" icon="search" [iconOnly]="true" ariaLabel="Agregar entidades del estado" />
+                    <siaf-button variant="secondary" size="md" icon="search" [iconOnly]="true" ariaLabel="Agregar entidades del estado" [disabled]="!selectedTipoPlan()" />
                   </div>
                   <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
                     <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">Por favor, haga clic en el botón para agregar una o varias entidades del estado.</p>
@@ -206,19 +251,19 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                     <div class="flex flex-wrap items-center gap-siaf-xs">
                       <h4 class="m-0 text-sm font-bold text-text">¿Está vigente?</h4>
                       <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                        <input class="size-4 accent-brand-primary" type="radio" name="account-current" [checked]="accountCurrent() === 'si'" (change)="accountCurrent.set('si')" />
+                        <input class="size-4 accent-brand-primary" type="radio" name="account-current" [checked]="accountCurrent() === 'si'" [disabled]="!selectedTipoPlan()" (change)="accountCurrent.set('si')" />
                         Si
                       </label>
                       <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                        <input class="size-4 accent-brand-primary" type="radio" name="account-current" [checked]="accountCurrent() === 'no'" (change)="accountCurrent.set('no')" />
+                        <input class="size-4 accent-brand-primary" type="radio" name="account-current" [checked]="accountCurrent() === 'no'" [disabled]="!selectedTipoPlan()" (change)="accountCurrent.set('no')" />
                         No
                       </label>
                     </div>
-                    <siaf-text-field label="Fecha inicio desde" trailingIcon="calendar_today" [value]="validFrom()" (valueChange)="validFrom.set(textFieldValue($event))" />
-                    <siaf-text-field label="Fecha fin hasta" trailingIcon="calendar_today" [value]="validUntil()" (valueChange)="validUntil.set(textFieldValue($event))" />
+                    <siaf-text-field label="Fecha inicio desde" trailingIcon="calendar_today" [value]="validFrom()" [disabled]="!selectedTipoPlan()" (valueChange)="validFrom.set(textFieldValue($event))" />
+                    <siaf-text-field label="Fecha fin hasta" trailingIcon="calendar_today" [value]="validUntil()" [disabled]="!selectedTipoPlan()" (valueChange)="validUntil.set(textFieldValue($event))" />
                   </div>
                   <label class="inline-flex min-h-10 items-center gap-siaf-xs text-sm text-text">
-                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="accountVisible()" (change)="accountVisible.set(checkedValue($event))" />
+                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="accountVisible()" [disabled]="!selectedTipoPlan()" (change)="accountVisible.set(checkedValue($event))" />
                     ¿Está visible?
                   </label>
                 </section>
@@ -287,17 +332,12 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
           </siaf-solicitude-form-card>
 
           <siaf-solicitude-form-card title="Justificación del sustento">
-              <label class="flex min-h-[76px] flex-col gap-siaf-xxs">
-                <span class="sr-only">Justificación del requerimiento solicitado</span>
-                <textarea
-                  class="min-h-[60px] resize-none rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface px-siaf-md py-siaf-xs text-sm text-text outline-none transition placeholder:text-[var(--sys-color-text-neutral-low)] focus:border-2 focus:border-[var(--sys-color-border-states-focus)]"
-                  maxlength="500"
-                  placeholder="Justificación del requerimiento solicitado*"
-                  [value]="justification()"
-                  (input)="justification.set(inputValue($event))"
-                ></textarea>
-                <span class="self-end px-siaf-md text-xs text-text-muted">{{ justification().length }}/500</span>
-              </label>
+              <text-area-control
+                placeholder="Justificación del requerimiento solicitado*"
+                [maxlength]="500"
+                [value]="justification()"
+                (valueChange)="justification.set($event)"
+              />
 
               <div class="flex flex-col gap-siaf-xs">
                 <div class="flex min-h-10 items-center justify-between gap-siaf-md">
@@ -401,6 +441,75 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
           </aside>
         </section>
       }
+
+      @if (tipoPlanPanelOpen()) {
+        <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="tipo-plan-panel-title" (click)="closeTipoPlanPanel()">
+          <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-[0_16px_12px_rgba(0,0,0,0.14),0_6px_15px_rgba(0,0,0,0.12),0_8px_5px_rgba(0,0,0,0.2)] lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
+            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
+              <h2 id="tipo-plan-panel-title" class="m-0 min-w-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Seleccionar plan de cuentas contable</h2>
+              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Cerrar selección de plan de cuentas contable" (click)="closeTipoPlanPanel()">
+                <siaf-icon name="close" [size]="24" />
+              </button>
+            </header>
+
+            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
+              <div class="flex flex-col gap-siaf-lg">
+                <div class="flex items-start gap-siaf-md">
+                  <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md">
+                    <span class="sr-only">Buscar</span>
+                    <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted" placeholder="Buscar" [value]="tipoPlanSearch()" (input)="tipoPlanSearch.set(inputValue($event))" />
+                  </label>
+                  <div class="flex shrink-0 items-center gap-siaf-xs">
+                    <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted" type="button" aria-label="Filtros">
+                      <siaf-icon name="filter_list" [size]="24" />
+                    </button>
+                    <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted" type="button" aria-label="Mas opciones">
+                      <siaf-icon name="more_vert" [size]="24" />
+                    </button>
+                  </div>
+                </div>
+
+                <div class="min-h-0 flex-1 overflow-auto">
+                  <table class="w-full border-collapse text-left">
+                    <thead class="sticky top-0 z-[1] bg-[var(--sys-color-bg-surfaces-surface-high)]">
+                      <tr class="h-10 border-b border-[var(--sys-color-divider-strong)] text-xs font-bold uppercase text-text">
+                        <th class="w-12 px-siaf-sm"></th>
+                        <th class="px-siaf-md py-siaf-sm">Tipo de plan contable</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (plan of filteredTiposPlan(); track plan.id) {
+                        <tr class="h-12 border-b border-[var(--sys-color-divider-default)] text-sm text-[var(--sys-color-text-neutral-medium)] hover:bg-surface-muted/60 cursor-pointer" (click)="tempSelectedTipoPlan.set(plan)">
+                          <td class="px-siaf-sm py-siaf-sm">
+                            <input
+                              class="size-5 accent-brand-primary"
+                              type="radio"
+                              name="tipo-plan"
+                              [checked]="tempSelectedTipoPlan()?.id === plan.id"
+                              [attr.aria-label]="'Seleccionar ' + plan.nombre"
+                              (change)="tempSelectedTipoPlan.set(plan)"
+                            />
+                          </td>
+                          <td class="px-siaf-md py-siaf-sm">{{ plan.nombre }}</td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td class="px-siaf-md py-siaf-lg text-sm text-text-muted" colspan="2">No se encontraron planes.</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <footer class="flex shrink-0 items-center justify-end gap-siaf-xs px-siaf-md py-siaf-sm">
+              <siaf-button variant="secondary" (click)="closeTipoPlanPanel()">Cancelar</siaf-button>
+              <siaf-button variant="primary" [disabled]="!tempSelectedTipoPlan()" (click)="confirmTipoPlanSelection()">Aceptar</siaf-button>
+            </footer>
+          </aside>
+        </section>
+      }
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -408,19 +517,37 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 export class ChartAccountsRequestComponent {
   private readonly router = inject(Router);
 
+  // Códigos existentes (mock — reemplazar con llamada real a API)
+  private readonly EXISTING_ACCOUNT_CODES = new Set(['1101', '110101', '110102', '2101', '3101']);
+
   readonly externalOrigin = signal<'si' | 'no' | ''>('');
+  readonly tipoPlanPanelOpen = signal(false);
+  readonly selectedTipoPlan = signal<TipoPlanContable | null>(null);
+  readonly tempSelectedTipoPlan = signal<TipoPlanContable | null>(null);
+  readonly tipoPlanSearch = signal('');
+
+  readonly filteredTiposPlan = computed(() => {
+    const search = this.normalize(this.tipoPlanSearch());
+    if (!search) return TIPOS_PLAN_CONTABLE;
+    return TIPOS_PLAN_CONTABLE.filter(p => this.normalize(p.nombre).includes(search));
+  });
+
   readonly justification = signal('');
   readonly uploadPanelOpen = signal(false);
   readonly uploadedFile = signal<File | null>(null);
   readonly accountingAccountFormOpen = signal(false);
   readonly newAccountCode = signal('');
+  readonly newAccountCodeInUse = signal(false);
+  readonly newAccountCodeError = computed(() =>
+    this.newAccountCodeInUse() ? 'El código ingresado está en uso' : ''
+  );
   readonly newAccountName = signal('');
   readonly newAccountImputable = signal<'si' | 'no' | ''>('');
   readonly previousAccountCode = signal('');
   readonly accountNature = signal('');
   readonly elementType = signal('');
   readonly monetaryAccount = signal('');
-  readonly institutionalScope = signal('');
+  readonly institutionalScope = signal<string[]>([]);
   readonly appliesExtraBudgetary = signal(false);
   readonly reciprocalAccount = signal(false);
   readonly activeCurrent = signal('');
@@ -485,9 +612,18 @@ export class ChartAccountsRequestComponent {
   ];
 
   readonly institutionalScopeOptions: TextFieldOption[] = [
-    { label: 'Gobierno Nacional', value: 'gobierno-nacional' },
-    { label: 'Gobierno Regional', value: 'gobierno-regional' },
-    { label: 'Gobierno Local', value: 'gobierno-local' }
+    { label: 'Entidades del Poder Ejecutivo (EPE)', value: 'epe' },
+    { label: 'Entidades del Poder Legislativo (EPL)', value: 'epl' },
+    { label: 'Entidades del Poder Judicial (EPJ)', value: 'epj' },
+    { label: 'Organismos Constitucionales Autónomos (OCA)', value: 'oca' },
+    { label: 'Gobiernos Regionales (GR)', value: 'gr' },
+    { label: 'Gobiernos Locales (GL)', value: 'gl' },
+    { label: 'Entidades de Tratamiento Empresarial (ETE)', value: 'ete' },
+    { label: 'Empresas Públicas del Estado (EPP)', value: 'epp' },
+    { label: 'Empresas Públicas de Derecho Privado (EPD)', value: 'epd' },
+    { label: 'Fondos y Fideicomisos (FF)', value: 'ff' },
+    { label: 'Organismos Reguladores (OR)', value: 'or' },
+    { label: 'Organismos Supervisores (OS)', value: 'os' }
   ];
 
   readonly activeOptions: TextFieldOption[] = [
@@ -506,7 +642,7 @@ export class ChartAccountsRequestComponent {
   ];
 
   readonly entityFields: SolicitudeInfoField[] = [
-    { label: 'Fecha', value: '19/08/2025    08:00:59' },
+    { label: 'Fecha', value: '' },
     { label: 'Órgano de línea', value: 'DIRECCIÓN GENERAL DE CONTABILIDAD PÚBLICA' },
     { label: 'Entidad', value: 'MINISTERIO DE ECONOMIA Y FINANZAS' }
   ];
@@ -527,6 +663,7 @@ export class ChartAccountsRequestComponent {
 
   closeFloatingPanels(): void {
     this.externalEntityPanelOpen.set(false);
+    this.tipoPlanPanelOpen.set(false);
   }
 
   get hasFloatingPanel(): boolean {
@@ -541,6 +678,10 @@ export class ChartAccountsRequestComponent {
     return Array.isArray(value) ? value.join(', ') : String(value);
   }
 
+  arrayFieldValue(value: string | number | string[]): string[] {
+    return Array.isArray(value) ? value : [String(value)];
+  }
+
   checkedValue(event: Event): boolean {
     return (event.target as HTMLInputElement).checked;
   }
@@ -551,6 +692,31 @@ export class ChartAccountsRequestComponent {
 
   cancelAccountingAccountForm(): void {
     this.accountingAccountFormOpen.set(false);
+    this.newAccountCode.set('');
+    this.newAccountCodeInUse.set(false);
+  }
+
+  openTipoPlanPanel(): void {
+    this.tipoPlanSearch.set('');
+    this.tempSelectedTipoPlan.set(this.selectedTipoPlan());
+    this.tipoPlanPanelOpen.set(true);
+  }
+
+  closeTipoPlanPanel(): void {
+    this.tipoPlanPanelOpen.set(false);
+  }
+
+  confirmTipoPlanSelection(): void {
+    const selected = this.tempSelectedTipoPlan();
+    if (!selected) return;
+    this.selectedTipoPlan.set(selected);
+    this.tipoPlanPanelOpen.set(false);
+  }
+
+  onNewAccountCodeChange(value: string | number | string[]): void {
+    const code = this.textFieldValue(value).trim();
+    this.newAccountCode.set(code);
+    this.newAccountCodeInUse.set(code.length > 0 && this.EXISTING_ACCOUNT_CODES.has(code));
   }
 
   get previousAccountName(): string {
