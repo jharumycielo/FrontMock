@@ -1,4 +1,4 @@
-import { findProcessPathById } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
+import { findProcessPathById } from '../../layout/process-menu-tree/process-menu-tree.component';
 import type { DocumentsRecordsBreadcrumbItem, DocumentsRecordsColumn, DocumentsRecordsConfig, DocumentsRecordsCreateProcessOption, DocumentsRecordsRow } from '../../shared/types/documents-records.types';
 import { BASE_DOCUMENT_COLUMNS, BASE_FILTER_VALUES, DOCUMENTS_RECORDS_FIELD_MENU_OPTIONS, DOCUMENTS_RECORDS_FILTER_CAMPO_OPTIONS } from './common-documents-records.config';
 

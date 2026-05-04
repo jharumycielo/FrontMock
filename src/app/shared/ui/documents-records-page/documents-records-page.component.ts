@@ -3,11 +3,11 @@ import { Router } from '@angular/router';
 
 import { BreadcrumbComponent } from '../../components/breadcrumb/breadcrumb.component';
 import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../components/custom-filter/custom-filter.component';
-import { PaginationComponent } from '../pagination/pagination.component';
+import { PaginationComponent } from '../../components/pagination/pagination.component';
 import type { DocumentsRecordsColumn, DocumentsRecordsConfig, DocumentsRecordsRow, DocumentsRecordsTab } from '../../types/documents-records.types';
 import { ButtonComponent } from '../button/button.component';
 import { ColumnVisibilityPanelComponent } from '../column-visibility-panel/column-visibility-panel.component';
-import { CreateDocumentAccepted, CreateDocumentComponent, CreateDocumentField, CreateDocumentSelection } from '../create-document/create-document.component';
+import { CreateDocumentAccepted, CreateDocumentComponent, CreateDocumentField, CreateDocumentSelection } from '../../../layout/create-document/create-document.component';
 import { DocumentHistoryPanelComponent, DocumentHistorySummary } from '../document-history-panel/document-history-panel.component';
 import { DocumentsRecordsSelectionChange, DocumentsRecordsTableComponent } from '../documents-records-table/documents-records-table.component';
 import { IconComponent } from '../icon/icon.component';

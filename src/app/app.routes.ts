@@ -20,23 +20,23 @@ export const routes: Routes = [
       },
       {
         path: 'procesos/registro-asiento-ajuste',
-        loadComponent: () => import('./features/adjustment-seat-documents/adjustment-seat-documents.component').then((m) => m.AdjustmentSeatDocumentsComponent)
+        loadComponent: () => import('./features/adjustment-seat/pages/documents/adjustment-seat-documents.component').then((m) => m.AdjustmentSeatDocumentsComponent)
       },
       {
         path: 'procesos/registro-asiento-ajuste/solicitud',
-        loadComponent: () => import('./features/adjustment-seat-request/adjustment-seat-request.component').then((m) => m.AdjustmentSeatRequestComponent)
+        loadComponent: () => import('./features/adjustment-seat/pages/request/adjustment-seat-request.component').then((m) => m.AdjustmentSeatRequestComponent)
       },
       {
         path: 'procesos/registro-asiento-ajuste/formulario',
-        loadComponent: () => import('./features/adjustment-seat-form/adjustment-seat-form.component').then((m) => m.AdjustmentSeatFormComponent)
+        loadComponent: () => import('./features/adjustment-seat/pages/form/adjustment-seat-form.component').then((m) => m.AdjustmentSeatFormComponent)
       },
       {
         path: 'procesos/plan-cuentas-contables',
-        loadComponent: () => import('./features/chart-accounts-documents/chart-accounts-documents.component').then((m) => m.ChartAccountsDocumentsComponent)
+        loadComponent: () => import('./features/chart-accounts/pages/documents/chart-accounts-documents.component').then((m) => m.ChartAccountsDocumentsComponent)
       },
       {
         path: 'procesos/plan-cuentas-contables/solicitud',
-        loadComponent: () => import('./features/chart-accounts-request/chart-accounts-request.component').then((m) => m.ChartAccountsRequestComponent)
+        loadComponent: () => import('./features/chart-accounts/pages/request/chart-accounts-request.component').then((m) => m.ChartAccountsRequestComponent)
       },
       {
         path: 'procesos/plan-cuentas-contables/carga-masiva/solicitud',

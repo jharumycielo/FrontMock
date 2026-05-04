@@ -5,11 +5,11 @@ import { filter } from 'rxjs';
 
 import { CHART_ACCOUNTS_DOCUMENTS_CONFIG } from '../../features/process-configs/chart-accounts-documents.config';
 import { ADJUSTMENT_SEAT_DOCUMENTS_CONFIG } from '../../features/process-configs/adjustment-seat-documents.config';
-import { CreateDocumentAccepted, CreateDocumentComponent } from '../../shared/ui/create-document/create-document.component';
-import { MobileNavigationMenuComponent } from '../../shared/ui/mobile-navigation-menu/mobile-navigation-menu.component';
-import { ProcessMenuNode, ProcessMenuTreeComponent } from '../../shared/ui/process-menu-tree/process-menu-tree.component';
-import { TrayDocumentsViewComponent } from '../../shared/ui/tray-documents-view/tray-documents-view.component';
-import { TrayMenuComponent } from '../../shared/ui/tray-menu/tray-menu.component';
+import { CreateDocumentAccepted, CreateDocumentComponent } from '../create-document/create-document.component';
+import { MobileNavigationMenuComponent } from '../mobile-navigation-menu/mobile-navigation-menu.component';
+import { ProcessMenuNode, ProcessMenuTreeComponent } from '../process-menu-tree/process-menu-tree.component';
+import { TrayDocumentsViewComponent } from '../tray-documents-view/tray-documents-view.component';
+import { TrayMenuComponent } from '../tray-menu/tray-menu.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { SidebarComponent, SidebarNavigation } from '../sidebar/sidebar.component';
 import { CurrentUserService } from '../../core/auth/current-user.service';

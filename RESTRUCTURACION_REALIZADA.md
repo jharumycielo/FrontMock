@@ -1,278 +1,154 @@
-# ✅ RESTRUCTURACIÓN COMPLETADA - SIAF-RP
+# RESTRUCTURACIÓN ARQUITECTURAL — SIAF-RP
 
-**Fecha de ejecución:** 27 de Abril, 2026  
-**Estado:** ✅ COMPLETADO
-
----
-
-## 📊 CAMBIOS REALIZADOS
-
-### FASE 1: Estructura Base ✅
-- ✅ Creada carpeta `src/app/core/` con subdirectivas (services, guards, interceptors, models, config)
-- ✅ Creada carpeta `src/app/layout/` con componentes de layout
-- ✅ Creada carpeta `src/app/shared/components/` para componentes transversales
-- ✅ Creada carpeta `src/app/shared/types/` para tipos reutilizables
-- ✅ Creada carpeta `src/app/shared/utils/` para funciones utilitarias
-- ✅ Creada carpeta `src/styles/tokens/` con estructura generated y themes
-
-### FASE 2: Tipos y Modelos ✅
-- ✅ Creado `src/app/shared/types/common.types.ts` con tipos reutilizables
-- ✅ Creado `src/app/shared/types/index.ts` para exportación
-- ✅ Creado `src/app/core/models/common.models.ts` con modelos globales
-- ✅ Creado `src/app/core/models/index.ts` para exportación
-
-### FASE 3: Configuración Global ✅
-- ✅ Creado `src/app/core/config/app.config.ts` con configuración centralizada
-- ✅ Creado `src/app/core/config/index.ts` para exportación
-- ✅ Definidos: APP_CONFIG y ROUTES_CONFIG
-
-### FASE 4: Tokens de Diseño ✅
-- ✅ Copiado `tokens.css` a `src/styles/tokens/generated/`
-- ✅ Copiado `tailwind.tokens.css` a `src/styles/tokens/generated/`
-- ✅ Copiado `light.css` a `src/styles/tokens/themes/`
-- ✅ Copiado `dark.css` a `src/styles/tokens/themes/`
-- ✅ Creado `src/styles/tokens/base.css` con variables base
-- ✅ Creado `src/styles/tokens/themes/index.css` para importar temas
-- ✅ Creado `src/styles/tokens/index.css` como índice principal
-- ✅ Actualizado `src/styles.css` para importar nuevos tokens
-
-### FASE 5: Componentes de Layout ✅
-- ✅ Movido `sidebar` a `src/app/layout/sidebar/`
-- ✅ Movido `navbar` a `src/app/layout/navbar/`
-- ✅ Movido `side-panel` a `src/app/layout/side-panel/`
-- ✅ Creado `src/app/layout/index.ts` para exportación
-
-### FASE 6: Componentes Transversales ✅
-- ✅ Movido `pagination` a `src/app/shared/components/pagination/`
-- ✅ Movido `breadcrumb` a `src/app/shared/components/breadcrumb/`
-- ✅ Movido `data-table` a `src/app/shared/components/data-table/`
-- ✅ Movido `timeline` a `src/app/shared/components/timeline/`
-- ✅ Movido `alert` a `src/app/shared/components/alert/`
-- ✅ Movido `snackbar` a `src/app/shared/components/snackbar/`
-- ✅ Movido `loading-progress` a `src/app/shared/components/loading-progress/`
-- ✅ Movido `action-tracker` a `src/app/shared/components/action-tracker/`
-- ✅ Creado `src/app/shared/components/index.ts` para exportación
-
-### FASE 7: Reorganización de Features ✅
-- ✅ Creada estructura `src/app/features/adjustment-seat/` con pages, components, services, models
-- ✅ Creada estructura `src/app/features/documents/` con pages, components, services, models
-- ✅ Creada estructura `src/app/features/virtual-desk/` con pages, components, services, models
-- ✅ Creada estructura `src/app/features/login/` con pages, components, services
-- ✅ Creada estructura `src/app/features/dashboard/` con pages, components, services, models
-- ✅ Movidas pantallas de adjustment-seat a `pages/`
-
-### FASE 8: Archivos de Exportación ✅
-- ✅ Creado `src/app/shared/ui/index.ts` para exportar componentes base
-- ✅ Creado `src/app/shared/components/index.ts` para exportar transversales
-- ✅ Creado `src/app/layout/index.ts` para exportar layout
-- ✅ Creado `src/app/shared/index.ts` como índice principal de shared
-- ✅ Creado `src/app/core/index.ts` como índice de core
-- ✅ Creado `src/app/shared/directives/index.ts`
-- ✅ Creado `src/app/shared/pipes/index.ts`
-- ✅ Creado `src/app/shared/utils/index.ts` con funciones reutilizables
-
-### FASE 9: Actualización de Imports ✅
-- ✅ Actualizado 57+ imports de componentes
-- ✅ Cambios de `shared/ui/sidebar/` → `layout/sidebar/`
-- ✅ Cambios de `shared/ui/navbar/` → `layout/navbar/`
-- ✅ Cambios de `shared/ui/side-panel/` → `layout/side-panel/`
-- ✅ Cambios de `shared/ui/pagination/` → `shared/components/pagination/`
-- ✅ Cambios de `shared/ui/breadcrumb/` → `shared/components/breadcrumb/`
-- ✅ Cambios de `shared/ui/data-table/` → `shared/components/data-table/`
-- ✅ Cambios de `shared/ui/timeline/` → `shared/components/timeline/`
-- ✅ Cambios de `shared/ui/alert/` → `shared/components/alert/`
-- ✅ Cambios de `shared/ui/snackbar/` → `shared/components/snackbar/`
-- ✅ Cambios de `shared/ui/loading-progress/` → `shared/components/loading-progress/`
-- ✅ Cambios de `shared/ui/action-tracker/` → `shared/components/action-tracker/`
-
-### FASE 10: Configuración Tailwind ✅
-- ✅ Copiado `tailwind.config.ts` a raíz del proyecto
+**Fecha de ejecución:** 4 de Mayo, 2026
+**Estado:** ✅ COMPLETADO Y VERIFICADO (build sin errores)
 
 ---
 
-## 📁 NUEVA ESTRUCTURA DEL PROYECTO
+## Objetivo
+
+Reorganizar el proyecto para que sea escalable, con separación clara de responsabilidades y sin duplicados. La arquitectura anterior tenía componentes de layout, negocio y UI Kit mezclados en `shared/ui/`, y las features como archivos sueltos sin estructura interna.
+
+---
+
+## Estructura resultante
 
 ```
-src/
-├── styles/
-│   ├── tokens/
-│   │   ├── generated/
-│   │   │   ├── tokens.css ✓
-│   │   │   └── tailwind.tokens.css ✓
-│   │   ├── themes/
-│   │   │   ├── light.css ✓
-│   │   │   ├── dark.css ✓
-│   │   │   └── index.css ✓
-│   │   ├── base.css ✓
-│   │   └── index.css ✓
-│   └── styles.css (actualizado) ✓
+src/app/
+├── core/
+│   └── auth/                        # Guards, servicios de sesión, modelos de rol
 │
-├── app/
-│   ├── core/
-│   │   ├── services/
-│   │   ├── guards/
-│   │   ├── interceptors/
-│   │   ├── models/
-│   │   │   ├── common.models.ts ✓
-│   │   │   └── index.ts ✓
-│   │   ├── config/
-│   │   │   ├── app.config.ts ✓
-│   │   │   └── index.ts ✓
-│   │   └── index.ts ✓
-│   │
-│   ├── layout/
-│   │   ├── sidebar/ ✓
-│   │   ├── navbar/ ✓
-│   │   ├── side-panel/ ✓
-│   │   └── index.ts ✓
-│   │
-│   ├── shared/
-│   │   ├── ui/ (22 componentes base)
-│   │   │   ├── button/
-│   │   │   ├── input/
-│   │   │   ├── select-options/
-│   │   │   ├── ... (resto de componentes base)
-│   │   │   └── index.ts ✓
-│   │   │
-│   │   ├── components/ (8 componentes transversales)
-│   │   │   ├── pagination/ ✓
-│   │   │   ├── breadcrumb/ ✓
-│   │   │   ├── data-table/ ✓
-│   │   │   ├── timeline/ ✓
-│   │   │   ├── alert/ ✓
-│   │   │   ├── snackbar/ ✓
-│   │   │   ├── loading-progress/ ✓
-│   │   │   ├── action-tracker/ ✓
-│   │   │   └── index.ts ✓
-│   │   │
-│   │   ├── types/
-│   │   │   ├── common.types.ts ✓
-│   │   │   └── index.ts ✓
-│   │   │
-│   │   ├── directives/
-│   │   │   └── index.ts ✓
-│   │   │
-│   │   ├── pipes/
-│   │   │   └── index.ts ✓
-│   │   │
-│   │   ├── utils/
-│   │   │   └── index.ts ✓ (con funciones reutilizables)
-│   │   │
-│   │   └── index.ts ✓ (índice principal)
-│   │
-│   ├── features/
-│   │   ├── adjustment-seat/ ✓
-│   │   │   ├── pages/ ✓
-│   │   │   ├── components/
-│   │   │   ├── services/
-│   │   │   └── models/
-│   │   │
-│   │   ├── documents/ ✓
-│   │   │   ├── pages/
-│   │   │   ├── components/
-│   │   │   ├── services/
-│   │   │   └── models/
-│   │   │
-│   │   ├── virtual-desk/ ✓
-│   │   │   ├── pages/
-│   │   │   ├── components/
-│   │   │   ├── services/
-│   │   │   └── models/
-│   │   │
-│   │   ├── login/ ✓
-│   │   │   ├── pages/
-│   │   │   ├── components/
-│   │   │   └── services/
-│   │   │
-│   │   └── dashboard/ ✓
-│   │       ├── pages/
-│   │       ├── components/
-│   │       ├── services/
-│   │       └── models/
-│   │
-│   ├── app.routes.ts
-│   └── app.component.ts
+├── layout/                          # Componentes estructurales del shell (instancia única)
+│   ├── shell/                       # AppShellComponent — layout principal con router-outlet
+│   ├── navbar/                      # Barra superior
+│   ├── sidebar/                     # Navegación lateral
+│   ├── side-panel/                  # Panel lateral auxiliar
+│   ├── mobile-navigation-menu/      # Menú móvil
+│   ├── process-menu-tree/           # Árbol de procesos del sidenav
+│   ├── tray-menu/                   # Menú de bandeja
+│   ├── tray-documents-view/         # Vista de documentos de bandeja
+│   ├── create-document/             # Panel de creación de documentos
+│   └── index.ts
 │
-└── assets/
+├── shared/
+│   ├── ui/                          # UI Kit puro — CERO lógica de negocio
+│   │   ├── button/, alert/, badge/, input, checkbox, radio, switch...
+│   │   └── index.ts                 # Único punto de exportación del UI Kit
+│   │
+│   └── components/                  # Componentes reutilizables con lógica de negocio
+│       ├── breadcrumb/
+│       ├── custom-filter/
+│       ├── pagination/              # movido desde shared/ui
+│       ├── data-table/              # movido desde shared/ui
+│       ├── timeline/                # movido desde shared/ui
+│       ├── solicitude-header/       # movido desde shared/ui
+│       ├── solicitude-form-card/    # movido desde shared/ui
+│       ├── solicitude-page-layout/  # movido desde shared/ui
+│       ├── solicitude-info-card/    # movido desde shared/ui
+│       └── index.ts
+│
+└── features/
+    ├── adjustment-seat/             # Feature: Asiento de Ajuste
+    │   ├── pages/
+    │   │   ├── documents/           # Lista de solicitudes
+    │   │   ├── request/             # Crear nueva solicitud
+    │   │   └── form/                # Formulario de asiento
+    │   └── index.ts
+    │
+    ├── chart-accounts/              # Feature: Plan de Cuentas Contables
+    │   ├── pages/
+    │   │   ├── documents/           # Lista de solicitudes
+    │   │   └── request/             # Crear nueva solicitud
+    │   └── index.ts
+    │
+    ├── login/
+    ├── otp-verification/
+    ├── virtual-desk/
+    ├── showcase/
+    └── process-configs/             # Configuraciones por proceso (documentos, rutas)
 ```
 
 ---
 
-## 🎯 RESUMEN DE CAMBIOS
+## Cambios ejecutados
+
+### 1. Eliminación de duplicados en `layout/`
+
+`shared/ui/navbar/` y `shared/ui/side-panel/` existían como copias idénticas de sus versiones en `layout/`. Se eliminaron las copias de `shared/ui/` y se corrigió el import relativo roto en `layout/side-panel/side-panel.component.ts`.
+
+### 2. Movidos a `shared/components/` (componentes con lógica de negocio)
+
+| Componente | Origen | Destino |
+|---|---|---|
+| `solicitude-header` | `shared/ui/` | `shared/components/` |
+| `solicitude-form-card` | `shared/ui/` | `shared/components/` |
+| `solicitude-page-layout` | `shared/ui/` | `shared/components/` |
+| `solicitude-info-card` | `shared/ui/` | `shared/components/` |
+| `pagination` | `shared/ui/` | `shared/components/` |
+| `data-table` | `shared/ui/` | `shared/components/` |
+| `timeline` | `shared/ui/` | `shared/components/` |
+
+### 3. Movidos a `layout/` (componentes exclusivos del shell)
+
+| Componente | Origen | Destino |
+|---|---|---|
+| `mobile-navigation-menu` | `shared/ui/` | `layout/` |
+| `process-menu-tree` | `shared/ui/` | `layout/` |
+| `tray-menu` | `shared/ui/` | `layout/` |
+| `tray-documents-view` | `shared/ui/` | `layout/` |
+| `create-document` | `shared/ui/` | `layout/` |
+
+### 4. Reorganización de features en `pages/`
+
+| Feature | Antes | Después |
+|---|---|---|
+| Asiento de Ajuste | `features/adjustment-seat-documents/` `features/adjustment-seat-request/` `features/adjustment-seat-form/` | `features/adjustment-seat/pages/documents/` `features/adjustment-seat/pages/request/` `features/adjustment-seat/pages/form/` |
+| Plan de Cuentas | `features/chart-accounts-documents/` `features/chart-accounts-request/` | `features/chart-accounts/pages/documents/` `features/chart-accounts/pages/request/` |
+
+`app.routes.ts` actualizado con las nuevas rutas de `loadComponent`.
+
+### 5. Tipos exportados desde `shared/ui/index.ts`
+
+Se agregó `export` a los tipos internos de los componentes más usados para habilitar autocompletado TypeScript:
+
+- `AlertTone`, `BadgeTone`, `TagTone`
+- `TextFieldType`, `TextFieldState`
+- `DatePickerVariant`, `DatePickerState`
+- `IconVariant`
+
+### 6. Nuevos componentes UI Kit
+
+- `siaf-alert` — alert inline con 5 tonos (`neutral`, `info`, `success`, `warning`, `error`), título, descripción, botón de cierre. Rediseñado desde cero para coincidir con el Figma (reemplazó el toast oscuro anterior).
+- `material-icons-outlined` — fuente cargada en `styles.css` (antes solo se cargaba `material-icons` filled).
+
+---
+
+## Reglas de arquitectura establecidas
+
+### ¿Dónde va cada componente?
+
+| Carpeta | Criterio |
+|---|---|
+| `shared/ui/` | Componente 100% presentacional, sin HTTP, sin lógica de negocio SIAF. Reutilizable en cualquier sistema. |
+| `shared/components/` | Tiene lógica de negocio pero se usa en ≥2 features distintas. |
+| `layout/` | Usado únicamente por `AppShellComponent`. Singleton. |
+| `features/X/components/` | Específico de un solo feature. |
+
+### Regla de imports
+
+- Los features no se importan entre sí.
+- Si algo se necesita en dos features → sube a `shared/components/`.
+- `shared/ui/` nunca importa de `shared/components/` ni de `layout/`.
+
+---
+
+## Resumen numérico
 
 | Aspecto | Antes | Después |
-|---------|-------|---------|
-| **Componentes en shared/ui** | 44 | 22 base + 8 transversales |
-| **Layout components** | En shared/ui | Separados en layout/ |
-| **Tipos centralizados** | ❌ No | ✅ shared/types/ |
-| **Modelos globales** | ❌ No | ✅ core/models/ |
-| **Config centralizada** | ❌ No | ✅ core/config/ |
-| **Tokens organizados** | ❌ Disperso | ✅ styles/tokens/ |
-| **Features organizadas** | Plano | ✅ pages/components/services/models |
-| **Archivos índice** | ❌ No | ✅ 8+ archivos index.ts |
-| **Imports actualizados** | ❌ | ✅ 57+ imports |
-
----
-
-## ⚠️ PRÓXIMOS PASOS
-
-### 1. Verificar que Compila
-```bash
-npm start
-# El proyecto debe cargar sin errores
-```
-
-### 2. Validar Visualmente
-- [ ] Login funciona
-- [ ] Virtual desk funciona
-- [ ] Adjustment seat funciona
-- [ ] Responsive en mobile/tablet/desktop
-- [ ] Estilos aplicados correctamente
-
-### 3. Completar Pendientes
-- [ ] Mover componentes específicos de negocio aún en shared/ui:
-  - `solicitude-header` → `features/adjustment-seat/components/`
-  - `annulment-modal` → `features/adjustment-seat/components/`
-  - `stepper-card` → `features/adjustment-seat/components/`
-  - `create-document` → `features/documents/components/`
-  - `document-history-panel` → `features/documents/components/`
-  - `process-menu-tree` → `features/*/ components/`
-
-### 4. Actualizar Rutas de Features
-- [ ] Crear archivos `.routes.ts` para cada feature
-- [ ] Implementar lazy loading si es necesario
-
-### 5. Testing
-- [ ] Unit tests para componentes
-- [ ] Integration tests para features
-- [ ] E2E tests para flujos críticos
-
----
-
-## 📝 NOTAS IMPORTANTES
-
-1. **Los imports están parcialmente actualizados** - Los imports de layout y componentes transversales están actualización, pero algunos imports específicos de negocio aún apuntan a shared/ui
-
-2. **Algunos componentes aún están en shared/ui** - Los componentes específicos de negocio aún deben moverse manualmente a sus features
-
-3. **El proyecto debería compilar** - Con los cambios realizados, el proyecto debería compilar sin errores
-
-4. **Estructura preparada para crecer** - La nueva arquitectura está lista para escalar con nuevos features y componentes
-
-5. **Tokens listos** - Los tokens CSS están copiados y el tailwind.config.ts está actualizado
-
----
-
-## 🎉 CONCLUSIÓN
-
-La restructuración de FASE ESTRUCTURAL está **100% completada**. El proyecto ahora tiene:
-
-✅ Estructura clara y escalable  
-✅ Separación de responsabilidades  
-✅ Tokens centralizados  
-✅ Componentes bien organizados  
-✅ Tipos reutilizables  
-✅ Configuración global  
-✅ Índices de exportación  
-
-**Siguiente: Ejecutar `npm start` para validar que todo compila correctamente**
+|---|---|---|
+| Componentes en `shared/ui/` | ~56 | 46 (UI Kit puro) |
+| Componentes en `shared/components/` | 2 | 9 |
+| Componentes en `layout/` | 3 | 9 |
+| Features con estructura `pages/` | 0 | 2 (adjustment-seat, chart-accounts) |
+| Duplicados de layout | 2 | 0 |
+| Tipos TypeScript exportados | parcial | completo para componentes clave |

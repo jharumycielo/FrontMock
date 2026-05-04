@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
-import { IconComponent } from '../icon/icon.component';
+import { IconComponent } from '../../shared/ui/icon/icon.component';
 
 @Component({
   selector: 'siaf-side-panel',

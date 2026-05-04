@@ -1,27 +1,6 @@
 # SIAF-RP — Sistema Integrado de Administración Financiera de los Recursos Públicos
 
-Aplicación web para la gestión de procesos financieros y contables del Estado Peruano. Construida con Angular 20 y Tailwind CSS 4, implementa un sistema de diseño propio basado en tokens de Figma.
-
----
-
-## Cambios recientes
-
-- Se unificaron los campos de texto sobre `siaf-text-field`; `siaf-input` queda como wrapper compatible.
-- `siaf-text-field` ahora soporta icono inicial, accion derecha, `password`, autocomplete, selects y estados visuales.
-- El login usa `siaf-text-field` para usuario y contrasena, incluyendo iconos y boton de mostrar/ocultar contrasena.
-- Se agrego el flujo de aprobacion multiple desde `Documentos y registros`: seleccion de documentos elaborados, modal de confirmacion, cambio a verificado y snackbar de resultado.
-- Se implemento la seccion Bandeja del sidebar con vista responsive y reutilizacion de filtros personalizados.
-- Se estandarizó la cabecera de solicitudes con `role` + `state` para reutilizarla por rol y estado del documento.
-- Se agregó `siaf-flow-status-tag` para mostrar estados oficiales del documento con colores del UI Kit mediante tokens CSS.
-- Se documentó una plantilla de prompts para construir pantallas y flujos como piezas reutilizables.
-- Se hizo transversal `siaf-create-document`: cada proceso puede inyectar documentos, tipos de acción y ruta destino mediante configuración.
-- Se agregó una plantilla para crear pantallas de `Documentos y registros` por proceso, incluyendo documentos, acciones y filas de ejemplo.
-- Se limpió `src/app` para evitar colores hexadecimales directos en clases o estilos de componentes.
-- Se reforzó la regla de usar tokens semánticos antes de agregar nuevos valores visuales.
-
-Documento de referencia:
-
-- `docs/plantilla-prompts-pantallas-siaf.md`
+Aplicación web para la gestión de procesos financieros y contables del Estado Peruano. Construida con Angular y Tailwind CSS 4, implementa un sistema de diseño propio basado en tokens de Figma.
 
 ---
 
@@ -29,12 +8,11 @@ Documento de referencia:
 
 | Herramienta | Versión |
 |---|---|
-| Angular | 20.3.19 |
-| Tailwind CSS | 4.1.17 |
-| TypeScript | 5.9.3 |
-| RxJS | 7.8.2 |
-| Material Icons | 1.13.14 |
-| Zone.js | 0.15.0 |
+| Angular | 19+ |
+| Tailwind CSS | 4 |
+| TypeScript | 5+ |
+| RxJS | 7.8+ |
+| Material Icons | 1.13+ |
 | Node.js requerido | ≥ 20.19.0 < 21 |
 | NPM requerido | ≥ 10 |
 
@@ -48,410 +26,109 @@ npm start          # http://localhost:4200
 npm run build      # Build de producción
 ```
 
-> El proyecto requiere Node.js `>=20.19.0 <21` y npm `>=10`, declarado en `package.json`.
-> Se recomienda usar Node 20 LTS para mantener compatibilidad con Angular 20.
-
 ---
 
 ## Estructura del proyecto
 
 ```
-src/
-├── app/
-│   ├── core/
-│   │   ├── auth/          # Roles, permisos y guards
-│   │   ├── config/
-│   │   └── models/
-│   ├── features/          # Páginas y flujos de la aplicación
-│   ├── shared/
-│   │   ├── ui/            # Librería de componentes base (~45 componentes)
-│   │   └── components/    # Componentes transversales de negocio
-│   ├── layout/            # Navbar, Sidebar, SidePanel
-│   ├── app.routes.ts      # Definición de rutas
-│   └── app.component.html # Router outlet raíz
-├── assets/
-│   └── figma/             # Assets exportados desde Figma
-└── styles/
-    └── tokens/            # Variables CSS del sistema de diseño
-docs/
-└── plantilla-prompts-pantallas-siaf.md
+src/app/
+├── core/
+│   └── auth/                        # Guards, servicios de sesión, modelos de rol
+│
+├── layout/                          # Componentes del shell (instancia única cada uno)
+│   ├── shell/                       # AppShellComponent con router-outlet
+│   ├── navbar/
+│   ├── sidebar/
+│   ├── side-panel/
+│   ├── mobile-navigation-menu/
+│   ├── process-menu-tree/
+│   ├── tray-menu/
+│   ├── tray-documents-view/
+│   ├── create-document/
+│   └── index.ts
+│
+├── shared/
+│   ├── ui/                          # UI Kit puro — sin lógica de negocio SIAF
+│   │   └── index.ts                 # Único punto de exportación
+│   └── components/                  # Componentes reutilizables entre features
+│       ├── breadcrumb/
+│       ├── custom-filter/
+│       ├── pagination/
+│       ├── data-table/
+│       ├── timeline/
+│       ├── solicitude-header/
+│       ├── solicitude-form-card/
+│       ├── solicitude-page-layout/
+│       ├── solicitude-info-card/
+│       └── index.ts
+│
+├── features/
+│   ├── adjustment-seat/
+│   │   └── pages/
+│   │       ├── documents/           # /procesos/registro-asiento-ajuste
+│   │       ├── request/             # /procesos/registro-asiento-ajuste/solicitud
+│   │       └── form/                # /procesos/registro-asiento-ajuste/formulario
+│   ├── chart-accounts/
+│   │   └── pages/
+│   │       ├── documents/           # /procesos/plan-cuentas-contables
+│   │       └── request/             # /procesos/plan-cuentas-contables/solicitud
+│   ├── login/
+│   ├── otp-verification/
+│   ├── virtual-desk/
+│   ├── showcase/                    # Catálogo visual de componentes
+│   └── process-configs/             # Configuración de documentos por proceso
+│
+├── app.routes.ts
+└── app.component.ts
+
+src/styles/
+└── tokens/
+    ├── generated/                   # tokens.css, tailwind.tokens.css (generados desde Figma)
+    └── figma-tokens.css
 ```
 
 ---
 
 ## Rutas
 
-```
-/                                              → redirige a /login
-/login                                         → Pantalla de inicio de sesión
-/login/recuperar-contrasena                    → Verificación de código OTP
-/panel                                         → Escritorio virtual (dashboard)
-/procesos/registro-asiento-ajuste              → Documentos y registros
-/procesos/registro-asiento-ajuste/solicitud    → Solicitud de asiento de ajuste
-/procesos/registro-asiento-ajuste/formulario   → Formulario de asiento de ajuste
-/procesos/plan-cuentas-contables               → Documentos y registros de Plan de Cuentas Contables
-```
-
----
-
-## Páginas
-
-### `/login` — Inicio de sesión
-Autenticación con dos modalidades mediante tabs:
-
-- **Entidades del Estado** — Formulario usuario/contraseña con etiquetas flotantes, toggle de visibilidad y navegación a recuperación de contraseña.
-- **Proveedores y Externos** — Acceso mediante proveedores de identidad externos: **ID Peru**, **SUNAT** y **JNE** (con popover informativo).
-
-### `/login/recuperar-contrasena` — Verificación OTP
-Ingreso del código de 4 dígitos enviado al correo. Auto-avance entre campos, soporte de pegado, botón habilitado al completar todos los dígitos.
-
-### `/panel` — Escritorio virtual
-Dashboard principal con acceso directo a todos los módulos del sistema mediante tarjetas: Bandeja, Procesos, Recibidos, Enviados, Borradores, Notificaciones, Consulta/Reportes y Crear documento.
-
-### `/procesos/registro-asiento-ajuste` — Documentos y registros
-Gestión completa de asientos de ajuste contable con dos tabs:
-
-- **Documentos** — Tabla con columnas: Documento, Número, Tipo de acción, Estado, Sistema, Fecha, Entidad. Acciones: verificar selección, ver historial, crear documento.
-- **Registros** — Tabla con columnas: Estado, Doc. contable, Ámbito institucional, Código clase ajuste, Código detalle ajuste, Total débito, Total crédito.
-
-Funcionalidades: búsqueda, filtros predefinidos, filtros personalizados dinámicos, paginación configurable (10/25/50/100), selección múltiple, ocultar/mostrar columnas desde sidepanel, modal de confirmación y snackbar de resultado.
-
-### `/procesos/plan-cuentas-contables` — Documentos y registros
-Pantalla del clasificador **Plan de Cuentas Contables** con la misma estructura transversal de documentos y registros.
-
-- **Documentos** — Grilla con `Solicitud de Cuentas Contables` y `Solicitud de carga masiva de plan de cuentas contables`.
-- **Crear documento** — La acción depende del documento: `Solicitud de Cuentas Contables` permite `Creación` y `Modificación`; la carga masiva permite solo `Creación`.
-- **Registros** — Tabla con código de cuenta, nombre de cuenta, nivel y naturaleza.
-- **Columnas** — El menú de tres puntos abre la opción `Ocultar o mostrar columnas`; al seleccionarla se muestra un sidepanel para configurar la visibilidad de la grilla activa.
-
----
-
-## Librería de componentes UI (`shared/ui`)
-
-Todos los componentes usan el selector prefix `siaf-` y `ChangeDetectionStrategy.OnPush`.
-
-### Formularios
-
-| Componente | Selector | Descripción |
-|---|---|---|
-| ButtonComponent | `siaf-button` | Variantes: `primary`, `secondary`, `ghost`, `danger`, `accent`. Tamaños: `sm`, `md`, `lg`. Soporte de ícono y estado de carga. |
-| TextFieldComponent | `siaf-text-field` | Campo base para formularios con etiqueta flotante. Tipos: `text`, `number`, `email`, `correo`, `password`, `select`, `select-multiple`. Soporta icono inicial, accion derecha, autocomplete y estados `enabled`, `error`, `success`. |
-| InputComponent | `siaf-input` | Wrapper compatible de `siaf-text-field`. Usar `siaf-text-field` para nuevos desarrollos. |
-| CheckboxComponent | `siaf-checkbox` | Casilla de verificación con label. |
-| RadioComponent | `siaf-radio` | Botón de opción. |
-| SwitchComponent | `siaf-switch` | Toggle on/off. |
-| SelectOptionsComponent | `siaf-select-options` | Listado de opciones para selects, soporta selección múltiple. |
-| DateTimePickerComponent | `siaf-date-time-picker` | Selector de fecha y hora. |
-| UploaderComponent | `siaf-uploader` | Carga de archivos con drag & drop. |
-
-### Retroalimentación
-
-| Componente | Selector | Descripción |
-|---|---|---|
-| SnackbarComponent | `siaf-snackbar` | Notificación temporal en la parte inferior. |
-| AlertComponent | `siaf-alert` | Mensaje de alerta contextual (info, success, warning, error). |
-| LoadingProgressComponent | `siaf-loading-progress` | Indicador de carga. |
-| ModalComponent | `siaf-modal` | Diálogo modal con variantes predefinidas: delete-request, review, verify, approve, cancel, etc. |
-| TooltipComponent | `siaf-tooltip` | Tooltip sobre elementos. |
-| PopoverComponent | `siaf-popover` | Popover con contenido enriquecido. |
-
-### Datos y visualización
-
-| Componente | Selector | Descripción |
-|---|---|---|
-| DataTableComponent | `siaf-data-table` | Tabla con columnas configurables. |
-| TimelineComponent | `siaf-timeline` | Línea de tiempo con estados: done, current, pending, error. |
-| ActionTrackerComponent | `siaf-action-tracker` | Rastreador de acciones con variantes `default` y `detail`. |
-| ListComponent | `siaf-list` | Lista de ítems. |
-| TreeViewComponent | `siaf-tree-view` | Vista de árbol jerárquico. |
-| BadgeComponent | `siaf-badge` | Indicador de conteo o estado. |
-| TagComponent | `siaf-tag` | Etiqueta de categoría. |
-| ReadonlyComponent | `siaf-readonly` | Campo de solo lectura. |
-
-### Navegación
-
-| Componente | Selector | Descripción |
-|---|---|---|
-| IconComponent | `siaf-icon` | Ícono de Material Icons. Variantes: filled, outlined, round, sharp, two-tone. |
-| TabsComponent | `siaf-tabs` | Navegación por pestañas. |
-| AccordionComponent | `siaf-accordion` | Panel expandible/colapsable. |
-| StepsComponent | `siaf-steps` | Indicador de pasos de un flujo. |
-| StepperCardComponent | `siaf-stepper-card` | Tarjeta de paso de proceso. |
-
-### Específicos del dominio
-
-| Componente | Selector | Descripción |
-|---|---|---|
-| CreateDocumentComponent | `siaf-create-document` | Panel/dropdown transversal para crear documentos. Recibe `processOptions` con proceso, documentos, tipos de acción y ruta destino. |
-| DocumentHistoryPanelComponent | `siaf-document-history-panel` | Panel lateral con historial de cambios de un documento. |
-| AnnulmentModalComponent | `siaf-annulment-modal` | Modal especializado para anulación de documentos. |
-| ProcessMenuTreeComponent | `siaf-process-menu-tree` | Árbol de navegación de procesos del sistema. |
-| SolicitudePageLayoutComponent | `siaf-solicitude-page-layout` | Layout transversal para pantallas de solicitud. Centraliza breadcrumb, header, gaps y padding del formulario. |
-| SolicitudeFormCardComponent | `siaf-solicitude-form-card` | Card transversal de solicitud. Centraliza título, acciones, padding y gap interno. |
-| SolicitudeInfoCardComponent | `siaf-solicitude-info-card` | Card transversal para datos generales de una solicitud. |
-| SolicitudeHeaderComponent | `siaf-solicitude-header` | Cabecera de una solicitud. Soporta matriz `role` + `state` para controlar etiquetas, botones y modo lectura/edición. |
-| UploadSidePanelComponent | `siaf-upload-side-panel` | Sidenav transversal para cargar documentos desde acciones con ícono `file_upload`. |
-| FlowStatusTagComponent | `siaf-flow-status-tag` | Etiqueta de estado del documento basada en los estados oficiales del UI Kit y tokens CSS. |
-| SummaryCardComponent | `siaf-summary-card` | Tarjeta resumen de estado de proceso. |
-| TrayMenuComponent | `siaf-tray-menu` | Menú lateral de bandeja de documentos. |
-| TrayDocumentsViewComponent | `siaf-tray-documents-view` | Vista de documentos de una bandeja seleccionada. |
-| MobileNavigationMenuComponent | `siaf-mobile-navigation-menu` | Menú de navegación para pantallas móviles. |
-
----
-
-## Estados, roles y flujos
-
-### Header de solicitud
-
-`siaf-solicitude-header` separa el rol del usuario del estado visual/de negocio:
-
-```html
-<siaf-solicitude-header
-  role="creator"
-  [state]="solicitudeHeaderState"
-  heading="Solicitud de registro de asiento de ajuste"
-  secondaryText="Creación"
-/>
-```
-
-Roles soportados:
-
-| Rol | Valor |
+| Ruta | Componente |
 |---|---|
-| Creador | `creator` |
-| Revisor | `reviewer` |
-| Aprobador | `approver` |
+| `/login` | `LoginComponent` |
+| `/login/recuperar-contrasena` | `OtpVerificationComponent` |
+| `/panel` | `VirtualDeskComponent` |
+| `/procesos/registro-asiento-ajuste` | `AdjustmentSeatDocumentsComponent` |
+| `/procesos/registro-asiento-ajuste/solicitud` | `AdjustmentSeatRequestComponent` |
+| `/procesos/registro-asiento-ajuste/formulario` | `AdjustmentSeatFormComponent` |
+| `/procesos/plan-cuentas-contables` | `ChartAccountsDocumentsComponent` |
+| `/procesos/plan-cuentas-contables/solicitud` | `ChartAccountsRequestComponent` |
+| `/showcase` | `ShowcaseComponent` |
 
-Estados soportados:
+---
 
-`new`, `edit`, `readonly`, `elaborated`, `registered`, `verified`, `validated`, `reviewed`, `generated`, `in_process`, `authorized`, `signed`, `approved`, `accepted`, `published`, `processed`, `observed`, `pending`, `failed`, `deleted`, `rejected`, `annulled`.
+## Reglas de arquitectura
 
-La matriz actual implementada cubre el rol `creator` en los estados `new`, `edit`, `elaborated` y `readonly`. Los demás estados quedan tipados para futuras variantes por rol.
-
-### Estados oficiales de documento
-
-`siaf-flow-status-tag` muestra los estados oficiales del UI Kit:
-
-```html
-<siaf-flow-status-tag status="Elaborado" size="standard" />
-```
-
-Estados disponibles:
-
-| Tono | Estados |
+| Carpeta | Criterio |
 |---|---|
-| Default | Elaborado, Registrado |
-| Info | Verificado, Validado, Revisado, Generado, En proceso |
-| Success | Autorizado, Firmado, Aprobado, Aceptado, Publicado, Procesado |
-| Warning | Observado, Pendiente, Fallido |
-| Danger | Eliminado, Rechazado, Anulado |
+| `shared/ui/` | 100% presentacional, sin HTTP ni lógica SIAF. Reutilizable en cualquier sistema. |
+| `shared/components/` | Tiene lógica de negocio pero se usa en ≥ 2 features distintas. |
+| `layout/` | Usado únicamente por `AppShellComponent`. |
+| `features/X/components/` | Específico de un solo feature. |
+| `features/X/pages/Y/` | Cada pantalla del feature. |
 
-Regla de implementación:
-
-- El estado del documento controla el tag visual y el estado de negocio.
-- El estado del header controla botones, permisos y si la pantalla está en modo edición o lectura.
-- Si ambos coinciden, puede usarse un solo estado en el prompt; si no coinciden, deben indicarse por separado.
-
-### Guía para nuevos prompts
-
-Para solicitar nuevas pantallas o flujos, usar:
-
-```md
-Rol:
-Estado del documento:
-Estado del header:
-Pantalla o flujo:
-Referencia Figma:
-Botones visibles:
-Botones ocultos:
-Campos editables:
-Campos solo lectura:
-Acción al guardar / aprobar / observar / rechazar:
-```
-
-Para pantallas de `Documentos y registros`, incluir además: proceso, id, ruta del proceso, ruta de creación, documentos permitidos, tipos de acción y filas de ejemplo para la grilla.
-
-La guía completa está en `docs/plantilla-prompts-pantallas-siaf.md`.
+- Los features **no se importan entre sí**.
+- Si algo se necesita en dos features → sube a `shared/components/`.
+- `shared/ui/` nunca importa de `shared/components/` ni de `layout/`.
+- Importar siempre desde el `index.ts` de la capa correspondiente.
 
 ---
 
 ## Roles y permisos
 
-La arquitectura se organiza por proceso o dominio, no por carpetas de rol. Los roles se aplican mediante permisos, guards y configuracion de componentes.
-
-Base disponible:
-
 | Archivo | Responsabilidad |
 |---|---|
-| `src/app/core/auth/role.model.ts` | Define roles, permisos y matriz de permisos por rol. |
-| `src/app/core/auth/permission.service.ts` | Expone el rol actual y helpers `hasRole`, `can`, `canAny`. |
-| `src/app/core/auth/role.guard.ts` | Restringe rutas por `data.roles` y `data.permissions`. |
-
-Ejemplo de ruta protegida:
-
-```typescript
-{
-  path: 'procesos/registro-asiento-ajuste/solicitud',
-  canActivate: [roleGuard],
-  data: {
-    roles: ['creator', 'approver'],
-    permissions: ['document.read']
-  },
-  loadComponent: () => import('./features/adjustment-seat-request/adjustment-seat-request.component').then((m) => m.AdjustmentSeatRequestComponent)
-}
-```
-
-Reglas:
-
-- Mantener las carpetas por proceso: `features/adjustment-seat`, `features/accounting-opening`, etc.
-- No crear carpetas principales por rol como `features/creator` o `features/approver`.
-- Usar rutas separadas solo cuando la experiencia sea realmente distinta.
-- Usar permisos para mostrar u ocultar botones, acciones, tabs, campos y secciones.
-- Usar `role` + `state` en componentes compartidos para variantes visuales por rol.
-
----
-
-## Componentes transversales (`shared/components`)
-
-Combinan múltiples componentes base para casos de uso recurrentes entre features.
-
-| Componente | Selector | Descripción |
-|---|---|---|
-| PaginationComponent | `siaf-pagination` | Paginación con posición `Top`/`Bottom`, selector de filas por página. |
-| BreadcrumbComponent | `siaf-breadcrumb` | Ruta de navegación con ítems clicables. |
-| DataTableComponent | `siaf-data-table` | Tabla con columnas y filas configurables. |
-| AlertComponent | `siaf-alert` | Alerta transversal. |
-| SnackbarComponent | `siaf-snackbar` | Notificación transversal. |
-| TimelineComponent | `siaf-timeline` | Línea de tiempo transversal. |
-| LoadingProgressComponent | `siaf-loading-progress` | Progreso de carga transversal. |
-| ActionTrackerComponent | `siaf-action-tracker` | Rastreador de acciones transversal. |
-| CustomFilterComponent | `siaf-custom-filter` | Panel de filtros personalizados dinámicos con campos Campo / Condición / Valor. Soporta múltiples condiciones, eliminación por fila y carga de valores iniciales. |
-
----
-
-## Layout (`layout/`)
-
-| Componente | Selector | Descripción |
-|---|---|---|
-| NavbarComponent | `siaf-navbar` | Barra superior con logo, usuario, oficina, notificaciones y perfil. Props: `userName`, `officeName`, `showMenu`, `showNotifications`, `showProfile`. |
-| SidebarComponent | `siaf-sidebar` | Navegación lateral. Variantes `rail` y `expanded`. Emite eventos de navegación y creación. |
-| SidePanelComponent | `siaf-side-panel` | Panel lateral auxiliar. |
-
----
-
-## Sistema de diseño
-
-### Tokens de color principales
-
-```css
-/* Marca */
---sys-color-bg-brand-primary
---sys-color-bg-brand-accent
-
-/* Superficies */
---sys-color-bg-surfaces-surface
---sys-color-bg-surfaces-surface-high
---sys-color-bg-surfaces-surface-lowest
-
-/* Estados de feedback */
---sys-color-bg-feedback-dark-default
---sys-color-bg-feedback-dark-info
---sys-color-bg-feedback-dark-success
---sys-color-bg-feedback-dark-warning
---sys-color-bg-feedback-dark-danger
---sys-color-bg-feedback-light-info
---sys-color-bg-feedback-light-success
---sys-color-bg-feedback-light-warning
---sys-color-bg-feedback-light-danger
-
-/* Texto */
---sys-color-text-neutral-high
---sys-color-text-neutral-medium
---sys-color-text-neutral-low
---sys-color-text-neutral-disabled
---sys-color-text-feedback-info
---sys-color-text-feedback-success
---sys-color-text-feedback-warning
---sys-color-text-feedback-danger
-```
-
-Reglas:
-
-- No usar hex directos en `src/app`.
-- No usar clases arbitrarias de Tailwind con valores hexadecimales en componentes.
-- Usar tokens semánticos `--sys-color-*` o aliases Tailwind existentes.
-- Si falta un token, actualizar los tokens desde Figma antes de hardcodear un valor.
-
-### Alias Tailwind
-
-```
-bg-brand-primary    → accent rojo (botones de acción principal)
-bg-surface          → fondo de superficies
-bg-surface-muted    → fondo de hover y áreas secundarias
-text-text           → texto principal
-text-text-muted     → texto secundario
-rounded-siaf-sm/md/lg/full
-shadow-siaf-sm/md/elevation-1/elevation-2
-spacing-siaf-none/xxs/xs/sm/md/lg/xl/xxl
-```
-
-### Temas
-
-Activación mediante atributo en el elemento raíz o por preferencia del sistema:
-
-```html
-<html data-theme="light">   <!-- Claro explícito -->
-<html data-theme="dark">    <!-- Oscuro explícito -->
-<!-- Sin atributo: respeta prefers-color-scheme del SO -->
-```
-
----
-
-## Patrones técnicos
-
-### Signals (Angular 17+)
-Estado reactivo compatible con `OnPush` sin necesidad de `ChangeDetectorRef`:
-
-```typescript
-readonly isOpen = signal(false);
-
-// Toggle en template (debe extraerse a método, no arrow function)
-toggleOpen(): void {
-  this.isOpen.update((v) => !v);
-}
-```
-
-### Standalone Components
-Todos los componentes son standalone, sin NgModules:
-
-```typescript
-@Component({
-  selector: 'siaf-example',
-  standalone: true,
-  imports: [ButtonComponent, IconComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `...`
-})
-```
-
-### Control flow moderno
-Sintaxis nativa de Angular 17+, sin `*ngIf` ni `*ngFor`:
-
-```html
-@if (condition) { ... } @else { ... }
-@for (item of items; track item.id; let i = $index) { ... }
-```
-
-### Nota importante sobre templates Angular
-Las arrow functions no son válidas en event bindings de templates. Siempre extraer a un método del componente:
-
-```html
-<!-- INCORRECTO -->
-(click)="signal.update(v => !v)"
-
-<!-- CORRECTO -->
-(click)="toggleMethod()"
-```
+| `core/auth/role.model.ts` | Define roles, permisos y matriz. |
+| `core/auth/permission.service.ts` | `hasRole`, `can`, `canAny`. |
+| `core/auth/role.guard.ts` | Restringe rutas por `data.roles` y `data.permissions`. |
 
 ---
 
@@ -459,16 +136,17 @@ Las arrow functions no son válidas en event bindings de templates. Siempre extr
 
 ```
 src/assets/figma/
-├── login/
-│   ├── login-hero.png          # Imagen del panel izquierdo del login
-│   ├── mef-logo.png            # Logo Ministerio de Economía y Finanzas
-│   ├── siaf-logo-vector.svg    # Logo SIAF-RP
-│   ├── id-peru-v1.svg          # Ícono ID Peru (capa 1)
-│   ├── id-peru-v2.svg          # Ícono ID Peru (capa 2)
-│   ├── sunat-v1.svg            # Ícono SUNAT (capa 1)
-│   ├── sunat-v2.svg            # Ícono SUNAT (capa 2)
-│   ├── jne-v1.svg              # Ícono JNE (capa 1)
-│   └── jne-v2.svg              # Ícono JNE (capa 2)
-├── logos/                      # Variantes del logo SIAF-RP (blanco, negro, color)
-└── modals/                     # Ilustraciones para modales del sistema
+├── login/          # Hero, logos, iconos de proveedores de identidad
+├── logos/          # Variantes del logo SIAF-RP
+└── modals/         # Ilustraciones para modales
 ```
+
+---
+
+## Documentación
+
+| Documento | Contenido |
+|---|---|
+| `docs/guia-implementacion-pantallas-siaf.md` | Componentes disponibles, tokens, patrones de uso y reglas visuales. |
+| `docs/plantilla-prompts-pantallas-siaf.md` | Plantillas para pedir nuevas pantallas o modificar flujos. |
+| `RESTRUCTURACION_REALIZADA.md` | Historial de la restructuración arquitectural del proyecto. |

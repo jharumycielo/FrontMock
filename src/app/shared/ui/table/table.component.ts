@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
-import { DataTableColumn, DataTableComponent, DataTableRow } from '../data-table/data-table.component';
+import { DataTableColumn, DataTableComponent, DataTableRow } from '../../components/data-table/data-table.component';
 
 @Component({
   selector: 'siaf-table',

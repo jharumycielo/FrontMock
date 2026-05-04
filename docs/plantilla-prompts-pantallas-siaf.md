@@ -79,7 +79,15 @@ Botones:
 Accion al aceptar:
 Accion al cancelar:
 
-## Snackbar / alerta
+## Alert inline (validacion de campo)
+
+Cuando aparece:
+Estado idle (formulario activo, sin valor):
+Estado error (valor ya registrado o invalido):
+Estado success (valor disponible):
+Campo que dispara la validacion:
+
+## Snackbar
 
 Cuando aparece:
 Mensaje:
@@ -121,13 +129,15 @@ La estructura del codigo se organiza por proceso o dominio, no por rol. Los role
 
 Reglas:
 
-- Crear carpetas por proceso, por ejemplo `features/adjustment-seat`.
+- Crear carpetas por proceso dentro de `features/`, por ejemplo `features/adjustment-seat/`.
+- Las paginas del proceso van en `features/[proceso]/pages/[nombre-pagina]/`.
 - No crear carpetas principales como `features/creator` o `features/approver`.
 - Usar `roleGuard` solo cuando una ruta completa sea exclusiva para uno o varios roles.
 - Usar `PermissionService` cuando una misma pantalla cambie botones, campos o acciones segun el rol.
 - Usar `siaf-solicitude-header` con `role` + `state` para variantes del encabezado.
 - Si la pantalla es casi igual entre roles, reutilizar la misma pagina y cambiar permisos/acciones.
-- Si la pantalla cambia mucho, crear componentes internos por caso dentro del mismo feature.
+- Si la pantalla cambia mucho, crear componentes internos por caso dentro del mismo feature en `features/[proceso]/components/`.
+- Los features no se importan entre si. Si algo se necesita en dos features, sube a `shared/components/`.
 
 Base tecnica disponible:
 
@@ -141,7 +151,7 @@ import { roleGuard } from './core/auth';
     roles: ['creator', 'approver'],
     permissions: ['document.read']
   },
-  loadComponent: () => import('./features/adjustment-seat-request/adjustment-seat-request.component').then((m) => m.AdjustmentSeatRequestComponent)
+  loadComponent: () => import('./features/adjustment-seat/pages/request/adjustment-seat-request.component').then((m) => m.AdjustmentSeatRequestComponent)
 }
 ```
 
@@ -153,6 +163,25 @@ readonly role = this.permission.currentRole;
 canEdit = this.permission.can('document.edit');
 canApprove = this.permission.can('document.approve');
 ```
+
+## Arquitectura de capas
+
+Al pedir un nuevo componente o pantalla, indicar en cual capa debe vivir:
+
+| Capa | Carpeta | Criterio |
+| --- | --- | --- |
+| UI Kit puro | `shared/ui/` | 100% presentacional, sin HTTP ni logica de negocio SIAF. Reutilizable en cualquier sistema. |
+| Transversales de negocio | `shared/components/` | Tiene logica de negocio pero se usa en 2 o mas features distintas. |
+| Shell | `layout/` | Usado unicamente por `AppShellComponent`. Instancia unica. |
+| Especifico del proceso | `features/[proceso]/components/` | Exclusivo de un proceso. No se comparte. |
+| Pagina de proceso | `features/[proceso]/pages/[pagina]/` | Cada pantalla del proceso va aqui. |
+
+Importaciones entre capas:
+- `shared/ui/` nunca importa de `shared/components/` ni de `layout/`.
+- Los features no se importan entre si.
+- Importar siempre desde el `index.ts` de la capa correspondiente.
+
+---
 
 ## Permisos recomendados
 
@@ -219,26 +248,59 @@ Regla para prompts:
 
 ## Componentes reutilizables
 
-Cuando pidas una pantalla, puedes indicar estas piezas:
+Cuando pidas una pantalla, puedes indicar estas piezas. La columna **Capa** indica de donde viene el componente segun la arquitectura del proyecto:
 
-| Pieza | Componente sugerido | Cuando usarlo |
-| --- | --- | --- |
-| Navbar | `siaf-navbar` | Todas las pantallas internas. |
-| Sidebar | `siaf-sidebar` | Navegacion principal con Procesos, Bandeja y Crear. |
-| Breadcrumb | `siaf-breadcrumb` | Ruta segun arbol de procesos o seccion actual. |
-| Layout solicitud | `siaf-solicitude-page-layout` | Estructura transversal para breadcrumb, header, gaps y padding de formularios de solicitud. |
-| Card de formulario | `siaf-solicitude-form-card` | Card transversal de formulario. Centraliza titulo, acciones, padding interno y gap. |
-| Card de datos | `siaf-solicitude-info-card` | Card transversal para datos generales de la solicitud. |
-| Header solicitud | `siaf-solicitude-header` | Encabezado de formularios de solicitud. |
-| Panel de carga | `siaf-upload-side-panel` | Sidenav transversal para cargar documentos desde botones con icono `file_upload`. |
-| Tag de estado de flujo | `siaf-flow-status-tag` | Estado visual del documento usando colores del UI Kit. |
-| Crear documento | `siaf-create-document` | Panel lateral desde el boton Crear. |
-| Arbol procesos | `siaf-process-menu-tree` | Menu de procesos desde el sidebar. |
-| Date picker | `siaf-date-time-picker` | Campos de fecha o fecha/hora. |
-| Boton | `siaf-button` | Acciones con iconos y variantes del sistema. |
-| Modal | `siaf-modal` | Confirmaciones y decisiones bloqueantes. |
-| Snackbar | `siaf-snackbar` | Confirmaciones no bloqueantes. |
-| Paginacion | `siaf-pagination` | Tablas con resultados. |
+| Pieza | Componente sugerido | Capa | Cuando usarlo |
+| --- | --- | --- | --- |
+| Navbar | `siaf-navbar` | `layout/` | Todas las pantallas internas. Instanciado solo en el shell. |
+| Sidebar | `siaf-sidebar` | `layout/` | Navegacion principal con Procesos, Bandeja y Crear. Instanciado solo en el shell. |
+| Crear documento | `siaf-create-document` | `layout/` | Panel lateral desde el boton Crear. Instanciado solo en el shell. |
+| Arbol procesos | `siaf-process-menu-tree` | `layout/` | Menu de procesos desde el sidebar. Instanciado solo en el shell. |
+| Breadcrumb | `siaf-breadcrumb` | `shared/components/` | Ruta segun arbol de procesos o seccion actual. |
+| Layout solicitud | `siaf-solicitude-page-layout` | `shared/components/` | Estructura transversal para breadcrumb, header, gaps y padding de formularios de solicitud. |
+| Card de formulario | `siaf-solicitude-form-card` | `shared/components/` | Card transversal de formulario. Centraliza titulo, acciones, padding interno y gap. |
+| Card de datos | `siaf-solicitude-info-card` | `shared/components/` | Card transversal para datos generales de la solicitud. |
+| Header solicitud | `siaf-solicitude-header` | `shared/components/` | Encabezado de formularios de solicitud. |
+| Tabla de datos | `siaf-data-table` | `shared/components/` | Tabla con columnas configurables y acciones por fila. |
+| Paginacion | `siaf-pagination` | `shared/components/` | Tablas con resultados. |
+| Linea de tiempo | `siaf-timeline` | `shared/components/` | Historial de estados de un documento. |
+| Filtros dinamicos | `siaf-custom-filter` | `shared/components/` | Filtros por campo/condicion/valor. |
+| Date picker | `siaf-date-time-picker` | `shared/ui/` | Campos de fecha o fecha/hora. Nunca usar `siaf-input` para fechas. |
+| Campo de texto | `siaf-input` | `shared/ui/` | Todos los campos de formulario (texto, select, password, etc). |
+| Boton | `siaf-button` | `shared/ui/` | Acciones con iconos y variantes del sistema. |
+| Alert inline | `siaf-alert` | `shared/ui/` | Validaciones y mensajes contextuales dentro del formulario. Tonos: `info`, `success`, `warning`, `error`. |
+| Modal | `siaf-modal` | `shared/ui/` | Confirmaciones y decisiones bloqueantes. |
+| Snackbar | `siaf-snackbar` | `shared/ui/` | Confirmaciones no bloqueantes. |
+| Tag de estado de flujo | `siaf-flow-status-tag` | `shared/ui/` | Estado visual del documento usando colores del UI Kit. |
+| Panel de carga | `siaf-upload-side-panel` | `shared/ui/` | Sidenav transversal para cargar documentos desde botones con icono `file_upload`. |
+
+## Alerts en formularios
+
+Usar `siaf-alert` (de `shared/ui/`) para mensajes contextuales dentro de los formularios. No usar `siaf-snackbar` para validaciones de campo.
+
+Patron de 3 estados para validacion de un campo:
+
+```html
+@if (selectedPlan()) {
+  @if (validationState() === 'idle') {
+    <siaf-alert tone="info" title="Instruccion" description="Ingrese el valor para continuar." />
+  } @else if (validationState() === 'error') {
+    <siaf-alert tone="error" title="Valor ya registrado" description="Ingrese un valor diferente." />
+  } @else if (validationState() === 'valid') {
+    <siaf-alert tone="success" title="Validacion exitosa" description="El valor esta disponible." />
+  }
+}
+```
+
+Los iconos del alert usan `variant="filled"` (relleno solido). Los tonos disponibles son: `neutral`, `info`, `success`, `warning`, `error`.
+
+Reglas:
+- El alert de `info` aparece cuando el formulario esta activo pero el campo aun no tiene valor.
+- El alert de `error` aparece cuando el valor ingresado ya esta en uso o es invalido.
+- El alert de `success` aparece cuando el valor esta disponible y es valido.
+- Envolver el bloque en `@if (selectedPlan())` si el alert solo debe mostrarse cuando el formulario esta habilitado.
+
+---
 
 ## Layout transversal de solicitud
 
@@ -660,8 +722,10 @@ Accion al aceptar: cambiar estado a Rechazado
 - Decir que botones deben verse.
 - Decir si la pantalla es editable o solo lectura.
 - Listar campos obligatorios y validaciones.
+- Indicar si algun campo tiene validacion asincrona que requiera alert de 3 estados (info/error/success).
 - Indicar que pasa al guardar, aceptar, editar, verificar, aprobar, observar o rechazar.
 - Indicar la ruta de breadcrumbs o el arbol de procesos esperado.
+- Si hay tabla, indicar columnas, acciones por fila y si necesita paginacion.
 
 ## Prompt corto recomendado
 
