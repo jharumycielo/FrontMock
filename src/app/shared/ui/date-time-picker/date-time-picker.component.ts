@@ -3,8 +3,8 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnI
 import { ButtonComponent } from '../button/button.component';
 import { IconComponent } from '../icon/icon.component';
 
-type DatePickerVariant = 'date' | 'datetime';
-type DatePickerState = 'enabled' | 'error' | 'success';
+export type DatePickerVariant = 'date' | 'datetime';
+export type DatePickerState = 'enabled' | 'error' | 'success';
 
 type CalendarDay = {
   label: string;

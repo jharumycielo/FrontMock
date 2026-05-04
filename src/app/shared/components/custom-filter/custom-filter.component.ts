@@ -27,7 +27,7 @@ export interface CustomFilterApplyEvent {
           <div class="flex items-center gap-siaf-sm">
             <div class="flex w-[860px] max-w-[calc(100%-44px)] items-center gap-siaf-xs min-w-0">
               <div class="w-[268px] shrink-0">
-                <siaf-text-field
+                <siaf-input
                   label="Campo"
                   type="select"
                   [options]="campoOptions"
@@ -36,7 +36,7 @@ export interface CustomFilterApplyEvent {
                 />
               </div>
               <div class="w-[288px] flex-none min-w-0">
-                <siaf-text-field
+                <siaf-input
                   label="Condici&oacute;n"
                   type="select"
                   [options]="condicionOptions"
@@ -45,7 +45,7 @@ export interface CustomFilterApplyEvent {
                 />
               </div>
               <div class="w-[288px] flex-none min-w-0">
-                <siaf-text-field
+                <siaf-input
                   label="Valor"
                   type="select"
                   [options]="valorOptions"

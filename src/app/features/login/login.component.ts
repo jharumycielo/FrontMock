@@ -76,7 +76,7 @@ type LoginTab = 'entidades' | 'proveedores';
             <form class="flex w-full flex-col items-center gap-5" aria-label="Inicio de sesión">
 
               <!-- Input Usuario -->
-              <siaf-text-field
+              <siaf-input
                 class="block w-full"
                 label="Usuario"
                 type="email"
@@ -87,7 +87,7 @@ type LoginTab = 'entidades' | 'proveedores';
               />
 
               <!-- Input Contraseña -->
-              <siaf-text-field
+              <siaf-input
                 class="block w-full"
                 label="Contraseña"
                 [type]="showPassword() ? 'text' : 'password'"

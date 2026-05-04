@@ -10,6 +10,7 @@ import { SolicitudeFormCardComponent } from '../../shared/ui/solicitude-form-car
 import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../shared/ui/solicitude-info-card/solicitude-info-card.component';
 import { SolicitudePageLayoutComponent } from '../../shared/ui/solicitude-page-layout/solicitude-page-layout.component';
 import { TextAreaControlComponent } from '../../shared/ui/text-area-control/text-area-control.component';
+import { AlertComponent } from '../../shared/ui/alert/alert.component';
 import { TextFieldComponent, TextFieldOption } from '../../shared/ui/text-field/text-field.component';
 import { UploadedFileCardComponent } from '../../shared/ui/uploaded-file-card/uploaded-file-card.component';
 import { UploadSidePanelComponent } from '../../shared/ui/upload-side-panel/upload-side-panel.component';
@@ -63,6 +64,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
   selector: 'siaf-chart-accounts-request',
   standalone: true,
   imports: [
+    AlertComponent,
     ButtonComponent,
     IconComponent,
     PaginationComponent,
@@ -121,30 +123,49 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                   }
                 </section>
 
-                @if (newAccountCodeInUse()) {
-                  <div class="flex items-start gap-siaf-sm rounded-siaf-md bg-[var(--sys-color-bg-feedback-light-danger)] px-siaf-md py-siaf-sm text-[var(--sys-color-text-feedback-danger)]">
-                    <siaf-icon class="mt-0.5 shrink-0" name="error" [size]="20" />
-                    <div class="min-w-0 flex-1">
-                      <p class="m-0 text-sm font-bold leading-normal">Código de cuenta ya registrado</p>
-                      <p class="m-0 text-sm leading-normal">El código ingresado ya se encuentra creado en el sistema. Debe crear y registrar otro código.</p>
-                    </div>
-                  </div>
+                @if (selectedTipoPlan()) {
+                  @if (codeValidationState() === 'idle') {
+                    <siaf-alert
+                      tone="info"
+                      title="Código de cuenta contable"
+                      description="Para crear la cuenta contable, ingrese un código único que no esté en uso."
+                    />
+                  } @else if (codeValidationState() === 'inUse') {
+                    <siaf-alert
+                      tone="error"
+                      title="Código ya registrado"
+                      description="El código ingresado ya se encuentra creado en el sistema. Debe crear y registrar otro código."
+                    />
+                  } @else if (codeValidationState() === 'valid') {
+                    <siaf-alert
+                      tone="success"
+                      title="Validación exitosa"
+                      description="El código ingresado no está en uso. Puede continuar con la creación de la cuenta contable."
+                    />
+                  }
                 }
 
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Nueva cuenta contable</h3>
                   <div class="grid gap-siaf-md lg:grid-cols-[320px_minmax(0,1fr)]">
-                    <siaf-text-field label="Código de la nueva cuenta *" [value]="newAccountCode()" [error]="newAccountCodeError()" [disabled]="!selectedTipoPlan()" (valueChange)="onNewAccountCodeChange($event)" />
-                    <siaf-text-field label="Nombre de la cuenta contable *" [value]="newAccountName()" [disabled]="!selectedTipoPlan()" (valueChange)="newAccountName.set(textFieldValue($event))" />
+                    <siaf-input
+                      label="Código de la nueva cuenta *"
+                      [value]="newAccountCode()"
+                      [error]="codeValidationState() === 'inUse' ? 'El código ingresado está en uso' : ''"
+                      [state]="codeValidationState() === 'valid' ? 'success' : 'enabled'"
+                      [disabled]="formDisabled"
+                      (valueChange)="onNewAccountCodeChange($event)"
+                    />
+                    <siaf-input label="Nombre de la cuenta contable *" [value]="newAccountName()" [disabled]="formDisabled" (valueChange)="newAccountName.set(textFieldValue($event))" />
                   </div>
                   <div class="flex flex-wrap items-center gap-siaf-md">
                     <h4 class="m-0 w-[280px] text-sm font-bold text-text">¿Es una cuenta imputable?</h4>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'si'" [disabled]="!selectedTipoPlan()" (change)="newAccountImputable.set('si')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'si'" [disabled]="formDisabled" (change)="newAccountImputable.set('si')" />
                       Si
                     </label>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'no'" [disabled]="!selectedTipoPlan()" (change)="newAccountImputable.set('no')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'no'" [disabled]="formDisabled" (change)="newAccountImputable.set('no')" />
                       No
                     </label>
                   </div>
@@ -153,32 +174,32 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Asociar código de cuenta contable anterior</h3>
                   <div class="grid gap-siaf-md md:grid-cols-2">
-                    <siaf-text-field label="Código de la cuenta contable" type="select" leadingIcon="search" [options]="previousAccountOptions" [value]="previousAccountCode()" [disabled]="!selectedTipoPlan()" (valueChange)="onPreviousAccountSelected($event)" />
-                    <siaf-text-field label="Nombre de la cuenta contable seleccionada" [value]="previousAccountName" [disabled]="true" />
+                    <siaf-input label="Código de la cuenta contable" type="select" leadingIcon="search" [options]="previousAccountOptions" [value]="previousAccountCode()" [disabled]="formDisabled" (valueChange)="onPreviousAccountSelected($event)" />
+                    <siaf-input label="Nombre de la cuenta contable seleccionada" [value]="previousAccountName" [disabled]="true" />
                   </div>
                 </section>
 
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Atributos de la cuenta contable</h3>
                   <div class="grid gap-siaf-md lg:grid-cols-3">
-                    <siaf-text-field label="Naturaleza *" type="select" [options]="natureOptions" [value]="accountNature()" [disabled]="!selectedTipoPlan()" (valueChange)="accountNature.set(textFieldValue($event))" />
-                    <siaf-text-field label="Tipo de elemento *" type="select" [options]="elementTypeOptions" [value]="elementType()" [disabled]="!selectedTipoPlan()" (valueChange)="elementType.set(textFieldValue($event))" />
-                    <siaf-text-field label="¿Es monetaria? *" type="select" [options]="yesNoOptions" [value]="monetaryAccount()" [disabled]="!selectedTipoPlan()" (valueChange)="monetaryAccount.set(textFieldValue($event))" />
+                    <siaf-input label="Naturaleza *" type="select" [options]="natureOptions" [value]="accountNature()" [disabled]="formDisabled" (valueChange)="accountNature.set(textFieldValue($event))" />
+                    <siaf-input label="Tipo de elemento *" type="select" [options]="elementTypeOptions" [value]="elementType()" [disabled]="formDisabled" (valueChange)="elementType.set(textFieldValue($event))" />
+                    <siaf-input label="¿Es monetaria? *" type="select" [options]="yesNoOptions" [value]="monetaryAccount()" [disabled]="formDisabled" (valueChange)="monetaryAccount.set(textFieldValue($event))" />
                   </div>
-                  <siaf-text-field label="Ámbito institucional de aplicación *" type="select-multiple" [options]="institutionalScopeOptions" [value]="institutionalScope()" [disabled]="!selectedTipoPlan()" (valueChange)="institutionalScope.set(arrayFieldValue($event))" />
+                  <siaf-input label="Ámbito institucional de aplicación *" type="select-multiple" [options]="institutionalScopeOptions" [value]="institutionalScope()" [disabled]="formDisabled" (valueChange)="institutionalScope.set(arrayFieldValue($event))" />
                   <label class="inline-flex min-h-10 items-center gap-siaf-xs text-sm text-text">
-                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="appliesExtraBudgetary()" [disabled]="!selectedTipoPlan()" (change)="appliesExtraBudgetary.set(checkedValue($event))" />
+                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="appliesExtraBudgetary()" [disabled]="formDisabled" (change)="appliesExtraBudgetary.set(checkedValue($event))" />
                     ¿Aplica Extra Presupuestaria? (AEP)
                   </label>
                   <label class="inline-flex min-h-10 items-center gap-siaf-xs text-sm text-text">
-                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="reciprocalAccount()" [disabled]="!selectedTipoPlan()" (change)="reciprocalAccount.set(checkedValue($event))" />
+                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="reciprocalAccount()" [disabled]="formDisabled" (change)="reciprocalAccount.set(checkedValue($event))" />
                     ¿Es Recíproca ? (RECI)
                   </label>
                   <div class="grid gap-siaf-md md:grid-cols-2 xl:grid-cols-4">
-                    <siaf-text-field label="AC Activo" type="select" [options]="activeOptions" [value]="activeCurrent()" [disabled]="!selectedTipoPlan()" (valueChange)="activeCurrent.set(textFieldValue($event))" />
-                    <siaf-text-field label="PC Pasivo" type="select" [options]="passiveOptions" [value]="passiveCurrent()" [disabled]="!selectedTipoPlan()" (valueChange)="passiveCurrent.set(textFieldValue($event))" />
-                    <siaf-text-field label="ANC Activo" type="select" [options]="activeOptions" [value]="activeNonCurrent()" [disabled]="!selectedTipoPlan()" (valueChange)="activeNonCurrent.set(textFieldValue($event))" />
-                    <siaf-text-field label="PNC Pasivo" type="select" [options]="passiveOptions" [value]="passiveNonCurrent()" [disabled]="!selectedTipoPlan()" (valueChange)="passiveNonCurrent.set(textFieldValue($event))" />
+                    <siaf-input label="AC Activo" type="select" [options]="activeOptions" [value]="activeCurrent()" [disabled]="formDisabled" (valueChange)="activeCurrent.set(textFieldValue($event))" />
+                    <siaf-input label="PC Pasivo" type="select" [options]="passiveOptions" [value]="passiveCurrent()" [disabled]="formDisabled" (valueChange)="passiveCurrent.set(textFieldValue($event))" />
+                    <siaf-input label="ANC Activo" type="select" [options]="activeOptions" [value]="activeNonCurrent()" [disabled]="formDisabled" (valueChange)="activeNonCurrent.set(textFieldValue($event))" />
+                    <siaf-input label="PNC Pasivo" type="select" [options]="passiveOptions" [value]="passiveNonCurrent()" [disabled]="formDisabled" (valueChange)="passiveNonCurrent.set(textFieldValue($event))" />
                   </div>
                 </section>
 
@@ -187,11 +208,11 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                   <div class="flex flex-wrap items-center gap-siaf-md">
                     <h4 class="m-0 w-[280px] text-sm font-bold text-text">¿Tiene dinámica contable?</h4>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'si'" [disabled]="!selectedTipoPlan()" (change)="hasAccountingDynamics.set('si')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'si'" [disabled]="formDisabled" (change)="hasAccountingDynamics.set('si')" />
                       Si
                     </label>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'no'" [disabled]="!selectedTipoPlan()" (change)="hasAccountingDynamics.set('no')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'no'" [disabled]="formDisabled" (change)="hasAccountingDynamics.set('no')" />
                       No
                     </label>
                   </div>
@@ -200,45 +221,52 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                       placeholder="Se debita por"
                       [maxlength]="4000"
                       [value]="debitDescription()"
-                      [disabled]="!selectedTipoPlan() || hasAccountingDynamics() !== 'si'"
+                      [disabled]="formDisabled || hasAccountingDynamics() !== 'si'"
                       (valueChange)="debitDescription.set($event)"
                     />
                     <text-area-control
                       placeholder="Se acredita por"
                       [maxlength]="4000"
                       [value]="creditDescription()"
-                      [disabled]="!selectedTipoPlan() || hasAccountingDynamics() !== 'si'"
+                      [disabled]="formDisabled || hasAccountingDynamics() !== 'si'"
                       (valueChange)="creditDescription.set($event)"
                     />
                     <text-area-control
                       placeholder="Objeto"
                       [maxlength]="4000"
                       [value]="objectDescription()"
-                      [disabled]="!selectedTipoPlan() || hasAccountingDynamics() !== 'si'"
+                      [disabled]="formDisabled || hasAccountingDynamics() !== 'si'"
                       (valueChange)="objectDescription.set($event)"
                     />
                     <text-area-control
                       placeholder="Saldos"
                       [maxlength]="4000"
                       [value]="balanceDescription()"
-                      [disabled]="!selectedTipoPlan() || hasAccountingDynamics() !== 'si'"
+                      [disabled]="formDisabled || hasAccountingDynamics() !== 'si'"
                       (valueChange)="balanceDescription.set($event)"
                     />
                   </div>
                   <div class="flex flex-wrap items-center gap-siaf-md">
                     <h4 class="m-0 text-sm font-bold text-text">¿Cuenta contable para una entidad del estado?</h4>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="state-entity-account" [checked]="accountForStateEntity() === 'si'" [disabled]="!selectedTipoPlan()" (change)="accountForStateEntity.set('si')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="state-entity-account" [checked]="accountForStateEntity() === 'si'" [disabled]="formDisabled" (change)="accountForStateEntity.set('si')" />
                       Si
                     </label>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="state-entity-account" [checked]="accountForStateEntity() === 'no'" [disabled]="!selectedTipoPlan()" (change)="accountForStateEntity.set('no')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="state-entity-account" [checked]="accountForStateEntity() === 'no'" [disabled]="formDisabled" (change)="accountForStateEntity.set('no')" />
                       No
                     </label>
                   </div>
                   <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                     <h3 class="m-0 text-sm font-bold uppercase text-text">Entidades del estado</h3>
-                    <siaf-button variant="secondary" size="md" icon="search" [iconOnly]="true" ariaLabel="Agregar entidades del estado" [disabled]="!selectedTipoPlan()" />
+                    <siaf-button
+                      [variant]="accountForStateEntity() === 'si' ? 'accent' : 'secondary'"
+                      size="md"
+                      icon="search"
+                      [iconOnly]="true"
+                      ariaLabel="Agregar entidades del estado"
+                      [disabled]="formDisabled || accountForStateEntity() !== 'si'"
+                    />
                   </div>
                   <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
                     <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">Por favor, haga clic en el botón para agregar una o varias entidades del estado.</p>
@@ -251,19 +279,19 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                     <div class="flex flex-wrap items-center gap-siaf-xs">
                       <h4 class="m-0 text-sm font-bold text-text">¿Está vigente?</h4>
                       <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                        <input class="size-4 accent-brand-primary" type="radio" name="account-current" [checked]="accountCurrent() === 'si'" [disabled]="!selectedTipoPlan()" (change)="accountCurrent.set('si')" />
+                        <input class="size-4 accent-brand-primary" type="radio" name="account-current" [checked]="accountCurrent() === 'si'" [disabled]="formDisabled" (change)="accountCurrent.set('si')" />
                         Si
                       </label>
                       <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                        <input class="size-4 accent-brand-primary" type="radio" name="account-current" [checked]="accountCurrent() === 'no'" [disabled]="!selectedTipoPlan()" (change)="accountCurrent.set('no')" />
+                        <input class="size-4 accent-brand-primary" type="radio" name="account-current" [checked]="accountCurrent() === 'no'" [disabled]="formDisabled" (change)="accountCurrent.set('no')" />
                         No
                       </label>
                     </div>
-                    <siaf-text-field label="Fecha inicio desde" trailingIcon="calendar_today" [value]="validFrom()" [disabled]="!selectedTipoPlan()" (valueChange)="validFrom.set(textFieldValue($event))" />
-                    <siaf-text-field label="Fecha fin hasta" trailingIcon="calendar_today" [value]="validUntil()" [disabled]="!selectedTipoPlan()" (valueChange)="validUntil.set(textFieldValue($event))" />
+                    <siaf-input label="Fecha inicio desde" trailingIcon="calendar_today" [value]="validFrom()" [disabled]="formDisabled" (valueChange)="validFrom.set(textFieldValue($event))" />
+                    <siaf-input label="Fecha fin hasta" trailingIcon="calendar_today" [value]="validUntil()" [disabled]="formDisabled" (valueChange)="validUntil.set(textFieldValue($event))" />
                   </div>
                   <label class="inline-flex min-h-10 items-center gap-siaf-xs text-sm text-text">
-                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="accountVisible()" [disabled]="!selectedTipoPlan()" (change)="accountVisible.set(checkedValue($event))" />
+                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="accountVisible()" [disabled]="formDisabled" (change)="accountVisible.set(checkedValue($event))" />
                     ¿Está visible?
                   </label>
                 </section>
@@ -538,6 +566,12 @@ export class ChartAccountsRequestComponent {
   readonly accountingAccountFormOpen = signal(false);
   readonly newAccountCode = signal('');
   readonly newAccountCodeInUse = signal(false);
+  readonly codeValidationState = computed(() => {
+    const code = this.newAccountCode();
+    if (!code) return 'idle';
+    if (this.EXISTING_ACCOUNT_CODES.has(code)) return 'inUse';
+    return 'valid';
+  });
   readonly newAccountCodeError = computed(() =>
     this.newAccountCodeInUse() ? 'El código ingresado está en uso' : ''
   );
@@ -717,6 +751,10 @@ export class ChartAccountsRequestComponent {
     const code = this.textFieldValue(value).trim();
     this.newAccountCode.set(code);
     this.newAccountCodeInUse.set(code.length > 0 && this.EXISTING_ACCOUNT_CODES.has(code));
+  }
+
+  get formDisabled(): boolean {
+    return !this.selectedTipoPlan();
   }
 
   get previousAccountName(): string {

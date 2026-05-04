@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
-type IconVariant = 'filled' | 'outlined' | 'round' | 'sharp' | 'two-tone';
+export type IconVariant = 'filled' | 'outlined' | 'round' | 'sharp' | 'two-tone';
 
 @Component({
   selector: 'siaf-icon',

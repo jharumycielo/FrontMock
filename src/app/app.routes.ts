@@ -45,5 +45,9 @@ export const routes: Routes = [
       }
     ]
   },
+  {
+    path: 'showcase',
+    loadComponent: () => import('./features/showcase/showcase.component').then((m) => m.ShowcaseComponent)
+  },
   { path: '**', redirectTo: 'login' }
 ];

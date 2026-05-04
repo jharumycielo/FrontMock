@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 
 import { IconComponent } from '../icon/icon.component';
 
-type TagTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
+export type TagTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 
 @Component({
   selector: 'siaf-tag',

@@ -9,11 +9,11 @@ export interface TextFieldOption {
   value: string;
 }
 
-type TextFieldType = 'text' | 'number' | 'email' | 'correo' | 'password' | 'select' | 'select-multiple';
-type TextFieldState = 'enabled' | 'error' | 'success';
+export type TextFieldType = 'text' | 'number' | 'email' | 'correo' | 'password' | 'select' | 'select-multiple';
+export type TextFieldState = 'enabled' | 'error' | 'success';
 
 @Component({
-  selector: 'siaf-text-field',
+  selector: 'siaf-input',
   standalone: true,
   imports: [IconComponent, SelectOptionsComponent],
   providers: [
