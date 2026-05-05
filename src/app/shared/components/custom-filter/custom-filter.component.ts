@@ -19,14 +19,14 @@ export interface CustomFilterApplyEvent {
   standalone: true,
   imports: [ButtonComponent, IconComponent, TextFieldComponent],
   template: `
-    <div class="flex flex-col gap-siaf-md rounded-siaf-md bg-surface p-siaf-md shadow-[0_4px_5px_rgba(0,0,0,0.14),0_4px_5px_rgba(0,0,0,0.14),0_2px_4px_rgba(0,0,0,0.2)]">
+    <div class="flex max-h-[calc(100vh-96px)] flex-col gap-siaf-md overflow-y-auto rounded-siaf-md bg-surface p-siaf-md shadow-siaf-elevation-1 sm:max-h-none sm:overflow-visible">
       <div class="flex flex-col gap-siaf-md">
         <span class="text-sm font-bold text-[var(--sys-color-text-neutral-medium)]">Agregar filtros personalizados</span>
 
         @for (row of rows; track $index; let i = $index) {
-          <div class="flex items-center gap-siaf-sm">
-            <div class="flex w-[860px] max-w-[calc(100%-44px)] items-center gap-siaf-xs min-w-0">
-              <div class="w-[268px] shrink-0">
+          <div class="flex items-start gap-siaf-sm">
+            <div class="grid min-w-0 flex-1 grid-cols-1 gap-siaf-xs sm:grid-cols-3">
+              <div class="min-w-0">
                 <siaf-input
                   label="Campo"
                   type="select"
@@ -35,7 +35,7 @@ export interface CustomFilterApplyEvent {
                   (valueChange)="onCampoChange(i, $event)"
                 />
               </div>
-              <div class="w-[288px] flex-none min-w-0">
+              <div class="min-w-0">
                 <siaf-input
                   label="Condici&oacute;n"
                   type="select"
@@ -44,7 +44,7 @@ export interface CustomFilterApplyEvent {
                   (valueChange)="onCondicionChange(i, $event)"
                 />
               </div>
-              <div class="w-[288px] flex-none min-w-0">
+              <div class="min-w-0">
                 <siaf-input
                   label="Valor"
                   type="select"
@@ -55,7 +55,7 @@ export interface CustomFilterApplyEvent {
               </div>
             </div>
             <button
-              class="inline-flex size-8 items-center justify-center rounded-siaf-md p-siaf-xxs text-text-muted transition hover:bg-surface-muted hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-40"
+              class="mt-1 inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md p-siaf-xxs text-text-muted transition hover:bg-surface-muted hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-40"
               type="button"
               aria-label="Eliminar condicion"
               (click)="removeRow(i)"
@@ -76,7 +76,7 @@ export interface CustomFilterApplyEvent {
           </button>
         </div>
 
-        <div class="flex items-center gap-siaf-sm">
+        <div class="flex flex-row flex-wrap items-center gap-siaf-sm">
           <siaf-button
             variant="primary"
             size="sm"

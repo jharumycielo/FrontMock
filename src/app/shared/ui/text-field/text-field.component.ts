@@ -52,7 +52,7 @@ export type TextFieldState = 'enabled' | 'error' | 'success';
 
           @if (selectOpen) {
             <button class="fixed inset-0 z-30 cursor-default bg-transparent" type="button" aria-label="Cerrar opciones" (click)="closeSelect()"></button>
-            <div class="absolute left-0 right-0 top-[calc(100%+4px)] z-40">
+            <div class="relative z-40 mt-siaf-xs sm:absolute sm:left-0 sm:right-0 sm:top-[calc(100%+4px)] sm:mt-0">
               <siaf-select-options
                 [options]="selectOptions"
                 [selectedValue]="selectValue"
@@ -95,7 +95,7 @@ export type TextFieldState = 'enabled' | 'error' | 'success';
 
           @if (selectOpen) {
             <button class="fixed inset-0 z-30 cursor-default bg-transparent" type="button" aria-label="Cerrar opciones" (click)="closeSelect()"></button>
-            <div class="absolute left-0 right-0 top-[calc(100%+4px)] z-40">
+            <div class="relative z-40 mt-siaf-xs sm:absolute sm:left-0 sm:right-0 sm:top-[calc(100%+4px)] sm:mt-0">
               <siaf-select-options
                 [options]="selectOptions"
                 [selectedValues]="selectValues"

@@ -55,7 +55,6 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
   template: `
     <section
       class="flex flex-col items-start bg-surface"
-      [class.shadow-[0_1px_3px_rgba(0,0,0,0.20),0_2px_1px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.14)]]="variant === 'dropdown'"
       [ngClass]="variantClass"
       aria-label="Crear documento"
     >
@@ -132,7 +131,7 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
 
                     @if (showProcessResults(field)) {
                       <div
-                        class="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-72 overflow-y-auto rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest)] py-siaf-xs shadow-[0_8px_10px_rgba(0,0,0,0.14),0_3px_14px_rgba(0,0,0,0.12),0_5px_5px_rgba(0,0,0,0.2)]"
+                        class="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-72 overflow-y-auto rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest)] py-siaf-xs shadow-siaf-elevation-1"
                         role="listbox"
                       >
                         @for (process of filteredProcessOptions; track process.id) {
@@ -257,8 +256,8 @@ export class CreateDocumentComponent {
 
   get variantClass(): string {
     return this.variant === 'dropdown'
-      ? 'w-full max-w-[360px] rounded-siaf-md py-siaf-xs'
-      : 'h-[calc(100vh-56px)] w-screen border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] lg:max-w-[370px]';
+      ? 'w-full max-w-[360px] rounded-siaf-md py-siaf-xs shadow-siaf-elevation-1'
+      : 'h-[calc(100vh-56px)] w-screen border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] shadow-siaf-elevation-1 lg:max-w-[370px]';
   }
 
   toggleSelect(field: CreateDocumentField): void {

@@ -60,6 +60,8 @@
   --shadow-siaf-sm: var(--sys-shadow-sm);
   --shadow-siaf-md: var(--sys-shadow-md);
   --shadow-siaf-lg: var(--sys-shadow-lg);
+  --shadow-siaf-elevation-1: var(--sys-shadow-elevation-1);
+  --shadow-siaf-elevation-2: var(--sys-shadow-elevation-2);
 
   /* ========================================
      TIPOGRAFÍA

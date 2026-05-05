@@ -43,7 +43,7 @@ type CalendarDay = {
         @if (pickerOpen) {
           <button class="fixed inset-0 z-30 cursor-default bg-transparent" type="button" aria-label="Cerrar calendario" (click)="closePicker()"></button>
           <section
-            class="absolute left-0 top-[calc(100%+4px)] z-40 w-[268px] rounded-siaf-md bg-surface p-siaf-xs shadow-[0_2px_1px_rgba(0,0,0,0.14),0_3px_1px_rgba(0,0,0,0.12),0_1px_3px_rgba(0,0,0,0.2)]"
+            class="absolute left-0 top-[calc(100%+4px)] z-40 w-[268px] rounded-siaf-md bg-surface p-siaf-xs shadow-siaf-elevation-2"
             role="dialog"
             aria-label="Seleccionar fecha"
             (click)="$event.stopPropagation()"

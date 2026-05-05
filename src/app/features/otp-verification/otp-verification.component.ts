@@ -10,7 +10,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
   imports: [ButtonComponent, IconComponent, RouterLink],
   template: `
     <main class="flex min-h-screen items-center justify-center bg-[var(--sys-color-bg-surfaces-surface-lowest,rgba(32,32,32,0.04))] p-siaf-xxl">
-      <div class="w-full max-w-[1077px] rounded-siaf-lg bg-surface p-siaf-xxl shadow-[0px_3px_12px_-4px_rgba(0,0,0,0.2)]">
+      <div class="w-full max-w-[1077px] rounded-siaf-lg bg-surface p-siaf-xxl shadow-siaf-sm">
         <div class="flex flex-col items-center justify-between gap-10 min-h-[440px]">
 
           <!-- Contenido principal -->

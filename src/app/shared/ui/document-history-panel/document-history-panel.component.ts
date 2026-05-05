@@ -32,7 +32,7 @@ type ReadonlyField = {
     @if (open) {
       <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="document-history-title" (click)="closed.emit()">
         <aside
-          class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-[0_16px_12px_rgba(0,0,0,0.14),0_6px_15px_rgba(0,0,0,0.12),0_8px_5px_rgba(0,0,0,0.2)] lg:rounded-l-siaf-md"
+          class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md"
           (click)="$event.stopPropagation()"
         >
           <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">

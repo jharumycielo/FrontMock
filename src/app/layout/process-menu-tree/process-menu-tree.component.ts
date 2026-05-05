@@ -161,7 +161,7 @@ export function findProcessPathById(id: string, nodes: readonly ProcessMenuNode[
   imports: [IconComponent, NgTemplateOutlet],
   template: `
     <aside
-      class="flex h-[calc(100vh-56px)] w-screen flex-col bg-[var(--sys-color-bg-surfaces-surface)] text-text shadow-[0_1px_3px_rgba(0,0,0,0.20),0_2px_1px_rgba(0,0,0,0.12),0_1px_1px_rgba(0,0,0,0.14)] lg:max-w-[370px]"
+      class="flex h-[calc(100vh-56px)] w-screen flex-col bg-[var(--sys-color-bg-surfaces-surface)] text-text shadow-siaf-elevation-1 lg:max-w-[370px]"
       aria-label="Menu de procesos"
     >
       <header class="sticky top-0 z-[2] flex min-h-14 w-full items-center bg-[var(--sys-color-bg-surfaces-surface)] p-siaf-md">

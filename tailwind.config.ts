@@ -74,6 +74,8 @@ export default {
         'siaf-sm': 'var(--shadow-siaf-sm)',
         'siaf-md': 'var(--shadow-siaf-md)',
         'siaf-lg': 'var(--shadow-siaf-lg)',
+        'siaf-elevation-1': 'var(--shadow-siaf-elevation-1)',
+        'siaf-elevation-2': 'var(--shadow-siaf-elevation-2)',
       },
       fontFamily: {
         sans: ['var(--font-sans)'],

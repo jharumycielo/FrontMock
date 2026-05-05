@@ -11,7 +11,7 @@ import { UploaderComponent } from '../uploader/uploader.component';
   template: `
     @if (open) {
       <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="upload-panel-title" (click)="closePanel()">
-        <aside class="absolute bottom-0 right-0 top-0 flex w-full max-w-[420px] flex-col overflow-hidden rounded-siaf-md bg-surface shadow-[0_16px_22px_rgba(0,0,0,0.14),0_6px_30px_rgba(0,0,0,0.12),0_8px_10px_rgba(0,0,0,0.2)]" (click)="$event.stopPropagation()">
+        <aside class="absolute bottom-0 right-0 top-0 flex w-full max-w-[420px] flex-col overflow-hidden rounded-siaf-md bg-surface shadow-siaf-lg" (click)="$event.stopPropagation()">
           <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
             <h2 id="upload-panel-title" class="m-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">{{ title }}</h2>
             <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Cerrar" (click)="closePanel()">

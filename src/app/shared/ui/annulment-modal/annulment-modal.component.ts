@@ -13,7 +13,7 @@ export type AnnulmentModalStep = 1 | 2 | 3;
     @if (open) {
       <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-siaf-md" role="presentation">
         <section
-          class="relative flex max-h-[calc(100vh-32px)] w-full max-w-[500px] flex-col gap-siaf-lg overflow-y-auto rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest)] px-siaf-lg pb-siaf-lg pt-12 shadow-[0_24px_19px_rgb(0_0_0_/_0.14),0_9px_23px_rgb(0_0_0_/_0.12),0_11px_8px_rgb(0_0_0_/_0.2)]"
+          class="relative flex max-h-[calc(100vh-32px)] w-full max-w-[500px] flex-col gap-siaf-lg overflow-y-auto rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest)] px-siaf-lg pb-siaf-lg pt-12 shadow-siaf-lg"
           role="dialog"
           aria-modal="true"
           aria-label="Confirmacion de solicitud de anulacion"

@@ -393,7 +393,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 
       @if (externalEntityPanelOpen()) {
         <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="external-entity-panel-title" (click)="closeExternalEntityPanel()">
-          <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-[0_16px_12px_rgba(0,0,0,0.14),0_6px_15px_rgba(0,0,0,0.12),0_8px_5px_rgba(0,0,0,0.2)] lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
+          <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
             <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
               <h2 id="external-entity-panel-title" class="m-0 min-w-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Selecciona la entidad externa</h2>
               <button
@@ -472,7 +472,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 
       @if (tipoPlanPanelOpen()) {
         <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="tipo-plan-panel-title" (click)="closeTipoPlanPanel()">
-          <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-[0_16px_12px_rgba(0,0,0,0.14),0_6px_15px_rgba(0,0,0,0.12),0_8px_5px_rgba(0,0,0,0.2)] lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
+          <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
             <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
               <h2 id="tipo-plan-panel-title" class="m-0 min-w-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Seleccionar plan de cuentas contable</h2>
               <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Cerrar selección de plan de cuentas contable" (click)="closeTipoPlanPanel()">

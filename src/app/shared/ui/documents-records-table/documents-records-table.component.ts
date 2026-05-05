@@ -23,7 +23,7 @@ export type DocumentsRecordsSelectionChange = {
             @for (column of columns; track column.key) {
               <th class="px-siaf-md py-siaf-sm" [ngClass]="[column.widthClass || 'w-[180px]', column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left']">{{ column.label }}</th>
             }
-            <th class="sticky right-0 w-14 rounded-r-siaf-sm border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm shadow-[-4px_0_8px_rgba(0,0,0,0.08)]"></th>
+            <th class="sticky right-0 w-14 rounded-r-siaf-sm border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm"></th>
           </tr>
         </thead>
         <tbody>
@@ -48,7 +48,7 @@ export type DocumentsRecordsSelectionChange = {
                   }
                 </td>
               }
-              <td class="sticky right-0 border-l border-[var(--sys-color-divider-strong)] bg-surface px-siaf-sm py-siaf-xs shadow-[-4px_0_8px_rgba(0,0,0,0.08)]">
+              <td class="sticky right-0 border-l border-[var(--sys-color-divider-strong)] bg-surface px-siaf-sm py-siaf-xs">
                 <button class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)]" type="button" aria-label="Historial de documento" title="Historial de documento" (click)="historyOpened.emit(row)">
                   <siaf-icon name="history" [size]="20" />
                 </button>

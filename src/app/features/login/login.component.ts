@@ -171,7 +171,7 @@ type LoginTab = 'entidades' | 'proveedores';
                 </button>
 
                 @if (jnePopover()) {
-                  <div class="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-[4px] bg-surface px-siaf-md py-siaf-sm shadow-[0px_6px_5px_rgba(0,0,0,0.14),0px_1px_9px_rgba(0,0,0,0.12),0px_3px_3px_rgba(0,0,0,0.2)]">
+                  <div class="absolute bottom-[calc(100%+8px)] left-0 right-0 z-50 rounded-[4px] bg-surface px-siaf-md py-siaf-sm shadow-siaf-elevation-1">
                     <p class="m-0 text-sm leading-normal text-[var(--sys-color-text-neutral-medium)]">
                       Exclusivo para autoridades electas.<br />
                       Se registra automáticamente al ingresar por primera vez.
