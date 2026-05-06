@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+import { roleChildGuard } from './core/auth';
+
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   {
@@ -13,35 +15,25 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./layout/shell/app-shell.component').then((m) => m.AppShellComponent),
+    canActivateChild: [roleChildGuard],
     children: [
       {
         path: 'panel',
-        loadComponent: () => import('./features/virtual-desk/virtual-desk.component').then((m) => m.VirtualDeskComponent)
+        loadChildren: () =>
+          import('./features/virtual-desk/virtual-desk.routes').then((m) => m.VIRTUAL_DESK_ROUTES),
+        data: { permissions: ['document.read'] }
       },
       {
         path: 'procesos/registro-asiento-ajuste',
-        loadComponent: () => import('./features/adjustment-seat/pages/documents/adjustment-seat-documents.component').then((m) => m.AdjustmentSeatDocumentsComponent)
-      },
-      {
-        path: 'procesos/registro-asiento-ajuste/solicitud',
-        loadComponent: () => import('./features/adjustment-seat/pages/request/adjustment-seat-request.component').then((m) => m.AdjustmentSeatRequestComponent)
-      },
-      {
-        path: 'procesos/registro-asiento-ajuste/formulario',
-        loadComponent: () => import('./features/adjustment-seat/pages/form/adjustment-seat-form.component').then((m) => m.AdjustmentSeatFormComponent)
+        loadChildren: () =>
+          import('./features/adjustment-seat/adjustment-seat.routes').then((m) => m.ADJUSTMENT_SEAT_ROUTES),
+        data: { permissions: ['document.read'] }
       },
       {
         path: 'procesos/plan-cuentas-contables',
-        loadComponent: () => import('./features/chart-accounts/pages/documents/chart-accounts-documents.component').then((m) => m.ChartAccountsDocumentsComponent)
-      },
-      {
-        path: 'procesos/plan-cuentas-contables/solicitud',
-        loadComponent: () => import('./features/chart-accounts/pages/request/chart-accounts-request.component').then((m) => m.ChartAccountsRequestComponent)
-      },
-      {
-        path: 'procesos/plan-cuentas-contables/carga-masiva/solicitud',
-        redirectTo: 'procesos/plan-cuentas-contables',
-        pathMatch: 'full'
+        loadChildren: () =>
+          import('./features/chart-accounts/chart-accounts.routes').then((m) => m.CHART_ACCOUNTS_ROUTES),
+        data: { permissions: ['document.read'] }
       }
     ]
   },

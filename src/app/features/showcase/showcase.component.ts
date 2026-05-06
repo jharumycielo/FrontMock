@@ -28,6 +28,7 @@ import { ProcessMenuTreeComponent } from '../../layout/process-menu-tree/process
 import { RadioComponent } from '../../shared/ui/radio/radio.component';
 import { ReadonlyComponent } from '../../shared/ui/readonly/readonly.component';
 import { ReadonlyFieldComponent } from '../../shared/ui/readonly-field/readonly-field.component';
+import { RecordStatusTagComponent } from '../../shared/ui/record-status-tag/record-status-tag.component';
 import { SelectOptionsComponent } from '../../shared/ui/select-options/select-options.component';
 import { SidePanelComponent } from '../../layout/side-panel/side-panel.component';
 import { SnackbarComponent } from '../../shared/ui/snackbar/snackbar.component';
@@ -66,7 +67,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
     EmptySectionComponent, FlowStatusTagComponent, IconComponent, ListComponent,
     LoadingProgressComponent, MenuComponent, MessageBoxComponent, MobileNavigationMenuComponent,
     ModalComponent, PaginationComponent, PopoverComponent, ProcessMenuTreeComponent,
-    RadioComponent, ReadonlyComponent, ReadonlyFieldComponent, SelectOptionsComponent,
+    RadioComponent, ReadonlyComponent, ReadonlyFieldComponent, RecordStatusTagComponent, SelectOptionsComponent,
     SidePanelComponent, SnackbarComponent, SolicitudeFormCardComponent,
     SolicitudeHeaderComponent, SolicitudeInfoCardComponent, SolicitudePageLayoutComponent,
     StepperCardComponent, StepsComponent, SummaryCardComponent, SwitchComponent,
@@ -176,6 +177,25 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
           <siaf-flow-status-tag status="Registrado" />
           <siaf-flow-status-tag status="Elaborado" size="small" />
           <siaf-flow-status-tag status="Aprobado" size="small" />
+        </div>
+      </section>
+
+      <!-- RECORD STATUS TAG -->
+      <section id="sc-record-status">
+        <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Record Status Tag</h2>
+        <div class="flex flex-wrap gap-2 bg-white p-4 rounded-lg shadow-sm">
+          <siaf-record-status-tag status="Activo" size="small" />
+          <siaf-record-status-tag status="Activo" size="standard" />
+          <siaf-record-status-tag status="Inactivo" size="small" />
+          <siaf-record-status-tag status="Inactivo" size="standard" />
+          <siaf-record-status-tag status="Anulado" size="small" />
+          <siaf-record-status-tag status="Anulado" size="standard" />
+          <siaf-record-status-tag status="Eliminado" size="small" />
+          <siaf-record-status-tag status="Eliminado" size="standard" />
+          <siaf-record-status-tag status="En Proceso" size="small" />
+          <siaf-record-status-tag status="En Proceso" size="standard" />
+          <siaf-record-status-tag status="Validado" size="small" />
+          <siaf-record-status-tag status="Validado" size="standard" />
         </div>
       </section>
 

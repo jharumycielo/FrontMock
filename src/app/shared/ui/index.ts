@@ -25,6 +25,8 @@ export { TagComponent } from './tag/tag.component';
 export type { TagTone } from './tag/tag.component';
 export { FlowStatusTagComponent } from './flow-status-tag/flow-status-tag.component';
 export type { FlowStatus, FlowStatusTagSize } from './flow-status-tag/flow-status-tag.component';
+export { RecordStatusTagComponent } from './record-status-tag/record-status-tag.component';
+export type { RecordStatus, RecordStatusTagSize } from './record-status-tag/record-status-tag.component';
 export { AccordionComponent } from './accordion/accordion.component';
 export { SwitchComponent } from './switch/switch.component';
 export { MenuComponent } from './menu/menu.component';

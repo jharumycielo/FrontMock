@@ -706,8 +706,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     this.fieldsMenuOpen = false;
   }
 
-  selectFieldsMenuOption(option: string): void {
-    console.log('Campo seleccionado:', option);
+  selectFieldsMenuOption(_option: string): void {
     this.closeFieldsMenu();
   }
 
@@ -715,8 +714,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     this.favoriteMenuOpen = false;
   }
 
-  selectFavoriteOption(option: 'observed' | 'save-search'): void {
-    console.log('Opcion de favoritos:', option);
+  selectFavoriteOption(_option: 'observed' | 'save-search'): void {
     this.closeFavoriteMenu();
   }
 

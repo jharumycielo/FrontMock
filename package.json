@@ -11,6 +11,9 @@
     "start": "ng serve --host 127.0.0.1",
     "tokens:build": "node scripts/generate-figma-tokens.mjs",
     "build": "ng build",
+    "typecheck": "ng build --configuration development",
+    "verify": "npm run tokens:build && npm run typecheck",
+    "ci": "npm run tokens:build && npm run build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

@@ -34,6 +34,13 @@ export const APP_CONFIG = {
 };
 
 export const ROUTES_CONFIG = {
-  public: ['/login', '/forgot-password', '/reset-password'],
-  protected: ['/panel', '/dashboard', '/documents'],
+  public: ['/login', '/login/recuperar-contrasena', '/showcase'],
+  protected: [
+    '/panel',
+    '/procesos/registro-asiento-ajuste',
+    '/procesos/registro-asiento-ajuste/solicitud',
+    '/procesos/registro-asiento-ajuste/formulario',
+    '/procesos/plan-cuentas-contables',
+    '/procesos/plan-cuentas-contables/solicitud',
+  ],
 };
