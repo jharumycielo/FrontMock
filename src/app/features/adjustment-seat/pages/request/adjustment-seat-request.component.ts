@@ -8,6 +8,7 @@ import { DateTimePickerComponent } from '../../../../shared/ui/date-time-picker/
 import { EmptySectionComponent } from '../../../../shared/ui/empty-section/empty-section.component';
 import { FlowStatus, FlowStatusTagComponent } from '../../../../shared/ui/flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../../../../shared/ui/icon/icon.component';
+import { LoaderOverlayComponent } from '../../../../shared/ui/loader-overlay/loader-overlay.component';
 import { MessageBoxComponent } from '../../../../shared/ui/message-box/message-box.component';
 import { findProcessPathById } from '../../../../layout/process-menu-tree/process-menu-tree.component';
 import { SolicitudeHeaderState } from '../../../../shared/components/solicitude-header/solicitude-header.component';
@@ -90,6 +91,7 @@ type PeriodoGroup = {
     EmptySectionComponent,
     FlowStatusTagComponent,
     IconComponent,
+    LoaderOverlayComponent,
     MessageBoxComponent,
     ModalComponent,
     PaginationComponent,
@@ -808,6 +810,11 @@ type PeriodoGroup = {
         (confirmed)="onConfirmDelete()"
       />
 
+      <siaf-loader-overlay
+        [open]="processingModalAction"
+        [message]="processingMessage"
+      />
+
       <div class="fixed bottom-siaf-lg left-1/2 z-50 w-[min(430px,calc(100vw-32px))] -translate-x-1/2">
         <siaf-snackbar
           [variant]="snackbarVariant"
@@ -827,6 +834,7 @@ export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
 
   currentDateTime = '';
   private intervalId: ReturnType<typeof setInterval> | null = null;
+  private processingTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
     this.tickDateTime();
@@ -839,6 +847,10 @@ export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.intervalId !== null) {
       clearInterval(this.intervalId);
+    }
+
+    if (this.processingTimeoutId !== null) {
+      clearTimeout(this.processingTimeoutId);
     }
   }
 
@@ -900,6 +912,8 @@ export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
   saveModalOpen = false;
   verifyModalOpen = false;
   deleteModalOpen = false;
+  processingModalAction = false;
+  processingMessage = 'Procesando solicitud...';
   readonly fechaContabilizacion = signal('');
   readonly glosa = signal('');
   readonly justificacion = signal('');
@@ -1038,15 +1052,16 @@ export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
 
   onConfirmSave(): void {
     this.saveModalOpen = false;
-    this.isElaborated = true;
-    this.isVerified = false;
-    this.isDeleted = false;
-    this.isReadOnly = true;
-    this.snackbarVariant = 'creation-elaborated';
-    this.saveSnackbarOpen = true;
-    this.elaboradoPor = this.currentUser.name.toUpperCase();
-    this.elaboradoFecha = this.formatDateTime(new Date());
-    this.cdr.markForCheck();
+    this.runModalProcess('Guardando solicitud...', () => {
+      this.isElaborated = true;
+      this.isVerified = false;
+      this.isDeleted = false;
+      this.isReadOnly = true;
+      this.snackbarVariant = 'creation-elaborated';
+      this.saveSnackbarOpen = true;
+      this.elaboradoPor = this.currentUser.name.toUpperCase();
+      this.elaboradoFecha = this.formatDateTime(new Date());
+    });
   }
 
   openVerifyModal(): void {
@@ -1056,15 +1071,16 @@ export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
 
   onConfirmVerify(): void {
     this.verifyModalOpen = false;
-    this.isElaborated = true;
-    this.isVerified = true;
-    this.isDeleted = false;
-    this.isReadOnly = true;
-    this.snackbarVariant = 'creation-verified';
-    this.saveSnackbarOpen = true;
-    this.verificadoPor = this.currentUser.name.toUpperCase();
-    this.verificadoFecha = this.formatDateTime(new Date());
-    this.cdr.markForCheck();
+    this.runModalProcess('Verificando solicitud...', () => {
+      this.isElaborated = true;
+      this.isVerified = true;
+      this.isDeleted = false;
+      this.isReadOnly = true;
+      this.snackbarVariant = 'creation-verified';
+      this.saveSnackbarOpen = true;
+      this.verificadoPor = this.currentUser.name.toUpperCase();
+      this.verificadoFecha = this.formatDateTime(new Date());
+    });
   }
 
   openDeleteModal(): void {
@@ -1074,13 +1090,31 @@ export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
 
   onConfirmDelete(): void {
     this.deleteModalOpen = false;
-    this.isElaborated = true;
-    this.isVerified = false;
-    this.isDeleted = true;
-    this.isReadOnly = true;
-    this.snackbarVariant = 'creation-deleted';
-    this.saveSnackbarOpen = true;
+    this.runModalProcess('Eliminando solicitud...', () => {
+      this.isElaborated = true;
+      this.isVerified = false;
+      this.isDeleted = true;
+      this.isReadOnly = true;
+      this.snackbarVariant = 'creation-deleted';
+      this.saveSnackbarOpen = true;
+    });
+  }
+
+  private runModalProcess(message: string, complete: () => void): void {
+    if (this.processingTimeoutId !== null) {
+      clearTimeout(this.processingTimeoutId);
+    }
+
+    this.processingMessage = message;
+    this.processingModalAction = true;
     this.cdr.markForCheck();
+
+    this.processingTimeoutId = setTimeout(() => {
+      complete();
+      this.processingModalAction = false;
+      this.processingTimeoutId = null;
+      this.cdr.markForCheck();
+    }, 900);
   }
 
   enableEditing(): void {
