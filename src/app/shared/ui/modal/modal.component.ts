@@ -240,7 +240,7 @@ const MODAL_PRESETS: Record<Exclude<ModalVariant, "custom">, ModalPreset> = {
 
           @if (showFooter) {
             <footer
-              class="flex flex-col-reverse justify-end gap-siaf-xs sm:flex-row"
+              class="flex flex-row flex-wrap justify-end gap-siaf-xs"
             >
               @if (hasProjectedActions) {
                 <ng-content select="[modal-actions]" />
