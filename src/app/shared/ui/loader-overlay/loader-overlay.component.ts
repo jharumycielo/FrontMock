@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
-import { LoaderComponent, LoaderTone } from '../loader/loader.component';
+import { LoaderComponent } from '../loader/loader.component';
 
 @Component({
   selector: 'siaf-loader-overlay',
@@ -14,11 +14,11 @@ import { LoaderComponent, LoaderTone } from '../loader/loader.component';
         aria-live="polite"
         [attr.aria-label]="label"
       >
-        <div class="grid place-items-center gap-siaf-md rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest)] px-siaf-xl py-siaf-lg shadow-siaf-lg">
-          <siaf-loader [size]="size" [dotSize]="dotSize" [tone]="tone" [decorative]="true" />
+        <div class="grid place-items-center gap-siaf-md text-white">
+          <siaf-loader [size]="size" [dotSize]="dotSize" tone="light" [decorative]="true" />
 
           @if (message) {
-            <p class="m-0 text-center text-sm font-medium text-[var(--sys-color-text-neutral-high)]">
+            <p class="m-0 text-center text-sm font-medium text-white">
               {{ message }}
             </p>
           }
@@ -34,5 +34,4 @@ export class LoaderOverlayComponent {
   @Input() label = 'Procesando';
   @Input() size = 32;
   @Input() dotSize = 6;
-  @Input() tone: LoaderTone = 'brand';
 }
