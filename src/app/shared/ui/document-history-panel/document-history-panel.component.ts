@@ -60,7 +60,7 @@ type ReadonlyField = {
                   <span class="inline-flex size-10 items-center justify-center rounded-siaf-md">
                     <siaf-icon class="transition" [class.rotate-180]="!attributesOpen" name="expand_less" [size]="24" />
                   </span>
-                  <span class="min-w-0 flex-1 text-sm font-medium uppercase leading-normal text-text">Atributos de la solicitud de registro de asiento de ajuste</span>
+                  <span class="min-w-0 flex-1 text-sm font-medium leading-normal text-text">Atributos de la solicitud de registro de asiento de ajuste</span>
                 </button>
 
                 @if (attributesOpen) {

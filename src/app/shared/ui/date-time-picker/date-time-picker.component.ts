@@ -21,7 +21,7 @@ type CalendarDay = {
       <span class="relative block w-full max-w-[300px]">
         @if (floatingLabel) {
           <span class="absolute -top-2.5 left-3 z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal" [class]="labelClass">
-            {{ labelText }}
+            {{ labelText }}@if (required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
           </span>
         }
 
@@ -31,11 +31,12 @@ type CalendarDay = {
           [class]="controlClass"
           [disabled]="disabled"
           [attr.aria-expanded]="pickerOpen"
+          [attr.aria-required]="required"
           aria-haspopup="dialog"
           (click)="togglePicker()"
         >
           <span class="min-w-0 flex-1 truncate" [class.text-[var(--sys-color-text-neutral-low)]]="!hasValue">
-            {{ displayValue || labelText }}
+            {{ displayValue || labelText }}@if (!hasValue && required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
           </span>
           <siaf-icon class="shrink-0 text-text-muted" name="calendar_today" [size]="20" />
         </button>
@@ -139,6 +140,7 @@ export class DateTimePickerComponent implements OnChanges, OnInit {
   @Input() disabled = false;
   @Input() variant: DatePickerVariant = 'date';
   @Input() defaultToToday = true;
+  @Input() required = false;
 
   @Output() valueChange = new EventEmitter<string>();
 

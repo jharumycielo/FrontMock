@@ -18,11 +18,12 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         type="checkbox"
         [checked]="checked"
         [disabled]="disabled"
+        [attr.aria-required]="required"
         (change)="onInputChange($event)"
         (blur)="markTouched()"
       />
       <span>
-        <span class="block font-medium">{{ label }}</span>
+        <span class="block font-medium">{{ label }}@if (required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }</span>
         @if (description) {
           <span class="block text-text-muted">{{ description }}</span>
         }
@@ -38,6 +39,7 @@ export class CheckboxComponent implements ControlValueAccessor {
   @Input() description = '';
   @Input() checked = false;
   @Input() disabled = false;
+  @Input() required = false;
 
   @Output() checkedChange = new EventEmitter<boolean>();
 

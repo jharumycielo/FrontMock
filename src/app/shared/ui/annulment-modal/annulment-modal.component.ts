@@ -33,12 +33,13 @@ export type AnnulmentModalStep = 1 | 2 | 3;
             <label class="relative flex min-h-[60px] flex-col rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface px-siaf-md py-siaf-xs">
               @if (step > 1) {
                 <span class="absolute -top-2.5 left-3 bg-surface px-1 text-xs font-medium text-[var(--sys-color-text-neutral-low)]">
-                  Detalle de anulacion<span class="font-bold text-[var(--figma-color-palette-red-800)]">*</span>
+                  Detalle de anulacion<span class="font-bold text-[var(--sys-color-text-feedback-danger)]">*</span>
                 </span>
               }
               <textarea
                 class="min-h-11 resize-none bg-transparent text-sm text-[var(--sys-color-text-neutral-medium)] outline-none placeholder:text-[var(--sys-color-text-neutral-low)]"
-                [placeholder]="step === 1 ? 'Detalle de anulacion*' : ''"
+                [placeholder]="step === 1 ? 'Detalle de anulacion *' : ''"
+                aria-required="true"
                 [value]="step > 1 ? detailValue : ''"
               ></textarea>
             </label>

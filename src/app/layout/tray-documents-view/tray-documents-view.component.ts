@@ -197,7 +197,7 @@ type AppliedCustomFilter = {
 
             <div class="flex min-h-10 items-center justify-between gap-siaf-md">
               <label class="inline-flex h-10 items-center gap-siaf-xs px-siaf-xxs">
-                <input class="size-4 accent-brand-primary" type="checkbox" />
+                <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" />
               </label>
               <div class="ml-auto flex h-10 items-center gap-siaf-md text-xs text-text-muted">
                 <span>1-{{ filteredRows.length }} de {{ filteredRows.length }}</span>
@@ -229,7 +229,7 @@ type AppliedCustomFilter = {
                 <tbody>
                   @for (row of filteredRows; track row.document + row.number) {
                     <tr class="h-[58px] border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-surface text-[var(--sys-color-text-neutral-medium)] hover:bg-[rgba(1,72,153,0.04)]">
-                      <td class="px-siaf-sm py-siaf-sm"><input class="size-4 accent-brand-primary" type="checkbox" /></td>
+                      <td class="px-siaf-sm py-siaf-sm"><input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" /></td>
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.document }}</td>
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.number }}</td>
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.actionType }}</td>

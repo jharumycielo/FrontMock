@@ -1,12 +1,16 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 
+export type TextAreaControlState = 'enabled' | 'error' | 'success';
+
 @Component({
   selector: 'text-area-control',
   standalone: true,
   template: `
     <label class="grid gap-siaf-md">
       @if (title) {
-        <span class="text-sm font-bold uppercase text-text">{{ title }}</span>
+        <span class="text-sm font-bold uppercase text-text">
+          {{ title }}@if (required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
+        </span>
       }
       <span class="relative block w-full">
         @if (floatingLabel) {
@@ -14,17 +18,23 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, in
             class="absolute -top-2.5 left-3 z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal"
             [class]="labelClass"
           >
-            {{ placeholder }}
+            {{ placeholderText }}@if (required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
           </span>
         }
         <span
           class="flex min-h-[60px] items-start rounded-siaf-md border px-siaf-md py-siaf-xs transition"
           [class]="containerClass"
         >
+          @if (!floatingLabel && required) {
+            <span class="pointer-events-none absolute left-siaf-md top-siaf-xs text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-low)]">
+              {{ placeholderText }}<span class="text-[var(--sys-color-text-feedback-danger)]">*</span>
+            </span>
+          }
           <textarea
             class="min-h-11 flex-1 resize-none bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)] outline-none placeholder:text-[var(--sys-color-text-neutral-low)] disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)]"
             [attr.maxlength]="maxlength"
-            [placeholder]="floatingLabel ? '' : placeholder"
+            [placeholder]="floatingLabel || required ? '' : placeholderText"
+            [attr.aria-required]="required"
             [value]="value"
             [disabled]="disabled"
             (focus)="onFocus()"
@@ -46,6 +56,9 @@ export class TextAreaControlComponent implements OnChanges {
   @Input() value = '';
   @Input() disabled = false;
   @Input() maxlength = 500;
+  @Input() required = false;
+  @Input() error = '';
+  @Input() state: TextAreaControlState = 'enabled';
 
   @Output() valueChange = new EventEmitter<string>();
 
@@ -62,6 +75,10 @@ export class TextAreaControlComponent implements OnChanges {
     return (this.value ?? '').length > 0;
   }
 
+  get placeholderText(): string {
+    return this.placeholder.replace(/\s*\*$/, '');
+  }
+
   get floatingLabel(): boolean {
     return this.focused || this.hasValue;
   }
@@ -71,14 +88,42 @@ export class TextAreaControlComponent implements OnChanges {
       return 'text-[var(--sys-color-text-neutral-disabled)]';
     }
 
+    if (this.effectiveState === 'error') {
+      return 'text-[var(--sys-color-text-feedback-danger)]';
+    }
+
+    if (this.effectiveState === 'success') {
+      return 'text-[var(--sys-color-text-neutral-low)]';
+    }
+
     return this.focused
       ? 'text-[var(--sys-color-text-neutral-activated)]'
       : 'text-[var(--sys-color-text-neutral-low)]';
   }
 
+  get effectiveState(): TextAreaControlState {
+    if (this.error) {
+      return 'error';
+    }
+
+    if (this.state === 'success' || (this.hasValue && !this.focused)) {
+      return 'success';
+    }
+
+    return this.state;
+  }
+
   get containerClass(): string {
     if (this.disabled) {
       return 'border-[var(--sys-color-border-states-disabled)] bg-[var(--sys-color-bg-surfaces-disabled)] cursor-not-allowed';
+    }
+
+    if (this.effectiveState === 'error') {
+      return 'border-2 border-[var(--sys-color-border-feedback-danger)] bg-surface hover:border-[var(--sys-color-border-feedback-danger)]';
+    }
+
+    if (this.effectiveState === 'success') {
+      return 'border-2 border-[var(--sys-color-border-feedback-success)] bg-surface hover:border-[var(--sys-color-border-feedback-success)]';
     }
 
     if (this.focused) {

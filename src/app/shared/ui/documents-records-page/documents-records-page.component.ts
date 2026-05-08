@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { BreadcrumbComponent } from '../../components/breadcrumb/breadcrumb.component';
 import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../components/custom-filter/custom-filter.component';
 import { PaginationComponent } from '../../components/pagination/pagination.component';
+import { TableControlsComponent } from '../../components/table-controls/table-controls.component';
 import type { DocumentsRecordsColumn, DocumentsRecordsConfig, DocumentsRecordsRow, DocumentsRecordsTab } from '../../types/documents-records.types';
 import { ButtonComponent } from '../button/button.component';
 import { ColumnVisibilityPanelComponent } from '../column-visibility-panel/column-visibility-panel.component';
@@ -25,7 +26,7 @@ type AppliedCustomFilter = {
 @Component({
   selector: 'siaf-documents-records-page',
   standalone: true,
-  imports: [BreadcrumbComponent, ButtonComponent, ColumnVisibilityPanelComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, DocumentsRecordsTableComponent, IconComponent, ModalComponent, PaginationComponent, SnackbarComponent],
+  imports: [BreadcrumbComponent, ButtonComponent, ColumnVisibilityPanelComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, DocumentsRecordsTableComponent, IconComponent, ModalComponent, PaginationComponent, SnackbarComponent, TableControlsComponent],
   template: `
     <div class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
       <siaf-document-history-panel
@@ -231,14 +232,18 @@ type AppliedCustomFilter = {
                 </div>
               </div>
 
-              <div class="flex justify-between">
-                <label class="inline-flex size-10 items-center justify-center">
-                  <input class="size-4 accent-brand-primary" type="checkbox" />
-                </label>
-                <div class="hidden w-full max-w-[220px] md:block">
-                  <siaf-pagination navigation="Activate" position="Top" [page]="page" [pageSize]="rowsPerPage" [totalItems]="activeTab === 'documents' ? filteredRows.length : recordRows.length" [totalPages]="totalPages" />
-                </div>
-              </div>
+              <siaf-table-controls
+                selectAllLabel="Seleccionar documentos o registros"
+                [hideTopPaginationOnMobile]="true"
+                [checked]="allVisibleElaboradoDocumentsSelected"
+                [indeterminate]="someVisibleElaboradoDocumentsSelected"
+                [disabled]="visibleSelectableElaboradoDocuments.length === 0"
+                [page]="page"
+                [pageSize]="rowsPerPage"
+                [totalItems]="activeTab === 'documents' ? filteredRows.length : recordRows.length"
+                [totalPages]="totalPages"
+                (selectionChange)="toggleVisibleElaboradoDocuments($event)"
+              />
 
               <siaf-documents-records-table
                 [activeTab]="activeTab"
@@ -247,6 +252,7 @@ type AppliedCustomFilter = {
                 [minWidthClass]="activeTab === 'documents' ? config.documentTableMinWidthClass : config.recordTableMinWidthClass"
                 [recordTrackKey]="config.recordTrackKey"
                 [documentRoute]="documentRoute"
+                [selectionDisabled]="selectionDisabled"
                 (selectionChanged)="toggleRowSelection($event)"
                 (historyOpened)="openHistory($event)"
               />
@@ -380,6 +386,24 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     return this.documentRows.some((row) => row.selected && row['status'] === 'Elaborado');
   }
 
+  get visibleSelectableElaboradoDocuments(): DocumentsRecordsRow[] {
+    if (this.activeTab !== 'documents') {
+      return [];
+    }
+
+    return this.visibleRows.filter((row) => row['status'] === 'Elaborado');
+  }
+
+  get allVisibleElaboradoDocumentsSelected(): boolean {
+    const rows = this.visibleSelectableElaboradoDocuments;
+    return rows.length > 0 && rows.every((row) => row.selected);
+  }
+
+  get someVisibleElaboradoDocumentsSelected(): boolean {
+    const rows = this.visibleSelectableElaboradoDocuments;
+    return rows.some((row) => row.selected) && !this.allVisibleElaboradoDocumentsSelected;
+  }
+
   get activeColumnOptions(): DocumentsRecordsColumn[] {
     return this.activeTab === 'documents' ? this.config.documentColumns : this.config.recordColumns;
   }
@@ -460,8 +484,28 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   toggleRowSelection(change: DocumentsRecordsSelectionChange): void {
+    if (this.selectionDisabled(change.row)) {
+      change.row.selected = false;
+      return;
+    }
+
     change.row.selected = change.selected;
   }
+
+  toggleVisibleElaboradoDocuments(selected: boolean): void {
+    this.visibleRows.forEach((row) => {
+      if (row['status'] === 'Elaborado') {
+        row.selected = selected;
+        return;
+      }
+
+      row.selected = false;
+    });
+  }
+
+  selectionDisabled = (row: DocumentsRecordsRow): boolean => {
+    return this.activeTab === 'documents' && row['status'] !== 'Elaborado';
+  };
 
   documentRoute = (row: DocumentsRecordsRow): string => {
     if (typeof row['linkRoute'] === 'string') {

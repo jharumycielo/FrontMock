@@ -28,7 +28,7 @@ export type TextFieldState = 'enabled' | 'error' | 'success';
       <span class="relative block w-full">
         @if (floatingLabel) {
           <span class="absolute -top-2.5 left-3 z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal" [class]="labelClass">
-            {{ labelText }}
+            {{ labelText }}@if (required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
           </span>
         }
 
@@ -45,8 +45,19 @@ export type TextFieldState = 'enabled' | 'error' | 'success';
             (keydown.escape)="closeSelect()"
           >
             <span class="min-w-0 flex-1 truncate" [class.text-[var(--sys-color-text-neutral-low)]]="!hasValue">
-              {{ selectDisplayText }}
+              {{ selectDisplayText }}@if (!hasValue && required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
             </span>
+            @if (clearable && hasValue && !required) {
+              <span
+                class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-enabled)]"
+                role="button"
+                tabindex="-1"
+                [attr.aria-label]="'Limpiar ' + labelText"
+                (click)="clearSelectValue($event)"
+              >
+                <siaf-icon name="close" [size]="18" />
+              </span>
+            }
             <siaf-icon class="shrink-0 text-text transition" [class.rotate-180]="selectOpen" name="expand_more" [size]="24" />
           </button>
 
@@ -74,7 +85,7 @@ export type TextFieldState = 'enabled' | 'error' | 'success';
             (keydown.escape)="closeSelect()"
           >
             @if (!hasValue) {
-              <span class="flex-1 text-[var(--sys-color-text-neutral-low)]">{{ labelText }}</span>
+              <span class="flex-1 text-[var(--sys-color-text-neutral-low)]">{{ labelText }}@if (required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }</span>
             }
             @for (val of selectValues; track val) {
               <span class="inline-flex items-center gap-siaf-xxs rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] px-siaf-xs py-0 text-text">
@@ -88,6 +99,17 @@ export type TextFieldState = 'enabled' | 'error' | 'success';
                 >
                   <siaf-icon name="close" [size]="16" />
                 </span>
+              </span>
+            }
+            @if (clearable && hasValue && !required) {
+              <span
+                class="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-enabled)]"
+                role="button"
+                tabindex="-1"
+                [attr.aria-label]="'Limpiar ' + labelText"
+                (click)="clearSelectValue($event)"
+              >
+                <siaf-icon name="close" [size]="18" />
               </span>
             }
             <siaf-icon class="ml-auto shrink-0 text-text transition" [class.rotate-180]="selectOpen" name="expand_more" [size]="24" />
@@ -113,10 +135,17 @@ export type TextFieldState = 'enabled' | 'error' | 'success';
               <siaf-icon class="shrink-0 text-[var(--sys-color-text-neutral-medium)]" [name]="leadingIcon" [size]="24" />
             }
 
+            @if (!floatingLabel && required) {
+              <span class="pointer-events-none shrink-0 text-[var(--sys-color-text-neutral-low)]">
+                {{ labelText }}<span class="text-[var(--sys-color-text-feedback-danger)]">*</span>
+              </span>
+            }
+
             <input
               class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)] outline-none placeholder:text-[var(--sys-color-text-neutral-low)] disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)]"
               [type]="inputType"
-              [placeholder]="floatingLabel ? '' : labelText"
+              [placeholder]="floatingLabel || required ? '' : labelText"
+              [attr.aria-required]="required"
               [disabled]="disabled"
               [value]="internalValue"
               [attr.autocomplete]="autocomplete || null"
@@ -171,6 +200,8 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
   @Input() trailingIcon = '';
   @Input() trailingButtonLabel = '';
   @Input() autocomplete = '';
+  @Input() clearable = false;
+  @Input() required = false;
 
   @Output() valueChange = new EventEmitter<string | number | string[]>();
   @Output() trailingAction = new EventEmitter<void>();
@@ -190,6 +221,10 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
 
   get labelText(): string {
     return this.label || this.placeholder;
+  }
+
+  get placeholderText(): string {
+    return `${this.labelText}${this.required ? ' *' : ''}`;
   }
 
   get floatingLabel(): boolean {
@@ -266,6 +301,18 @@ export class TextFieldComponent implements OnChanges, ControlValueAccessor {
     const next = this.selectValues.filter((v) => v !== value);
     this.internalValue = next;
     this.emitValue(next);
+  }
+
+  clearSelectValue(event: MouseEvent): void {
+    if (this.required) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.internalValue = this.type === 'select-multiple' ? [] : '';
+    this.emitValue(this.internalValue);
+    this.closeSelect();
   }
 
   get inputType(): 'text' | 'number' | 'email' | 'password' {

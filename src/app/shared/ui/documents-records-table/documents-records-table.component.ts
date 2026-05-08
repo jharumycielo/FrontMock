@@ -31,7 +31,13 @@ export type DocumentsRecordsSelectionChange = {
           @for (row of rows; track rowTrackValue(row, $index)) {
             <tr class="border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-surface hover:bg-[rgba(1,72,153,0.04)]" [class.h-12]="activeTab === 'records'">
               <td class="h-[58px] px-siaf-sm py-siaf-xs">
-                <input class="size-4 accent-brand-primary" type="checkbox" [checked]="row.selected" (change)="onSelectionChange(row, $event)" />
+                <input
+                  class="size-4 disabled:cursor-not-allowed"
+                  type="checkbox"
+                  [checked]="row.selected"
+                  [disabled]="selectionDisabled(row)"
+                  (change)="onSelectionChange(row, $event)"
+                />
               </td>
               @for (column of columns; track column.key) {
                 <td class="px-siaf-md py-siaf-sm" [ngClass]="[column.align === 'right' ? 'text-right' : column.align === 'center' ? 'text-center' : 'text-left', column.kind === 'document-link' ? 'max-w-[360px]' : '']">
@@ -66,6 +72,7 @@ export class DocumentsRecordsTableComponent {
   @Input() minWidthClass = '';
   @Input() recordTrackKey = '';
   @Input() documentRoute: (row: DocumentsRecordsRow) => string = () => '';
+  @Input() selectionDisabled: (row: DocumentsRecordsRow) => boolean = () => false;
 
   @Output() selectionChanged = new EventEmitter<DocumentsRecordsSelectionChange>();
   @Output() historyOpened = new EventEmitter<DocumentsRecordsRow>();

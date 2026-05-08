@@ -19,7 +19,7 @@ export interface RadioOption {
   template: `
     <fieldset class="grid gap-2">
       @if (label) {
-        <legend class="text-sm font-medium text-text">{{ label }}</legend>
+        <legend class="text-sm font-medium text-text">{{ label }}@if (required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }</legend>
       }
       @for (option of options; track option.value) {
         <label class="inline-flex items-center gap-3 text-sm text-text">
@@ -30,6 +30,7 @@ export interface RadioOption {
             [value]="option.value"
             [checked]="option.value === value"
             [disabled]="disabled"
+            [attr.aria-required]="required"
             (change)="selectValue(option.value)"
             (blur)="markTouched()"
           />
@@ -48,6 +49,7 @@ export class RadioComponent implements ControlValueAccessor {
   @Input() value = '';
   @Input() options: RadioOption[] = [];
   @Input() disabled = false;
+  @Input() required = false;
 
   @Output() valueChange = new EventEmitter<string>();
 

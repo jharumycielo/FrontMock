@@ -22,14 +22,14 @@ import { IconComponent } from '../icon/icon.component';
           <div class="min-h-0 flex-1 overflow-y-auto border-y border-[var(--sys-color-divider-strong)] bg-[var(--sys-color-bg-surfaces-surface-highest)] px-siaf-xl py-siaf-md">
             <div class="flex flex-col gap-siaf-lg">
               <label class="flex min-h-12 cursor-pointer items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm uppercase text-[var(--sys-color-text-neutral-medium)]">
-                <input class="size-4 accent-brand-primary" type="checkbox" [checked]="allSelected" (change)="toggleAll.emit($event)" />
+                <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" [checked]="allSelected" (change)="toggleAll.emit($event)" />
                 Seleccionar todo
               </label>
               <section class="grid gap-siaf-xs">
                 <h3 class="m-0 px-[18px] text-xs font-normal uppercase text-[var(--sys-color-text-neutral-medium)]">Predeterminado</h3>
                 @for (column of defaultColumns; track column.key) {
                   <label class="flex min-h-12 cursor-pointer items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted">
-                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="isColumnVisible(column.key)" (change)="toggleColumn.emit({ key: column.key, event: $event })" />
+                    <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" [checked]="isColumnVisible(column.key)" (change)="toggleColumn.emit({ key: column.key, event: $event })" />
                     {{ column.label }}
                   </label>
                 }
@@ -38,7 +38,7 @@ import { IconComponent } from '../icon/icon.component';
                 <h3 class="m-0 px-[18px] text-xs font-normal uppercase text-[var(--sys-color-text-neutral-medium)]">Más columnas</h3>
                 @for (column of moreColumns; track column.key) {
                   <label class="flex min-h-12 cursor-pointer items-center gap-siaf-md px-siaf-md py-siaf-sm text-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted">
-                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="isColumnVisible(column.key)" (change)="toggleColumn.emit({ key: column.key, event: $event })" />
+                    <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" [checked]="isColumnVisible(column.key)" (change)="toggleColumn.emit({ key: column.key, event: $event })" />
                     {{ column.label }}
                   </label>
                 }

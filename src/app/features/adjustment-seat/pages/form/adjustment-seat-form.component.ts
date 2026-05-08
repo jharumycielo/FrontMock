@@ -131,10 +131,10 @@ type AccountingRow = {
                 </section>
 
                 <section class="grid gap-siaf-lg">
-                  <readonly-line label="Fecha de contabilizacion" caption="Fecha *" value="19/08/2026" />
+                  <readonly-line label="Fecha de contabilizacion" caption="Fecha" [required]="true" value="19/08/2026" />
                   <readonly-card label="Buscar codigo de clase de ajuste" caption="Codigo de clase de ajuste" value="1. - Provisiones" />
                   <readonly-card label="Buscar codigo de detalle de ajuste" caption="Detalle de ajuste" value="1.1. - Provision de cuentas por cobrar" />
-                  <readonly-line label="Glosa" caption="Glosa *" value="Glosa que nosotros ingresamos el texto" />
+                  <readonly-line label="Glosa" caption="Glosa" [required]="true" value="Glosa que nosotros ingresamos el texto" />
                 </section>
 
                 <details class="group overflow-hidden rounded-siaf-sm border border-[rgba(32,32,32,0.24)] bg-surface" open>
@@ -239,7 +239,8 @@ type AccountingRow = {
               <div class="flex flex-col gap-siaf-lg px-siaf-lg py-siaf-md">
                 <readonly-line
                   label=""
-                  caption="Justificacion del requerimiento solicitado *"
+                  caption="Justificacion del requerimiento solicitado"
+                  [required]="true"
                   value="Registro del asiento de ajuste para las cuentas contables"
                 />
 
@@ -397,7 +398,9 @@ export class ReadonlyCardComponent {
         <h3 class="text-sm font-bold uppercase text-text">{{ label }}</h3>
       }
       <div class="px-siaf-md py-siaf-xs">
-        <span class="text-xs font-medium text-text-muted">{{ caption }}</span>
+        <span class="text-xs font-medium text-text-muted">
+          {{ caption }}@if (required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
+        </span>
         <p class="mt-siaf-xxs text-sm text-text">{{ value }}</p>
       </div>
     </section>
@@ -410,6 +413,9 @@ export class ReadonlyLineComponent {
 
   @Input()
   caption = '';
+
+  @Input()
+  required = false;
 
   @Input()
   value = '';

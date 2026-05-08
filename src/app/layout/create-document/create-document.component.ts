@@ -81,7 +81,7 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
                     [class.text-[var(--sys-color-text-neutral-activated)]]="focusedField === field.placeholder"
                     [class.text-[var(--sys-color-text-neutral-low)]]="focusedField !== field.placeholder"
                   >
-                    {{ optionPlaceholder(field) }}
+                    {{ field.placeholder }}@if (field.required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
                   </span>
                 }
 
@@ -97,7 +97,7 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
                       (click)="toggleSelect(field)"
                     >
                       <span class="min-w-0 flex-1 truncate" [class.text-[var(--sys-color-text-neutral-low)]]="!field.value">
-                        {{ field.value || optionPlaceholder(field) }}
+                        {{ field.value || field.placeholder }}@if (!field.value && field.required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
                       </span>
                       <siaf-icon class="shrink-0 text-text transition" [class.rotate-180]="openedSelectField === field.placeholder" name="expand_more" [size]="24" />
                     </button>
@@ -120,7 +120,7 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
                       [ngClass]="fieldControlClass(field)"
                       type="search"
                       autocomplete="off"
-                      [placeholder]="isFieldFloating(field) ? '' : field.placeholder"
+                      [placeholder]="isFieldFloating(field) ? '' : optionPlaceholder(field)"
                       [value]="field.value || ''"
                       [disabled]="field.disabled"
                       (focus)="onSearchFocus(field)"
@@ -374,7 +374,7 @@ export class CreateDocumentComponent {
   }
 
   optionPlaceholder(field: CreateDocumentField): string {
-    return `${field.placeholder}${field.required ? '*' : ''}`;
+    return `${field.placeholder}${field.required ? ' *' : ''}`;
   }
 
   isFieldFloating(field: CreateDocumentField): boolean {

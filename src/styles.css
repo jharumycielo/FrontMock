@@ -119,6 +119,59 @@ textarea {
   font: inherit;
 }
 
+input[type="checkbox"] {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  border: 2px solid var(--sys-color-icon-states-enabled);
+  border-radius: 2px;
+  background-color: var(--sys-color-bg-surfaces-surface);
+  accent-color: var(--sys-color-icon-states-enabled);
+}
+
+input[type="checkbox"]::before {
+  content: "";
+  width: 0.625rem;
+  height: 0.625rem;
+  transform: scale(0);
+  background-color: var(--sys-color-text-brand-white);
+  clip-path: polygon(14% 44%, 0 58%, 38% 96%, 100% 25%, 86% 10%, 37% 68%);
+}
+
+input[type="checkbox"]:checked {
+  border-color: var(--sys-color-icon-states-active);
+  background-color: var(--sys-color-icon-states-active);
+}
+
+input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+input[type="checkbox"]:indeterminate {
+  border-color: var(--sys-color-icon-states-active);
+  background-color: var(--sys-color-icon-states-active);
+}
+
+input[type="checkbox"]:indeterminate::before {
+  width: 0.625rem;
+  height: 0.125rem;
+  transform: scale(1);
+  background-color: var(--sys-color-text-brand-white);
+  clip-path: none;
+}
+
+input[type="checkbox"]:disabled {
+  border-color: var(--sys-color-icon-states-disabled);
+  accent-color: var(--sys-color-icon-states-disabled);
+}
+
+input[type="checkbox"]:disabled:checked {
+  background-color: var(--sys-color-icon-states-disabled);
+}
+
 .material-icons {
   direction: ltr;
   display: inline-block;

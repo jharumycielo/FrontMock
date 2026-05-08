@@ -17,6 +17,7 @@ import { SnackbarComponent, SnackbarVariant } from '../../../../shared/ui/snackb
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { ReadonlyFieldComponent } from '../../../../shared/ui/readonly-field/readonly-field.component';
 import { TextAreaControlComponent } from '../../../../shared/ui/text-area-control/text-area-control.component';
+import { TextFieldComponent } from '../../../../shared/ui/text-field/text-field.component';
 import { UploadedFileCardComponent } from '../../../../shared/ui/uploaded-file-card/uploaded-file-card.component';
 import { UploadSidePanelComponent } from '../../../../shared/ui/upload-side-panel/upload-side-panel.component';
 import { ActionTrackerComponent, ActionTrackerSummary } from '../../../../shared/ui/action-tracker/action-tracker.component';
@@ -101,6 +102,7 @@ type PeriodoGroup = {
     UploadSidePanelComponent,
     ReadonlyFieldComponent,
     TextAreaControlComponent,
+    TextFieldComponent,
     ActionTrackerComponent
   ],
   template: `
@@ -226,9 +228,9 @@ type PeriodoGroup = {
               <section class="grid gap-siaf-md">
                 <h3 class="m-0 text-sm font-bold uppercase text-text">Fecha de contabilización</h3>
                 @if (isReadOnly) {
-                  <readonly-field caption="Fecha *" [value]="fechaContabilizacionDisplay" />
+                  <readonly-field caption="Fecha" [required]="true" [value]="fechaContabilizacionDisplay" />
                 } @else {
-                  <siaf-date-time-picker placeholder="Fecha*" variant="date" [value]="fechaContabilizacion()" (valueChange)="fechaContabilizacion.set($event)" />
+                  <siaf-date-time-picker placeholder="Fecha" [required]="true" variant="date" [value]="fechaContabilizacion()" (valueChange)="fechaContabilizacion.set($event)" />
                 }
               </section>
               <!-- Código de clase de ajuste -->
@@ -309,10 +311,10 @@ type PeriodoGroup = {
               @if (isReadOnly) {
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 text-sm font-bold uppercase text-text">Glosa</h3>
-                  <readonly-field caption="Glosa *" [value]="glosa()" />
+                  <readonly-field caption="Glosa" [required]="true" [value]="glosa()" />
                 </section>
               } @else {
-                <text-area-control title="Glosa" placeholder="Glosa*" [value]="glosa()" (valueChange)="glosa.set($event)" />
+                <text-area-control title="Glosa" placeholder="Glosa" [required]="true" [value]="glosa()" (valueChange)="glosa.set($event)" />
               }
 
               <details class="group overflow-hidden rounded-siaf-sm border border-[var(--sys-color-divider-strong)] bg-surface" open>
@@ -376,21 +378,13 @@ type PeriodoGroup = {
                                     <span class="text-sm text-text">{{ formatImporte(cuenta.importe) }}</span>
                                   } @else {
                                     <!-- Input importe con floating label y decimales -->
-                                    <div class="relative w-full">
-                                      <label class="absolute left-3 top-[-9px] z-[1] flex items-center gap-px bg-surface px-siaf-xxs">
-                                        <span class="text-xs font-medium leading-none text-text-muted">Importe</span>
-                                        <span class="text-xs font-bold leading-none text-[var(--sys-color-text-feedback-danger)] opacity-80">*</span>
-                                      </label>
-                                      <input
-                                        class="h-8 w-full rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md text-right text-sm text-text outline-none transition focus:border-2 focus:border-[rgba(1,72,153,0.8)]"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        [value]="cuenta.importe || ''"
-                                        placeholder="0,0"
-                                        (input)="onCuentasImporteChange(i, $event)"
-                                      />
-                                    </div>
+                                    <siaf-input
+                                      label="Importe"
+                                      type="number"
+                                      [required]="true"
+                                      [value]="cuenta.importe || ''"
+                                      (valueChange)="onCuentasImporteValueChange(i, $event)"
+                                    />
                                   }
                                 </td>
                               </tr>
@@ -430,9 +424,9 @@ type PeriodoGroup = {
 
             <div class="flex flex-col gap-siaf-lg px-siaf-lg py-siaf-md">
               @if (isReadOnly) {
-                <readonly-field caption="Justificación del requerimiento solicitado *" [value]="justificacion()" />
+                <readonly-field caption="Justificación del requerimiento solicitado" [required]="true" [value]="justificacion()" />
               } @else {
-                <text-area-control title="" placeholder="Justificación del requerimiento solicitado*" [value]="justificacion()" (valueChange)="justificacion.set($event)" />
+                <text-area-control title="" placeholder="Justificación del requerimiento solicitado" [required]="true" [value]="justificacion()" (valueChange)="justificacion.set($event)" />
               }
 
               <div class="flex flex-col gap-siaf-xs">
@@ -1206,6 +1200,12 @@ export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
 
   onCuentasImporteChange(index: number, event: Event): void {
     const val = parseFloat((event.target as HTMLInputElement).value) || 0;
+    this.cuentasContables = this.cuentasContables.map((c, i) => i === index ? { ...c, importe: val } : c);
+  }
+
+  onCuentasImporteValueChange(index: number, value: string | number | string[]): void {
+    const rawValue = Array.isArray(value) ? value[0] : value;
+    const val = parseFloat(String(rawValue)) || 0;
     this.cuentasContables = this.cuentasContables.map((c, i) => i === index ? { ...c, importe: val } : c);
   }
 
