@@ -161,11 +161,11 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                   <div class="flex flex-wrap items-center gap-siaf-md">
                     <h4 class="m-0 w-[280px] text-sm font-bold text-text">¿Es una cuenta imputable?</h4>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'si'" [disabled]="formDisabled" (change)="newAccountImputable.set('si')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'si'" [disabled]="formDisabled" (change)="setNewAccountImputable('si')" />
                       Si
                     </label>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'no'" [disabled]="formDisabled" (change)="newAccountImputable.set('no')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-imputable" [checked]="newAccountImputable() === 'no'" [disabled]="formDisabled" (change)="setNewAccountImputable('no')" />
                       No
                     </label>
                   </div>
@@ -192,7 +192,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                     ¿Aplica Extra Presupuestaria? (AEP)
                   </label>
                   <label class="inline-flex min-h-10 items-center gap-siaf-xs text-sm text-text">
-                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="reciprocalAccount()" [disabled]="formDisabled" (change)="reciprocalAccount.set(checkedValue($event))" />
+                    <input class="size-4 accent-brand-primary" type="checkbox" [checked]="reciprocalAccount()" [disabled]="formDisabled || newAccountImputable() === 'no'" (change)="reciprocalAccount.set(checkedValue($event))" />
                     ¿Es Recíproca ? (RECI)
                   </label>
                   <div class="grid gap-siaf-md md:grid-cols-2 xl:grid-cols-4">
@@ -208,11 +208,11 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                   <div class="flex flex-wrap items-center gap-siaf-md">
                     <h4 class="m-0 w-[280px] text-sm font-bold text-text">¿Tiene dinámica contable?</h4>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'si'" [disabled]="formDisabled" (change)="hasAccountingDynamics.set('si')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'si'" [disabled]="accountingDynamicsDisabled" (change)="setAccountingDynamics('si')" />
                       Si
                     </label>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'no'" [disabled]="formDisabled" (change)="hasAccountingDynamics.set('no')" />
+                      <input class="size-4 accent-brand-primary" type="radio" name="account-dynamics" [checked]="hasAccountingDynamics() === 'no'" [disabled]="accountingDynamicsDisabled" (change)="setAccountingDynamics('no')" />
                       No
                     </label>
                   </div>
@@ -631,13 +631,16 @@ export class ChartAccountsRequestComponent {
 
   readonly natureOptions: TextFieldOption[] = [
     { label: 'Debe', value: 'debe' },
-    { label: 'Haber', value: 'haber' }
+    { label: 'Haber', value: 'haber' },
+    { label: 'Ambos', value: 'ambos' },
   ];
 
   readonly elementTypeOptions: TextFieldOption[] = [
     { label: 'Activo', value: 'activo' },
     { label: 'Pasivo', value: 'pasivo' },
-    { label: 'Patrimonio', value: 'patrimonio' }
+    { label: 'Patrimonio', value: 'patrimonio' },
+    { label: 'Gasto', value: 'gasto' },
+    { label: 'Ingreso', value: 'ingreso' },
   ];
 
   readonly yesNoOptions: TextFieldOption[] = [
@@ -661,13 +664,13 @@ export class ChartAccountsRequestComponent {
   ];
 
   readonly activeOptions: TextFieldOption[] = [
-    { label: 'Corriente', value: 'corriente' },
-    { label: 'No corriente', value: 'no-corriente' }
+    { label: 'Si', value: 'si' },
+    { label: 'No', value: 'no' }
   ];
 
   readonly passiveOptions: TextFieldOption[] = [
-    { label: 'Corriente', value: 'corriente' },
-    { label: 'No corriente', value: 'no-corriente' }
+    { label: 'Si', value: 'si' },
+    { label: 'No', value: 'no' }
   ];
 
   readonly breadcrumbs: BreadcrumbItem[] = [
@@ -728,6 +731,10 @@ export class ChartAccountsRequestComponent {
     this.accountingAccountFormOpen.set(false);
     this.newAccountCode.set('');
     this.newAccountCodeInUse.set(false);
+    this.newAccountImputable.set('');
+    this.hasAccountingDynamics.set('');
+    this.reciprocalAccount.set(false);
+    this.clearAccountingDynamicsDescriptions();
   }
 
   openTipoPlanPanel(): void {
@@ -757,12 +764,38 @@ export class ChartAccountsRequestComponent {
     return !this.selectedTipoPlan();
   }
 
+  get accountingDynamicsDisabled(): boolean {
+    return this.formDisabled || this.newAccountImputable() === 'no';
+  }
+
   get previousAccountName(): string {
     return this.previousAccountNames[this.previousAccountCode()] ?? '';
   }
 
   onPreviousAccountSelected(value: string | number | string[]): void {
     this.previousAccountCode.set(this.textFieldValue(value));
+  }
+
+  setNewAccountImputable(value: 'si' | 'no'): void {
+    this.newAccountImputable.set(value);
+
+    if (value === 'no') {
+      this.hasAccountingDynamics.set('no');
+      this.reciprocalAccount.set(false);
+      this.clearAccountingDynamicsDescriptions();
+    }
+  }
+
+  setAccountingDynamics(value: 'si' | 'no'): void {
+    if (this.accountingDynamicsDisabled) {
+      return;
+    }
+
+    this.hasAccountingDynamics.set(value);
+
+    if (value === 'no') {
+      this.clearAccountingDynamicsDescriptions();
+    }
   }
 
   openExternalEntityPanel(): void {
@@ -814,6 +847,13 @@ export class ChartAccountsRequestComponent {
   onExternalEntityRowsPerPageChange(value: number): void {
     this.externalEntityRowsPerPage = value;
     this.externalEntityPage = 1;
+  }
+
+  private clearAccountingDynamicsDescriptions(): void {
+    this.debitDescription.set('');
+    this.creditDescription.set('');
+    this.objectDescription.set('');
+    this.balanceDescription.set('');
   }
 
   onUploadConfirmed(file: File): void {
