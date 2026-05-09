@@ -116,7 +116,7 @@ type AppliedCustomFilter = {
                 <div class="flex flex-col gap-siaf-sm lg:flex-row lg:items-start">
                   <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-md">
                     <span class="sr-only">Buscar</span>
-                    <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted" placeholder="Buscar" />
+                    <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted" placeholder="Buscar" [value]="searchTerm" (input)="onSearchChange(inputValue($event))" />
                   </label>
 
                   <div class="flex shrink-0 items-center justify-end gap-siaf-xs">
@@ -243,6 +243,8 @@ type AppliedCustomFilter = {
                 [totalItems]="activeTab === 'documents' ? filteredRows.length : recordRows.length"
                 [totalPages]="totalPages"
                 (selectionChange)="toggleVisibleElaboradoDocuments($event)"
+                (previous)="onPreviousPage()"
+                (next)="onNextPage()"
               />
 
               <siaf-documents-records-table
@@ -264,9 +266,11 @@ type AppliedCustomFilter = {
                 [page]="page"
                 [pageSize]="rowsPerPage"
                 [totalItems]="activeTab === 'documents' ? filteredRows.length : recordRows.length"
-                [totalPages]="1"
+                [totalPages]="totalPages"
                 [rowsPerPage]="rowsPerPage"
                 [rowsPerPageOptions]="rowsPerPageOptions"
+                (previous)="onPreviousPage()"
+                (next)="onNextPage()"
                 (rowsPerPageChange)="onRowsPerPageChange($event)"
               />
             </article>
@@ -321,6 +325,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   selectedStatusFilter = '';
   actionTypeFilterMenuOpen = false;
   selectedActionTypeFilter = '';
+  searchTerm = '';
   appliedCustomFilters: AppliedCustomFilter[] = [];
   customFilterInitialRows: FilterRow[] = [];
   editingCustomFilterId = '';
@@ -367,15 +372,22 @@ export class DocumentsRecordsPageComponent implements OnChanges {
 
   get filteredRows(): DocumentsRecordsRow[] {
     return this.documentRows.filter((row) => {
+      const normalizedSearch = this.normalize(this.searchTerm);
+      const matchesSearch = !normalizedSearch || this.normalize(Object.values(row).join(' ')).includes(normalizedSearch);
       const matchesStatus = !this.selectedStatusFilter || row['status'] === this.selectedStatusFilter;
       const matchesActionType = !this.selectedActionTypeFilter || row['actionType'] === this.selectedActionTypeFilter;
       const matchesCustomFilters = this.appliedCustomFilters.every((filter) => this.matchesCustomFilter(row, filter));
-      return matchesStatus && matchesActionType && matchesCustomFilters;
+      return matchesSearch && matchesStatus && matchesActionType && matchesCustomFilters;
     });
   }
 
   get visibleRows(): DocumentsRecordsRow[] {
-    return this.activeTab === 'documents' ? this.filteredRows : this.recordRows;
+    if (this.activeTab === 'documents') {
+      return this.filteredRows;
+    }
+
+    const normalizedSearch = this.normalize(this.searchTerm);
+    return this.recordRows.filter((row) => !normalizedSearch || this.normalize(Object.values(row).join(' ')).includes(normalizedSearch));
   }
 
   get totalPages(): number {
@@ -475,6 +487,15 @@ export class DocumentsRecordsPageComponent implements OnChanges {
 
   private get selectedElaboradoDocuments(): DocumentsRecordsRow[] {
     return this.documentRows.filter((row) => row.selected && row['status'] === 'Elaborado');
+  }
+
+  inputValue(event: Event): string {
+    return (event.target as HTMLInputElement).value;
+  }
+
+  onSearchChange(value: string): void {
+    this.searchTerm = value;
+    this.page = 1;
   }
 
   selectTab(tab: DocumentsRecordsTab): void {
@@ -781,6 +802,14 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     this.page = 1;
   }
 
+  onPreviousPage(): void {
+    this.page = Math.max(1, this.page - 1);
+  }
+
+  onNextPage(): void {
+    this.page = Math.min(this.totalPages, this.page + 1);
+  }
+
   private closeToolbarMenus(except: 'status' | 'actionType' | 'favorite' | 'fields' | 'more' | '' = ''): void {
     this.createDocumentPopoverOpen = false;
     this.customFilterOpen = false;
@@ -813,8 +842,8 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   private matchesCustomFilter(row: DocumentsRecordsRow, filter: AppliedCustomFilter): boolean {
-    const rowValue = String(row[filter.campo] ?? '').toLocaleLowerCase();
-    const filterValue = filter.valor.toLocaleLowerCase();
+    const rowValue = this.normalize(String(row[filter.campo] ?? ''));
+    const filterValue = this.normalize(filter.valor);
 
     if (filter.condicion === 'neq') {
       return rowValue !== filterValue;
@@ -837,6 +866,10 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     }
 
     return rowValue === filterValue;
+  }
+
+  private normalize(value: string): string {
+    return value.toLocaleLowerCase();
   }
 
 }

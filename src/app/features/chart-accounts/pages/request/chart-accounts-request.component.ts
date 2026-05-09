@@ -5,8 +5,13 @@ import { BreadcrumbItem } from '../../../../shared/components/breadcrumb/breadcr
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { TableControlsComponent } from '../../../../shared/components/table-controls/table-controls.component';
 import { ButtonComponent } from '../../../../shared/ui/button/button.component';
+import { FlowStatus, FlowStatusTagComponent } from '../../../../shared/ui/flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../../../../shared/ui/icon/icon.component';
 import { findProcessPathById } from '../../../../layout/process-menu-tree/process-menu-tree.component';
+import { ModalComponent } from '../../../../shared/ui/modal/modal.component';
+import { SnackbarComponent, SnackbarVariant } from '../../../../shared/ui/snackbar/snackbar.component';
+import { SolicitudeHeaderState } from '../../../../shared/components/solicitude-header/solicitude-header.component';
+import { ReadonlyFieldComponent } from '../../../../shared/ui/readonly-field/readonly-field.component';
 import { SolicitudeFormCardComponent } from '../../../../shared/components/solicitude-form-card/solicitude-form-card.component';
 import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../../../shared/components/solicitude-info-card/solicitude-info-card.component';
 import { SolicitudePageLayoutComponent } from '../../../../shared/components/solicitude-page-layout/solicitude-page-layout.component';
@@ -108,12 +113,16 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
   imports: [
     AlertComponent,
     ButtonComponent,
+    FlowStatusTagComponent,
     IconComponent,
+    ModalComponent,
+    ReadonlyFieldComponent,
     PaginationComponent,
     TableControlsComponent,
     SolicitudeFormCardComponent,
     SolicitudeInfoCardComponent,
     SolicitudePageLayoutComponent,
+    SnackbarComponent,
     TextAreaControlComponent,
     TextFieldComponent,
     UploadedFileCardComponent,
@@ -124,24 +133,47 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
         <siaf-solicitude-page-layout
           [breadcrumbs]="breadcrumbs"
           role="creator"
-          state="new"
+          [state]="solicitudeHeaderState"
           heading="Solicitud de Cuentas Contables"
           secondaryText="Creación"
           [showReturn]="true"
-          [saveDisabled]="true"
-          [verifyDisabled]="true"
+          [saveDisabled]="!chartAccountsRequestValid"
+          [verifyDisabled]="!isReadOnly"
           (returned)="goToDocuments()"
           (canceled)="goToDocuments()"
+          (saved)="openSaveModal()"
+          (edited)="enableEditing()"
+          (verified)="openVerifyModal()"
         >
-          <siaf-solicitude-info-card [fields]="entityFields" [liveDate]="true" />
+          @if (isElaborated) {
+            <section class="grid gap-siaf-md xl:grid-cols-[1fr_360px]">
+              <siaf-solicitude-info-card [fields]="entityFields" [liveDate]="true" />
+              <article class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
+                <div class="grid gap-siaf-xs">
+                  <div class="grid min-h-6 gap-siaf-xs sm:grid-cols-[140px_1fr]">
+                    <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">N° documento</span>
+                    <strong class="min-w-0 text-sm font-bold leading-6 text-text">{{ generatedDocumentNumber }}</strong>
+                  </div>
+                  <div class="grid min-h-6 gap-siaf-xs sm:grid-cols-[140px_1fr]">
+                    <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Estado</span>
+                    <siaf-flow-status-tag [status]="documentStatus" size="standard" />
+                  </div>
+                </div>
+              </article>
+            </section>
+          } @else {
+            <siaf-solicitude-info-card [fields]="entityFields" [liveDate]="true" />
+          }
 
           @if (accountingAccountFormOpen()) {
             <section class="rounded-siaf-md bg-surface">
               <header class="flex min-h-14 flex-col gap-siaf-sm px-siaf-lg pt-siaf-md sm:flex-row sm:items-center sm:justify-between">
-                <h2 class="m-0 text-base font-bold uppercase leading-10 tracking-[0.02px] text-text">Crear cuenta contable</h2>
+                <h2 class="m-0 text-base font-bold uppercase leading-10 tracking-[0.02px] text-text">{{ isReadOnly ? 'Detalle de cuenta contable' : 'Crear cuenta contable' }}</h2>
                 <div class="flex shrink-0 items-center gap-siaf-xs">
-                  <siaf-button variant="secondary" size="md" (click)="cancelAccountingAccountForm()">Cancelar</siaf-button>
-                  <siaf-button variant="primary" size="md" [disabled]="!accountingAccountFormValid()" (click)="acceptAccountingAccountForm()">Aceptar</siaf-button>
+                  <siaf-button variant="secondary" size="md" (click)="cancelAccountingAccountForm()">{{ isReadOnly ? 'Volver' : 'Cancelar' }}</siaf-button>
+                  @if (!isReadOnly) {
+                    <siaf-button variant="primary" size="md" [disabled]="!accountingAccountFormValid()" (click)="acceptAccountingAccountForm()">Aceptar</siaf-button>
+                  }
                 </div>
               </header>
 
@@ -149,15 +181,19 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                 <section class="grid gap-siaf-md">
                   <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                     <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar tipo plan de cuentas contable</h3>
-                    <siaf-button variant="accent" size="md" icon="search" [iconOnly]="true" ariaLabel="Buscar tipo plan de cuentas contable" (click)="openTipoPlanPanel()" />
+                    @if (!isReadOnly) {
+                      <siaf-button variant="accent" size="md" icon="search" [iconOnly]="true" ariaLabel="Buscar tipo plan de cuentas contable" (click)="openTipoPlanPanel()" />
+                    }
                   </div>
                   @if (selectedTipoPlan()) {
                     <div class="relative flex min-h-[49px] items-center rounded-siaf-md border border-border px-siaf-xl py-siaf-xs">
                       <span class="absolute left-[-1px] top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-siaf-sm bg-brand-primary"></span>
                       <span class="flex-1 text-sm font-bold text-text">{{ selectedTipoPlan()!.nombre }}</span>
-                      <button class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Quitar plan contable" (click)="selectedTipoPlan.set(null)">
-                        <siaf-icon name="close" [size]="20" />
-                      </button>
+                      @if (!isReadOnly) {
+                        <button class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Quitar plan contable" (click)="selectedTipoPlan.set(null)">
+                          <siaf-icon name="close" [size]="20" />
+                        </button>
+                      }
                     </div>
                   } @else {
                     <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
@@ -196,6 +232,13 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Nueva cuenta contable</h3>
+                  @if (isReadOnly) {
+                    <div class="grid gap-siaf-md lg:grid-cols-[320px_minmax(0,1fr)]">
+                      <readonly-field caption="Codigo de la nueva cuenta" [required]="true" [value]="newAccountCode()" />
+                      <readonly-field caption="Nombre de la cuenta contable" [required]="true" [value]="newAccountName()" />
+                    </div>
+                    <readonly-field caption="Es una cuenta imputable" [value]="yesNoLabel(newAccountImputable())" />
+                  } @else {
                   <div class="grid gap-siaf-md lg:grid-cols-[320px_minmax(0,1fr)]">
                     <siaf-input
                       label="Código de la nueva cuenta"
@@ -219,18 +262,42 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                       No
                     </label>
                   </div>
+                  }
                 </section>
 
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Asociar código de cuenta contable anterior</h3>
+                  @if (isReadOnly) {
+                    <div class="grid gap-siaf-md md:grid-cols-2">
+                      <readonly-field caption="Codigo de la cuenta contable" [value]="optionLabel(previousAccountOptions, previousAccountCode())" />
+                      <readonly-field caption="Nombre de la cuenta contable seleccionada" [value]="previousAccountName" />
+                    </div>
+                  } @else {
                   <div class="grid gap-siaf-md md:grid-cols-2">
                     <siaf-input label="Código de la cuenta contable" type="select" leadingIcon="search" [options]="previousAccountOptions" [value]="previousAccountCode()" [disabled]="formDisabled" [clearable]="true" (valueChange)="onPreviousAccountSelected($event)" />
                     <siaf-input label="Nombre de la cuenta contable seleccionada" [value]="previousAccountName" [disabled]="true" />
                   </div>
+                  }
                 </section>
 
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Atributos de la cuenta contable</h3>
+                  @if (isReadOnly) {
+                    <div class="grid gap-siaf-md lg:grid-cols-3">
+                      <readonly-field caption="Naturaleza" [required]="true" [value]="optionLabel(natureOptions, accountNature())" />
+                      <readonly-field caption="Tipo de elemento" [required]="true" [value]="optionLabel(elementTypeOptions, elementType())" />
+                      <readonly-field caption="Es monetaria" [required]="true" [value]="optionLabel(yesNoOptions, monetaryAccount())" />
+                    </div>
+                    <readonly-field caption="Ambito institucional de aplicacion" [required]="true" [value]="optionLabels(institutionalScopeOptions, institutionalScope())" />
+                    <readonly-field caption="Aplica Extra Presupuestaria (AEP)" [value]="appliesExtraBudgetary() ? 'Si' : 'No'" />
+                    <readonly-field caption="Es Reciproca (RECI)" [value]="reciprocalAccount() ? 'Si' : 'No'" />
+                    <div class="grid gap-siaf-md md:grid-cols-2 xl:grid-cols-4">
+                      <readonly-field caption="AC Activo" [value]="optionLabel(activeOptions, activeCurrent())" />
+                      <readonly-field caption="PC Pasivo" [value]="optionLabel(passiveOptions, passiveCurrent())" />
+                      <readonly-field caption="ANC Activo" [value]="optionLabel(activeOptions, activeNonCurrent())" />
+                      <readonly-field caption="PNC Pasivo" [value]="optionLabel(passiveOptions, passiveNonCurrent())" />
+                    </div>
+                  } @else {
                   <div class="grid gap-siaf-md lg:grid-cols-3">
                     <siaf-input label="Naturaleza" type="select" [required]="true" [options]="natureOptions" [value]="accountNature()" [disabled]="formDisabled" (valueChange)="accountNature.set(textFieldValue($event))" />
                     <siaf-input label="Tipo de elemento" type="select" [required]="true" [options]="elementTypeOptions" [value]="elementType()" [disabled]="formDisabled" (valueChange)="elementType.set(textFieldValue($event))" />
@@ -251,10 +318,14 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                     <siaf-input label="ANC Activo" type="select" [options]="activeOptions" [value]="activeNonCurrent()" [disabled]="formDisabled" [clearable]="true" (valueChange)="activeNonCurrent.set(textFieldValue($event))" />
                     <siaf-input label="PNC Pasivo" type="select" [options]="passiveOptions" [value]="passiveNonCurrent()" [disabled]="formDisabled" [clearable]="true" (valueChange)="passiveNonCurrent.set(textFieldValue($event))" />
                   </div>
+                  }
                 </section>
 
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Dinámica contable</h3>
+                  @if (isReadOnly) {
+                    <readonly-field caption="Tiene dinamica contable" [value]="yesNoLabel(hasAccountingDynamics())" />
+                  } @else {
                   <div class="flex flex-wrap items-center gap-siaf-md">
                     <h4 class="m-0 w-[280px] text-sm font-bold text-text">¿Tiene dinámica contable?</h4>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
@@ -266,6 +337,15 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                       No
                     </label>
                   </div>
+                  }
+                  @if (isReadOnly) {
+                    <div class="grid gap-siaf-md md:grid-cols-2">
+                      <readonly-field caption="Se debita por" [value]="debitDescription()" />
+                      <readonly-field caption="Se acredita por" [value]="creditDescription()" />
+                      <readonly-field caption="Objeto" [value]="objectDescription()" />
+                      <readonly-field caption="Saldos" [value]="balanceDescription()" />
+                    </div>
+                  } @else {
                   <div class="grid gap-siaf-md md:grid-cols-2">
                     <text-area-control
                       placeholder="Se debita por"
@@ -296,6 +376,10 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                       (valueChange)="balanceDescription.set($event)"
                     />
                   </div>
+                  }
+                  @if (isReadOnly) {
+                    <readonly-field caption="Cuenta contable para una entidad del estado" [value]="yesNoLabel(accountForStateEntity())" />
+                  } @else {
                   <div class="flex flex-wrap items-center gap-siaf-md">
                     <h4 class="m-0 text-sm font-bold text-text">¿Cuenta contable para una entidad del estado?</h4>
                     <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
@@ -307,8 +391,10 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                       No
                     </label>
                   </div>
+                  }
                   <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                     <h3 class="m-0 text-sm font-bold uppercase text-text">Entidades del estado</h3>
+                    @if (!isReadOnly) {
                     <siaf-button
                       [variant]="accountForStateEntity() === 'si' ? 'accent' : 'secondary'"
                       size="md"
@@ -317,6 +403,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                       ariaLabel="Agregar entidades del estado"
                       [disabled]="formDisabled || accountForStateEntity() !== 'si'"
                     />
+                    }
                   </div>
                   <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
                     <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">Por favor, haga clic en el botón para agregar una o varias entidades del estado.</p>
@@ -325,6 +412,14 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 
                 <section class="grid gap-siaf-md">
                   <h3 class="m-0 min-h-10 text-sm font-bold uppercase leading-10 text-text">Vigencia y visible</h3>
+                  @if (isReadOnly) {
+                    <div class="grid gap-siaf-md lg:grid-cols-3">
+                      <readonly-field caption="Esta vigente" [value]="yesNoLabel(accountCurrent())" />
+                      <readonly-field caption="Fecha inicio desde" [value]="validFrom()" />
+                      <readonly-field caption="Fecha fin hasta" [value]="validUntil()" />
+                    </div>
+                    <readonly-field caption="Esta visible" [value]="accountVisible() ? 'Si' : 'No'" />
+                  } @else {
                   <div class="grid gap-siaf-md lg:grid-cols-[280px_minmax(0,1fr)_minmax(0,1fr)]">
                     <div class="flex flex-wrap items-center gap-siaf-xs">
                       <h4 class="m-0 text-sm font-bold text-text">¿Está vigente?</h4>
@@ -344,41 +439,50 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                     <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" [checked]="accountVisible()" [disabled]="true" />
                     ¿Está visible?
                   </label>
+                  }
                 </section>
               </div>
             </section>
           } @else {
           <siaf-solicitude-form-card title="Lista de cuentas contables">
             <ng-container card-actions>
-              <siaf-button variant="accent" size="md" icon="add" [iconOnly]="true" ariaLabel="Crear registro de cuenta contable" (click)="openAccountingAccountForm()" />
+              @if (!isReadOnly) {
+                <siaf-button variant="accent" size="md" icon="add" [iconOnly]="true" ariaLabel="Crear registro de cuenta contable" (click)="openAccountingAccountForm()" />
+              }
             </ng-container>
             @if (createdAccountingAccounts().length > 0) {
-              <siaf-table-controls
-                selectAllLabel="Seleccionar cuentas contables"
-                editLabel="Editar cuenta contable seleccionada"
-                deleteLabel="Eliminar cuentas contables seleccionadas"
-                [checked]="allCreatedAccountsSelected()"
-                [indeterminate]="someCreatedAccountsSelected()"
-                [selectedCount]="selectedCreatedAccountCodes().length"
-                [showEditAction]="true"
-                [showDeleteAction]="true"
-                [showMenuAction]="true"
-                [editDisabled]="selectedCreatedAccountCodes().length !== 1"
-                [page]="createdAccountsPage()"
-                [pageSize]="createdAccountsRowsPerPage()"
-                [totalItems]="createdAccountingAccounts().length"
-                [totalPages]="createdAccountsTotalPages()"
-                (selectionChange)="toggleAllCreatedAccounts($event)"
-                (edit)="editSelectedCreatedAccount()"
-                (delete)="deleteSelectedCreatedAccounts()"
-                (previous)="onCreatedAccountsPreviousPage()"
-                (next)="onCreatedAccountsNextPage()"
-              />
+              @if (!isReadOnly) {
+                <siaf-table-controls
+                  selectAllLabel="Seleccionar cuentas contables"
+                  editLabel="Editar cuenta contable seleccionada"
+                  deleteLabel="Eliminar cuentas contables seleccionadas"
+                  [checked]="allCreatedAccountsSelected()"
+                  [indeterminate]="someCreatedAccountsSelected()"
+                  [selectedCount]="selectedCreatedAccountCodes().length"
+                  [showEditAction]="true"
+                  [showDeleteAction]="true"
+                  [showMenuAction]="true"
+                  [editDisabled]="selectedCreatedAccountCodes().length !== 1"
+                  [page]="createdAccountsPage()"
+                  [pageSize]="createdAccountsRowsPerPage()"
+                  [totalItems]="createdAccountingAccounts().length"
+                  [totalPages]="createdAccountsTotalPages()"
+                  (selectionChange)="toggleAllCreatedAccounts($event)"
+                  (edit)="editSelectedCreatedAccount()"
+                  (delete)="deleteSelectedCreatedAccounts()"
+                  (previous)="onCreatedAccountsPreviousPage()"
+                  (next)="onCreatedAccountsNextPage()"
+                />
+              } @else {
+                <siaf-pagination navigation="Activate" position="Top" [page]="createdAccountsPage()" [pageSize]="createdAccountsRowsPerPage()" [totalItems]="createdAccountingAccounts().length" [totalPages]="createdAccountsTotalPages()" (previous)="onCreatedAccountsPreviousPage()" (next)="onCreatedAccountsNextPage()" />
+              }
               <div class="min-w-0 overflow-x-auto">
                 <table class="w-full min-w-[1880px] border-collapse text-left text-sm">
                   <thead>
                     <tr class="h-10 bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
-                      <th class="w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
+                      @if (!isReadOnly) {
+                        <th class="w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
+                      }
                       <th class="w-[110px] px-siaf-md py-siaf-sm">Elemento</th>
                       <th class="w-[110px] px-siaf-md py-siaf-sm">Grupo</th>
                       <th class="w-[110px] px-siaf-md py-siaf-sm">Cuenta</th>
@@ -396,10 +500,12 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                   </thead>
                   <tbody>
                     @for (account of pagedCreatedAccountingAccounts(); track account.code) {
-                      <tr class="h-12 border-b border-[var(--sys-color-divider-default)] bg-surface text-[var(--sys-color-text-neutral-medium)]">
-                        <td class="px-siaf-sm py-siaf-sm">
-                          <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" [checked]="isCreatedAccountSelected(account.code)" [attr.aria-label]="'Seleccionar ' + account.name" (change)="toggleCreatedAccount(account.code, checkedValue($event))" />
-                        </td>
+                      <tr class="h-12 border-b border-[var(--sys-color-divider-default)] bg-surface text-[var(--sys-color-text-neutral-medium)]" [class.cursor-pointer]="isReadOnly" [class.hover:bg-[rgba(1,72,153,0.04)]]="isReadOnly" (click)="openCreatedAccountReadonly(account)">
+                        @if (!isReadOnly) {
+                          <td class="px-siaf-sm py-siaf-sm">
+                            <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" [checked]="isCreatedAccountSelected(account.code)" [attr.aria-label]="'Seleccionar ' + account.name" (click)="$event.stopPropagation()" (change)="toggleCreatedAccount(account.code, checkedValue($event))" />
+                          </td>
+                        }
                         <td class="px-siaf-md py-siaf-sm">{{ account.element }}</td>
                         <td class="px-siaf-md py-siaf-sm">{{ account.group }}</td>
                         <td class="px-siaf-md py-siaf-sm">{{ account.account }}</td>
@@ -428,18 +534,23 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 
           <siaf-solicitude-form-card title="Solicitud proveniente de entidad externa">
             <section class="grid gap-siaf-md">
+              @if (isReadOnly) {
+                <readonly-field caption="La solicitud proviene de una entidad externa" [value]="yesNoLabel(externalOrigin())" />
+              } @else {
               <div class="flex flex-wrap items-center gap-siaf-md">
                 <h3 class="m-0 text-sm font-bold text-text">¿La solicitud proviene de una entidad externa?</h3>
                 <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                  <input class="size-4 accent-brand-primary" type="radio" name="external-origin" [checked]="externalOrigin() === 'si'" (change)="externalOrigin.set('si')" />
+                  <input class="size-4 accent-brand-primary" type="radio" name="external-origin" [checked]="externalOrigin() === 'si'" [disabled]="isReadOnly" (change)="externalOrigin.set('si')" />
                   Si
                 </label>
                 <label class="inline-flex h-10 items-center gap-siaf-xs text-sm text-text">
-                  <input class="size-4 accent-brand-primary" type="radio" name="external-origin" [checked]="externalOrigin() === 'no'" (change)="externalOrigin.set('no')" />
+                  <input class="size-4 accent-brand-primary" type="radio" name="external-origin" [checked]="externalOrigin() === 'no'" [disabled]="isReadOnly" (change)="externalOrigin.set('no')" />
                   No
                 </label>
               </div>
+              }
 
+              @if (!isReadOnly) {
               <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                 <h3 class="m-0 text-sm font-bold uppercase text-text">Buscar nombre de la entidad proveniente</h3>
                 <siaf-button
@@ -448,10 +559,11 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                   icon="search"
                   [iconOnly]="true"
                   ariaLabel="Buscar nombre de la entidad proveniente"
-                  [disabled]="externalOrigin() !== 'si'"
+                  [disabled]="isReadOnly || externalOrigin() !== 'si'"
                   (click)="openExternalEntityPanel()"
                 />
               </div>
+              }
 
               @if (acceptedExternalEntity()) {
                 <div class="relative flex items-center gap-siaf-md rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface p-siaf-md">
@@ -466,9 +578,11 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                       <span class="truncate text-sm font-bold leading-6 tracking-[-0.02px] text-[var(--sys-color-text-neutral-medium)]">{{ acceptedExternalEntity()!.name }}</span>
                     </div>
                   </div>
-                  <button class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-text transition hover:bg-surface-muted" type="button" aria-label="Quitar entidad proveniente" (click)="clearExternalEntitySelection()">
-                    <siaf-icon name="close" [size]="24" />
-                  </button>
+                  @if (!isReadOnly) {
+                    <button class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-text transition hover:bg-surface-muted" type="button" aria-label="Quitar entidad proveniente" (click)="clearExternalEntitySelection()">
+                      <siaf-icon name="close" [size]="24" />
+                    </button>
+                  }
                 </div>
               } @else {
               <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
@@ -479,22 +593,29 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
           </siaf-solicitude-form-card>
 
           <siaf-solicitude-form-card title="Justificación del sustento">
+              @if (isReadOnly) {
+                <readonly-field caption="Justificacion del requerimiento solicitado" [required]="true" [value]="justification()" />
+              } @else {
               <text-area-control
                 placeholder="Justificación del requerimiento solicitado"
                 [required]="true"
                 [maxlength]="500"
                 [value]="justification()"
+                [disabled]="isReadOnly"
                 (valueChange)="justification.set($event)"
               />
+              }
 
               <div class="flex flex-col gap-siaf-xs">
                 <div class="flex min-h-10 items-center justify-between gap-siaf-md">
                   <h3 class="m-0 text-sm font-bold uppercase text-text">Documento de sustento</h3>
-                  <siaf-button variant="accent" size="md" icon="file_upload" [iconOnly]="true" ariaLabel="Subir documento de sustento" (click)="uploadPanelOpen.set(true)" />
+                  @if (!isReadOnly) {
+                    <siaf-button variant="accent" size="md" icon="file_upload" [iconOnly]="true" ariaLabel="Subir documento de sustento" [disabled]="isReadOnly" (click)="uploadPanelOpen.set(true)" />
+                  }
                 </div>
 
                 @if (uploadedFile()) {
-                  <siaf-uploaded-file-card [file]="uploadedFile()" (replace)="uploadPanelOpen.set(true)" (removed)="uploadedFile.set(null)" />
+                  <siaf-uploaded-file-card [file]="uploadedFile()" [readonly]="isReadOnly" (replace)="uploadPanelOpen.set(true)" (removed)="uploadedFile.set(null)" />
                 } @else {
                   <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
                     <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">No se han adjuntado archivos. Por favor, haga clic en el botón para subir un archivo.</p>
@@ -658,6 +779,38 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
           </aside>
         </section>
       }
+      <siaf-modal
+        variant="save"
+        [open]="saveModalOpen"
+        confirmVariant="primary"
+        confirmLabel="Aceptar"
+        cancelLabel="Cancelar"
+        [showIllustration]="true"
+        (canceled)="saveModalOpen = false"
+        (closed)="saveModalOpen = false"
+        (confirmed)="onConfirmSave()"
+      />
+
+      <siaf-modal
+        variant="verify"
+        [open]="verifyModalOpen"
+        confirmVariant="primary"
+        confirmLabel="Aceptar"
+        cancelLabel="Cancelar"
+        [showIllustration]="true"
+        (canceled)="verifyModalOpen = false"
+        (closed)="verifyModalOpen = false"
+        (confirmed)="onConfirmVerify()"
+      />
+
+      <div class="fixed bottom-siaf-lg left-1/2 z-50 w-[min(430px,calc(100vw-32px))] -translate-x-1/2">
+        <siaf-snackbar
+          [variant]="snackbarVariant"
+          [open]="saveSnackbarOpen"
+          [requestNumber]="generatedDocumentNumber"
+          (closed)="saveSnackbarOpen = false"
+        />
+      </div>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -669,6 +822,14 @@ export class ChartAccountsRequestComponent {
   private readonly EXISTING_ACCOUNT_CODES = new Set(['1.1.01', '1.1.02', '1.1.03', '1.2.01', '2.1.01']);
 
   readonly externalOrigin = signal<'si' | 'no' | ''>('');
+  isReadOnly = false;
+  isElaborated = false;
+  isVerified = false;
+  saveModalOpen = false;
+  verifyModalOpen = false;
+  saveSnackbarOpen = false;
+  snackbarVariant: SnackbarVariant = 'creation-elaborated';
+  readonly generatedDocumentNumber = '0001';
   readonly tipoPlanPanelOpen = signal(false);
   readonly selectedTipoPlan = signal<TipoPlanContable | null>(null);
   readonly tempSelectedTipoPlan = signal<TipoPlanContable | null>(null);
@@ -881,8 +1042,75 @@ export class ChartAccountsRequestComponent {
     return `${entity.code} - ${entity.name}`;
   }
 
+  get chartAccountsRequestValid(): boolean {
+    return !!(
+      !this.isReadOnly &&
+      this.createdAccountingAccounts().length > 0 &&
+      this.justification().trim().length > 0 &&
+      this.uploadedFile() &&
+      this.externalOrigin() &&
+      (this.externalOrigin() === 'no' || this.acceptedExternalEntity())
+    );
+  }
+
+  get solicitudeHeaderState(): SolicitudeHeaderState {
+    if (this.isVerified) {
+      return 'verified';
+    }
+
+    if (this.isReadOnly) {
+      return 'elaborated';
+    }
+
+    return this.isElaborated ? 'edit' : 'new';
+  }
+
+  get documentStatus(): FlowStatus {
+    return this.isVerified ? 'Verificado' : 'Elaborado';
+  }
+
   goToDocuments(): void {
     void this.router.navigate([CHART_ACCOUNTS_PROCESS_ROUTE]);
+  }
+
+  openSaveModal(): void {
+    if (!this.chartAccountsRequestValid) {
+      return;
+    }
+
+    this.saveModalOpen = true;
+  }
+
+  onConfirmSave(): void {
+    this.saveModalOpen = false;
+    this.isElaborated = true;
+    this.isVerified = false;
+    this.isReadOnly = true;
+    this.snackbarVariant = 'creation-elaborated';
+    this.saveSnackbarOpen = true;
+  }
+
+  openVerifyModal(): void {
+    if (!this.isReadOnly) {
+      return;
+    }
+
+    this.verifyModalOpen = true;
+  }
+
+  onConfirmVerify(): void {
+    this.verifyModalOpen = false;
+    this.isElaborated = true;
+    this.isVerified = true;
+    this.isReadOnly = true;
+    this.snackbarVariant = 'creation-verified';
+    this.saveSnackbarOpen = true;
+  }
+
+  enableEditing(): void {
+    this.isReadOnly = false;
+    this.isVerified = false;
+    this.saveSnackbarOpen = false;
   }
 
   closeFloatingPanels(): void {
@@ -911,6 +1139,10 @@ export class ChartAccountsRequestComponent {
   }
 
   openAccountingAccountForm(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     this.editingCreatedAccountCode.set('');
     this.accountingAccountFormOpen.set(true);
   }
@@ -966,7 +1198,7 @@ export class ChartAccountsRequestComponent {
   }
 
   get formDisabled(): boolean {
-    return !this.selectedTipoPlan();
+    return this.isReadOnly || !this.selectedTipoPlan();
   }
 
   get accountingDynamicsDisabled(): boolean {
@@ -1029,6 +1261,10 @@ export class ChartAccountsRequestComponent {
   }
 
   toggleCreatedAccount(code: string, selected: boolean): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     this.selectedCreatedAccountCodes.update((codes) => {
       if (selected) {
         return codes.includes(code) ? codes : [...codes, code];
@@ -1039,6 +1275,10 @@ export class ChartAccountsRequestComponent {
   }
 
   toggleAllCreatedAccounts(selected: boolean): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     const pageCodes = this.pagedCreatedAccountingAccounts().map((account) => account.code);
     this.selectedCreatedAccountCodes.update((codes) => {
       if (selected) {
@@ -1050,6 +1290,10 @@ export class ChartAccountsRequestComponent {
   }
 
   deleteSelectedCreatedAccounts(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     const selectedCodes = new Set(this.selectedCreatedAccountCodes());
     this.createdAccountingAccounts.update((accounts) => accounts.filter((account) => !selectedCodes.has(account.code)));
     this.selectedCreatedAccountCodes.set([]);
@@ -1057,6 +1301,10 @@ export class ChartAccountsRequestComponent {
   }
 
   editSelectedCreatedAccount(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     const selectedCode = this.selectedCreatedAccountCodes()[0];
     const account = this.createdAccountingAccounts().find((item) => item.code === selectedCode);
 
@@ -1066,6 +1314,17 @@ export class ChartAccountsRequestComponent {
 
     this.applyCreatedAccountForm(account.form);
     this.editingCreatedAccountCode.set(account.code);
+    this.selectedCreatedAccountCodes.set([]);
+    this.accountingAccountFormOpen.set(true);
+  }
+
+  openCreatedAccountReadonly(account: CreatedAccountingAccount): void {
+    if (!this.isReadOnly) {
+      return;
+    }
+
+    this.applyCreatedAccountForm(account.form);
+    this.editingCreatedAccountCode.set('');
     this.selectedCreatedAccountCodes.set([]);
     this.accountingAccountFormOpen.set(true);
   }
@@ -1179,11 +1438,25 @@ export class ChartAccountsRequestComponent {
     return labels.join(', ') || '--';
   }
 
-  private yesNoLabel(value: 'si' | 'no' | ''): string {
-    return value === 'si' ? 'Si' : 'No';
+  yesNoLabel(value: 'si' | 'no' | ''): string {
+    return value === 'si' ? 'Si' : value === 'no' ? 'No' : '--';
+  }
+
+  optionLabel(options: TextFieldOption[], value: string): string {
+    if (!value) return '--';
+    return options.find((option) => option.value === value)?.label ?? value;
+  }
+
+  optionLabels(options: TextFieldOption[], values: string[]): string {
+    if (!values.length) return '--';
+    return values.map((value) => this.optionLabel(options, value)).join(', ');
   }
 
   openExternalEntityPanel(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     if (this.externalOrigin() !== 'si') {
       return;
     }
@@ -1209,6 +1482,10 @@ export class ChartAccountsRequestComponent {
   }
 
   clearExternalEntitySelection(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
     this.acceptedExternalEntity.set(null);
     this.selectedExternalEntityCode.set('');
   }
@@ -1242,6 +1519,11 @@ export class ChartAccountsRequestComponent {
   }
 
   onUploadConfirmed(file: File): void {
+    if (this.isReadOnly) {
+      this.uploadPanelOpen.set(false);
+      return;
+    }
+
     this.uploadedFile.set(file);
     this.uploadPanelOpen.set(false);
   }

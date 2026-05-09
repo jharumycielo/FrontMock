@@ -1,6 +1,6 @@
-# Plantilla de prompts para armar pantallas SIAF
+# Plantilla de prompts para pantallas SIAF
 
-Esta guia sirve para pedir nuevas pantallas o modificar flujos como piezas reutilizables. La idea es que el prompt indique rol, estado, estructura visual, formulario, acciones y comportamiento esperado.
+Esta guia sirve para pedir nuevas pantallas o modificar flujos como piezas reutilizables. El prompt debe indicar rol, estado, estructura visual, formulario, acciones, reglas de lectura y comportamiento esperado.
 
 ## Prompt base
 
@@ -8,11 +8,12 @@ Esta guia sirve para pedir nuevas pantallas o modificar flujos como piezas reuti
 ## Contexto
 
 Pantalla o flujo:
+Proceso:
+Documento:
+Ruta:
 Rol:
 Estado del documento:
 Estado del header:
-Proceso:
-Documento:
 Tipo de accion:
 Referencia Figma:
 
@@ -39,7 +40,7 @@ Ruta esperada:
 - Nivel 3:
 - Nivel final:
 
-En movil:
+En mobile:
 - Mostrar ultimo nivel:
 - El resto debe ir dentro de "...":
 
@@ -51,6 +52,16 @@ Estado visual:
 Campos bloqueados:
 Campos que se pueden editar:
 
+Reglas de solo lectura:
+- Inputs:
+- Selects:
+- Select multiple:
+- Radio buttons:
+- Checkboxes:
+- Textareas:
+- Botones que se ocultan:
+- Tablas que ocultan checkboxes/acciones:
+
 ## Formulario
 
 Secciones:
@@ -59,15 +70,21 @@ Secciones:
   - Obligatorios:
   - Validaciones:
   - Componentes esperados:
+  - Comportamiento en modo lectura:
 
 ## Tablas
 
 Tabla:
 Columnas:
 Acciones por fila:
+Acciones por seleccion:
 Estados posibles:
-Paginacion:
+Paginacion superior:
+Paginacion inferior:
 Filtros:
+Checkbox maestro:
+Regla de indeterminate:
+Regla de seleccion por estado:
 
 ## Modales
 
@@ -79,12 +96,12 @@ Botones:
 Accion al aceptar:
 Accion al cancelar:
 
-## Alert inline (validacion de campo)
+## Alert inline
 
 Cuando aparece:
-Estado idle (formulario activo, sin valor):
-Estado error (valor ya registrado o invalido):
-Estado success (valor disponible):
+Estado idle:
+Estado error:
+Estado success:
 Campo que dispara la validacion:
 
 ## Snackbar
@@ -115,630 +132,157 @@ Al cancelar:
 
 ## Roles recomendados
 
-Usar estos valores para que el codigo pueda mapear el header y las acciones:
-
 | Rol en prompt | Valor en codigo | Uso esperado |
 | --- | --- | --- |
-| Creador | `creator` | Crea, guarda, edita y envia/verifica segun el flujo. |
+| Creador | `creator` | Crea, guarda, edita y verifica segun el flujo. |
 | Revisor | `reviewer` | Revisa informacion y puede observar o derivar. |
-| Aprobador | `approver` | Aprueba, observa o rechaza una solicitud. |
+| Aprobador | `approver` | Aprueba, observa o rechaza. |
 
-## Reglas de arquitectura por rol
+## Estados del documento
 
-La estructura del codigo se organiza por proceso o dominio, no por rol. Los roles se aplican con permisos, guards y configuracion de componentes.
-
-Reglas:
-
-- Crear carpetas por proceso dentro de `features/`, por ejemplo `features/adjustment-seat/`.
-- Las paginas del proceso van en `features/[proceso]/pages/[nombre-pagina]/`.
-- No crear carpetas principales como `features/creator` o `features/approver`.
-- Usar `roleGuard` solo cuando una ruta completa sea exclusiva para uno o varios roles.
-- Usar `PermissionService` cuando una misma pantalla cambie botones, campos o acciones segun el rol.
-- Usar `siaf-solicitude-header` con `role` + `state` para variantes del encabezado.
-- Si la pantalla es casi igual entre roles, reutilizar la misma pagina y cambiar permisos/acciones.
-- Si la pantalla cambia mucho, crear componentes internos por caso dentro del mismo feature en `features/[proceso]/components/`.
-- Los features no se importan entre si. Si algo se necesita en dos features, sube a `shared/components/`.
-
-Base tecnica disponible:
-
-```ts
-import { roleGuard } from './core/auth';
-
-{
-  path: 'procesos/registro-asiento-ajuste/solicitud',
-  canActivate: [roleGuard],
-  data: {
-    roles: ['creator', 'approver'],
-    permissions: ['document.read']
-  },
-  loadComponent: () => import('./features/adjustment-seat/pages/request/adjustment-seat-request.component').then((m) => m.AdjustmentSeatRequestComponent)
-}
-```
-
-Para comportamiento dentro de una pantalla:
-
-```ts
-readonly role = this.permission.currentRole;
-
-canEdit = this.permission.can('document.edit');
-canApprove = this.permission.can('document.approve');
-```
-
-## Arquitectura de capas
-
-Al pedir un nuevo componente o pantalla, indicar en cual capa debe vivir:
-
-| Capa | Carpeta | Criterio |
+| Estado en prompt | Valor sugerido | Tono |
 | --- | --- | --- |
-| UI Kit puro | `shared/ui/` | 100% presentacional, sin HTTP ni logica de negocio SIAF. Reutilizable en cualquier sistema. |
-| Transversales de negocio | `shared/components/` | Tiene logica de negocio pero se usa en 2 o mas features distintas. |
-| Shell | `layout/` | Usado unicamente por `AppShellComponent`. Instancia unica. |
-| Especifico del proceso | `features/[proceso]/components/` | Exclusivo de un proceso. No se comparte. |
-| Pagina de proceso | `features/[proceso]/pages/[pagina]/` | Cada pantalla del proceso va aqui. |
-
-Importaciones entre capas:
-- `shared/ui/` nunca importa de `shared/components/` ni de `layout/`.
-- Los features no se importan entre si.
-- Importar siempre desde el `index.ts` de la capa correspondiente.
-
----
-
-## Permisos recomendados
-
-| Permiso | Uso |
-| --- | --- |
-| `document.create` | Crear solicitudes o documentos. |
-| `document.edit` | Editar documentos elaborados u observados. |
-| `document.delete` | Eliminar documentos. |
-| `document.verify` | Verificar documentos elaborados. |
-| `document.review` | Revisar documentos. |
-| `document.approve` | Aprobar documentos verificados. |
-| `document.observe` | Observar documentos. |
-| `document.reject` | Rechazar documentos. |
-| `document.annul` | Anular documentos. |
-| `document.read` | Visualizar documentos en modo lectura. |
-
-## Estados recomendados
-
-Usar estos valores cuando el prompt describa el estado del documento. Estos estados salen del componente `FlowTags` del UI Kit SIAF - RP.
-
-| Estado en prompt | Valor en codigo | Color / tono Figma | Uso esperado |
-| --- | --- | --- | --- |
-| Elaborado | `elaborated` | Default | Documento creado por el rol creador. |
-| Registrado | `registered` | Default | Documento registrado en el flujo. |
-| Verificado | `verified` | Info | Documento verificado y listo para el siguiente rol. |
-| Validado | `validated` | Info | Documento validado por una etapa intermedia. |
-| Revisado | `reviewed` | Info | Documento revisado por un rol de control. |
-| Generado | `generated` | Info | Documento generado por el sistema o por un proceso. |
-| En proceso | `in_process` | Info | Documento en ejecucion o procesamiento. |
-| Autorizado | `authorized` | Success | Documento autorizado por el rol responsable. |
-| Firmado | `signed` | Success | Documento firmado. |
-| Aprobado | `approved` | Success | Documento aprobado. |
-| Aceptado | `accepted` | Success | Documento aceptado por el flujo. |
-| Publicado | `published` | Success | Documento publicado. |
-| Procesado | `processed` | Success | Documento procesado correctamente. |
-| Observado | `observed` | Warning | Documento observado, normalmente requiere correccion. |
-| Pendiente | `pending` | Warning | Documento pendiente de accion. |
-| Fallido | `failed` | Warning | Proceso fallido o con error funcional recuperable. |
-| Eliminado | `deleted` | Danger | Documento enviado a papelera o eliminado. |
-| Rechazado | `rejected` | Danger | Documento rechazado por un rol de decision. |
-| Anulado | `annulled` | Danger | Documento anulado. |
+| Elaborado | `elaborated` | Default |
+| Registrado | `registered` | Default |
+| Verificado | `verified` | Info |
+| Validado | `validated` | Info |
+| Revisado | `reviewed` | Info |
+| Generado | `generated` | Info |
+| En proceso | `in_process` | Info |
+| Autorizado | `authorized` | Success |
+| Firmado | `signed` | Success |
+| Aprobado | `approved` | Success |
+| Aceptado | `accepted` | Success |
+| Publicado | `published` | Success |
+| Procesado | `processed` | Success |
+| Observado | `observed` | Warning |
+| Pendiente | `pending` | Warning |
+| Fallido | `failed` | Warning |
+| Eliminado | `deleted` | Danger |
+| Rechazado | `rejected` | Danger |
+| Anulado | `annulled` | Danger |
 
 ## Estados del header
 
-El estado del documento no siempre es igual al estado visual del header. Para construir pantallas, separar ambos datos:
-
 | Estado del header | Valor en codigo | Comportamiento |
 | --- | --- | --- |
-| Nuevo | `new` | Formulario editable, tag Nuevo, acciones de creacion. |
-| Edicion | `edit` | Formulario editable con datos existentes, tag Edicion. |
-| Solo lectura | `readonly` | Pantalla bloqueada sin asumir un estado de negocio. |
-| Elaborado | `elaborated` | Modo lectura para creador, puede permitir Editar o Verificar segun el rol. |
-| Verificado | `verified` | Modo lectura para roles posteriores, puede habilitar Aprobar, Observar o Rechazar. |
+| Nuevo | `new` | Formulario editable y acciones de creacion. |
+| Edicion | `edit` | Formulario editable con datos existentes. |
+| Solo lectura | `readonly` | Pantalla bloqueada sin estado de negocio especifico. |
+| Elaborado | `elaborated` | Modo lectura; puede permitir Editar o Verificar segun rol. |
+| Verificado | `verified` | Modo lectura para roles posteriores. |
 | Aprobado | `approved` | Modo lectura de cierre positivo. |
-| Observado | `observed` | Modo lectura o edicion condicionada segun rol. |
+| Observado | `observed` | Lectura o edicion condicionada. |
 | Rechazado | `rejected` | Modo lectura de cierre negativo. |
-
-Regla para prompts:
-
-- `Estado del documento`: controla el tag de estado y la informacion de negocio.
-- `Estado del header`: controla botones, permisos y si la pantalla es editable o lectura.
-- Si ambos son iguales, indicarlo una sola vez.
-- Si no son iguales, indicarlos por separado.
 
 ## Componentes reutilizables
 
-Cuando pidas una pantalla, puedes indicar estas piezas. La columna **Capa** indica de donde viene el componente segun la arquitectura del proyecto:
+| Pieza | Componente sugerido | Capa |
+| --- | --- | --- |
+| Navbar | `siaf-navbar` | `layout/` |
+| Sidebar | `siaf-sidebar` | `layout/` |
+| Crear documento | `siaf-create-document` | `layout/` |
+| Bandeja | `siaf-tray-documents-view` | `layout/` |
+| Breadcrumb | `siaf-breadcrumb` | `shared/components/` |
+| Layout solicitud | `siaf-solicitude-page-layout` | `shared/components/` |
+| Card de formulario | `siaf-solicitude-form-card` | `shared/components/` |
+| Card de datos | `siaf-solicitude-info-card` | `shared/components/` |
+| Header solicitud | `siaf-solicitude-header` | `shared/components/` |
+| Filtros dinamicos | `siaf-custom-filter` | `shared/components/` |
+| Controles de tabla | `siaf-table-controls` | `shared/components/` |
+| Paginacion | `siaf-pagination` | `shared/components/` |
+| Campo de texto/select | `siaf-input` | `shared/ui/` |
+| Textarea | `text-area-control` | `shared/ui/` |
+| Campo readonly | `readonly-field` | `shared/ui/` |
+| Boton | `siaf-button` | `shared/ui/` |
+| Alert inline | `siaf-alert` | `shared/ui/` |
+| Modal | `siaf-modal` | `shared/ui/` |
+| Snackbar | `siaf-snackbar` | `shared/ui/` |
+| Estado de flujo | `siaf-flow-status-tag` | `shared/ui/` |
+| Upload | `siaf-upload-side-panel` | `shared/ui/` |
 
-| Pieza | Componente sugerido | Capa | Cuando usarlo |
-| --- | --- | --- | --- |
-| Navbar | `siaf-navbar` | `layout/` | Todas las pantallas internas. Instanciado solo en el shell. |
-| Sidebar | `siaf-sidebar` | `layout/` | Navegacion principal con Procesos, Bandeja y Crear. Instanciado solo en el shell. |
-| Crear documento | `siaf-create-document` | `layout/` | Panel lateral desde el boton Crear. Instanciado solo en el shell. |
-| Arbol procesos | `siaf-process-menu-tree` | `layout/` | Menu de procesos desde el sidebar. Instanciado solo en el shell. |
-| Breadcrumb | `siaf-breadcrumb` | `shared/components/` | Ruta segun arbol de procesos o seccion actual. |
-| Layout solicitud | `siaf-solicitude-page-layout` | `shared/components/` | Estructura transversal para breadcrumb, header, gaps y padding de formularios de solicitud. |
-| Card de formulario | `siaf-solicitude-form-card` | `shared/components/` | Card transversal de formulario. Centraliza titulo, acciones, padding interno y gap. |
-| Card de datos | `siaf-solicitude-info-card` | `shared/components/` | Card transversal para datos generales de la solicitud. |
-| Header solicitud | `siaf-solicitude-header` | `shared/components/` | Encabezado de formularios de solicitud. |
-| Tabla de datos | `siaf-data-table` | `shared/components/` | Tabla con columnas configurables y acciones por fila. |
-| Paginacion | `siaf-pagination` | `shared/components/` | Tablas con resultados. |
-| Linea de tiempo | `siaf-timeline` | `shared/components/` | Historial de estados de un documento. |
-| Filtros dinamicos | `siaf-custom-filter` | `shared/components/` | Filtros por campo/condicion/valor. |
-| Date picker | `siaf-date-time-picker` | `shared/ui/` | Campos de fecha o fecha/hora. Nunca usar `siaf-input` para fechas. |
-| Campo de texto | `siaf-input` | `shared/ui/` | Todos los campos de formulario (texto, select, password, etc). |
-| Boton | `siaf-button` | `shared/ui/` | Acciones con iconos y variantes del sistema. |
-| Alert inline | `siaf-alert` | `shared/ui/` | Validaciones y mensajes contextuales dentro del formulario. Tonos: `info`, `success`, `warning`, `error`. |
-| Modal | `siaf-modal` | `shared/ui/` | Confirmaciones y decisiones bloqueantes. |
-| Snackbar | `siaf-snackbar` | `shared/ui/` | Confirmaciones no bloqueantes. |
-| Tag de estado de flujo | `siaf-flow-status-tag` | `shared/ui/` | Estado visual del documento usando colores del UI Kit. |
-| Panel de carga | `siaf-upload-side-panel` | `shared/ui/` | Sidenav transversal para cargar documentos desde botones con icono `file_upload`. |
+## Reglas de modo lectura
 
-## Alerts en formularios
+Cuando una solicitud entra en modo lectura:
 
-Usar `siaf-alert` (de `shared/ui/`) para mensajes contextuales dentro de los formularios. No usar `siaf-snackbar` para validaciones de campo.
+- Usar `readonly-field` para inputs, selects, select multiple, radios, checkboxes y textareas.
+- Select multiple debe mostrar labels separados por coma.
+- Radio y checkbox deben mostrar `Si`, `No` o `--`.
+- Ocultar botones de busqueda, carga, edicion y eliminacion que sean acciones de modificacion.
+- No dejar botones de accion solo deshabilitados si el usuario no debe usarlos.
+- En tablas de detalle, ocultar checkboxes y acciones.
+- El click de fila puede abrir detalle en modo lectura.
 
-Patron de 3 estados para validacion de un campo:
+## Reglas para tablas
 
-```html
-@if (selectedPlan()) {
-  @if (validationState() === 'idle') {
-    <siaf-alert tone="info" title="Instruccion" description="Ingrese el valor para continuar." />
-  } @else if (validationState() === 'error') {
-    <siaf-alert tone="error" title="Valor ya registrado" description="Ingrese un valor diferente." />
-  } @else if (validationState() === 'valid') {
-    <siaf-alert tone="success" title="Validacion exitosa" description="El valor esta disponible." />
-  }
-}
-```
+- Usar `siaf-table-controls` si hay seleccion o acciones masivas.
+- Mostrar editar/eliminar/menu solo cuando exista seleccion.
+- Usar indeterminate en checkbox maestro cuando hay seleccion parcial.
+- La seleccion por estado debe definirse explicitamente.
+- En documentos, la verificacion multiple solo aplica a `Elaborado`.
+- `Verificado` debe quedar deshabilitado para esa seleccion.
 
-Los iconos del alert usan `variant="filled"` (relleno solido). Los tonos disponibles son: `neutral`, `info`, `success`, `warning`, `error`.
-
-Reglas:
-- El alert de `info` aparece cuando el formulario esta activo pero el campo aun no tiene valor.
-- El alert de `error` aparece cuando el valor ingresado ya esta en uso o es invalido.
-- El alert de `success` aparece cuando el valor esta disponible y es valido.
-- Envolver el bloque en `@if (selectedPlan())` si el alert solo debe mostrarse cuando el formulario esta habilitado.
-
----
-
-## Layout transversal de solicitud
-
-Toda pantalla de creacion, edicion o lectura de una solicitud debe usar `siaf-solicitude-page-layout`. Este componente centraliza:
-
-- Breadcrumb.
-- Header de solicitud.
-- Padding externo del formulario.
-- Gap entre secciones.
-- Desplazamiento lateral cuando se abre el sidebar de Procesos, Bandeja o Crear documento.
-
-Reglas:
-
-- No redefinir gaps o paddings principales dentro de cada proceso.
-- No crear cards manuales con `rounded-siaf-md bg-surface`; usar `siaf-solicitude-form-card` o `siaf-solicitude-info-card`.
-- El proceso solo debe enviar `breadcrumbs`, `role`, `state`, `heading`, `secondaryText` y estados de botones.
-- El contenido interno del formulario se proyecta dentro del layout.
-- Si Figma cambia el espaciado general de solicitudes, modificar `siaf-solicitude-page-layout`, no cada pantalla.
-- Si Figma cambia el espaciado o header de las cards, modificar `siaf-solicitude-form-card`, no cada pantalla.
-- Si una card incluye accion de carga con icono `file_upload`, abrir `siaf-upload-side-panel`.
-
-Uso:
-
-```html
-<siaf-solicitude-page-layout
-  [breadcrumbs]="breadcrumbs"
-  role="creator"
-  [state]="solicitudeHeaderState"
-  heading="Solicitud de registro de asiento de ajuste"
-  secondaryText="Creacion"
-  [saveDisabled]="!isFormValid"
-  [verifyDisabled]="!isReadOnly"
->
-  <siaf-solicitude-info-card [fields]="entityFields" />
-
-  <siaf-solicitude-form-card title="Lista de cuentas contables">
-    <!-- Contenido interno de la card -->
-  </siaf-solicitude-form-card>
-
-  <siaf-upload-side-panel
-    [open]="uploadPanelOpen()"
-    (closed)="uploadPanelOpen.set(false)"
-    (confirmed)="onUploadConfirmed($event)"
-  />
-</siaf-solicitude-page-layout>
-```
-
-## Crear documento transversal
-
-`siaf-create-document` debe usarse como componente transversal. La pantalla o proceso que lo abre debe enviar la relacion entre proceso, documentos, tipos de accion y ruta destino.
-
-Estructura esperada:
-
-```ts
-const CREATE_DOCUMENT_OPTIONS = [
-  {
-    id: 'registro-asiento-ajuste',
-    label: 'Proceso de registro de asiento de ajuste',
-    route: '/procesos/registro-asiento-ajuste/solicitud',
-    documents: ['Solicitud de registro de asiento de ajuste'],
-    actionTypes: ['Creacion']
-  }
-];
-```
-
-Uso:
-
-```html
-<siaf-create-document
-  [processOptions]="createDocumentProcessOptions"
-  (accepted)="onCreateDocumentAccepted($event)"
-/>
-```
-
-Reglas:
-
-- No hardcodear documentos ni tipos de accion dentro de `siaf-create-document`.
-- Cada proceso define su data: `id`, `label`, `route`, `documents` y `actionTypes`.
-- Si un proceso tiene mas de un documento, todos deben venir en `documents`.
-- Si un documento tiene acciones distintas por rol o estado, filtrarlas antes de pasarlas al componente.
-- Al aceptar, navegar usando `selection.route` para que el flujo funcione con cualquier proceso.
-
-## Pantalla transversal de documentos y registros
-
-Usar esta plantilla cuando quieras crear una nueva seccion como la de `Documentos y registros` para cualquier proceso. La pantalla debe reutilizar la estructura existente: navbar, sidebar, breadcrumb del arbol de procesos, header del proceso, tabs `Documentos` y `Registros`, boton `Crear documento`, tabla, filtros, paginacion e historial.
+## Prompt corto: modo lectura
 
 ```md
-## Contexto
+Pantalla: Solicitud de cuentas contables
+Estado del header: Elaborado
+Modo: Solo lectura
 
-Pantalla o flujo: Documentos y registros
-Proceso:
-Id del proceso:
-Ruta del proceso:
-Ruta para crear solicitud:
-Breadcrumb segun arbol:
-- Nivel 1:
-- Nivel 2:
-- Nivel 3:
-- Nivel final:
-Referencia Figma:
+Aplicar readonly-field a todos los campos del formulario:
+- Inputs y selects con su label visible.
+- Select multiple separado por coma.
+- Radios y checkboxes como Si/No.
+- Textareas como readonly-field.
 
-## Header de la pantalla
-
-Titulo:
-Subtitulo: Documentos y registros
-Sistema: Sistema Nacional de Contabilidad
-
-## Crear documento
-
-Debe usar `siaf-create-document`: si
-Documentos permitidos:
-- Documento:
-  - Ruta:
-  - Tipos de accion permitidos:
-    - Creacion
-    - Modificacion
-    - Eliminacion
-
-Reglas:
-- Al elegir documento y tipo de accion, habilitar Aceptar.
-- Al aceptar, navegar a la ruta del documento seleccionado.
-- La grilla de Documentos debe reflejar los mismos nombres definidos en `Documentos permitidos`.
-- Si hay mas de un documento, el select Documento debe mostrar todos.
-- Si un documento tiene acciones propias, el select Tipo de accion debe mostrar solo las acciones de ese documento.
-
-## Tabla Documentos
-
-Columnas:
-- Documento
-- Numero
-- Tipo de accion
-- Estado
-- Sistema
-- Fecha de registro
-- Entidad
-
-Visibilidad de columnas:
-- El boton de tres puntos (`more_vert`) de la barra de busqueda no abre la lista directamente.
-- Primero debe abrir un menu corto con una sola opcion: `Ocultar o mostrar columnas`.
-- Al hacer click en esa opcion debe abrirse un **sidepanel** lateral angosto, no un sidenav.
-- El sidepanel debe incluir `Seleccionar todo`, grupo `Predeterminado`, grupo `Mas columnas`, grupo `Interno` si aplica, botones `Cancelar` y `Aplicar`.
-- La visibilidad se aplica solo al confirmar con `Aplicar`; `Cancelar` descarta cambios.
-- Debe existir al menos una columna visible.
-- La columna sticky de historial debe mantener `border-l`, sombra lateral y fondo solido de cabecera/celda para indicar que hay contenido horizontal scrolleable.
-- Las tablas deben permitir scroll horizontal y usar anchos amplios para evitar truncar encabezados o datos importantes.
-
-Filas de ejemplo:
-- Documento:
-  Numero:
-  Tipo de accion:
-  Estado:
-  Sistema:
-  Fecha de registro:
-  Entidad:
-
-Estados disponibles:
-- Elaborado
-- Verificado
-- Aprobado
-- Observado
-- Rechazado
-- Eliminado
-
-Acciones:
-- Crear documento
-- Ver historial
-- Verificar seleccion, si aplica
-
-## Tabla Registros
-
-Debe existir tab Registros: si/no
-Columnas:
-- Columna 1:
-- Columna 2:
-- Columna 3:
-
-Reglas de columnas:
-- Debe reutilizar el mismo patron de visibilidad de columnas que el tab Documentos.
-- Las opciones del sidepanel deben salir de la configuracion de columnas de la grilla activa.
-- Si se agregan nuevas columnas en el futuro, deben agregarse tambien a la configuracion de visibilidad.
-
-Filas de ejemplo:
-- Campo 1:
-- Campo 2:
-- Campo 3:
-
-## Navegacion
-
-Al abrir desde sidebar Procesos:
-Al dar click al proceso:
-Al crear documento:
-Al abrir documento existente:
-Al volver:
-
-## Reglas especiales
-
-- Mantener el componente y datos del proceso reutilizables.
-- No hardcodear documentos dentro de `siaf-create-document`.
-- Si el proceso no tiene registros, mantener el tab pero mostrar estado vacio o indicar ocultarlo.
+Ocultar:
+- Botones de busqueda.
+- Botones de upload.
+- Checkboxes y acciones de tablas.
 ```
 
-## Ejemplo: documentos y registros de plan de cuentas contables
+## Prompt corto: tabla con seleccion
 
 ```md
-## Contexto
+Pantalla: Documentos y registros
+Tabla: Documentos
 
-Pantalla o flujo: Documentos y registros
-Proceso: Plan de Cuentas Contables
-Id del proceso: plan-cuentas-contables
-Ruta del proceso: /procesos/plan-cuentas-contables
-Ruta para crear solicitud: /procesos/plan-cuentas-contables/solicitud
-Breadcrumb segun arbol:
-- Nivel 1: Gestion contabilidad
-- Nivel 2: Catalogos y clasificadores
-- Nivel 3: Clasificadores
-- Nivel final: Plan de Cuentas Contables
-Referencia Figma: usar misma estructura de Documentos y registros hasta que se entregue diseno especifico
-
-## Header de la pantalla
-
-Titulo: Plan de Cuentas Contables
-Subtitulo: Documentos y registros
-Sistema: Sistema Nacional de Contabilidad
-
-## Crear documento
-
-Debe usar `siaf-create-document`: si
-Documentos permitidos:
-- Documento: Solicitud de Cuentas Contables
-  - Ruta: /procesos/plan-cuentas-contables/solicitud
-  - Tipos de accion permitidos:
-    - Creacion
-    - Modificacion
-- Documento: Solicitud de carga masiva de plan de cuentas contables
-  - Ruta: /procesos/plan-cuentas-contables/carga-masiva/solicitud
-  - Tipos de accion permitidos:
-    - Creacion
-
-Reglas:
-- La grilla de Documentos debe mostrar los nombres definidos en `Documentos permitidos`.
-- Para `Solicitud de Cuentas Contables`, el select Tipo de accion debe mostrar Creacion y Modificacion.
-- Para `Solicitud de carga masiva de plan de cuentas contables`, el select Tipo de accion debe mostrar solo Creacion.
-
-## Tabla Documentos
-
-Columnas:
-- Documento
-- Numero
-- Tipo de accion
-- Estado
-- Sistema
-- Fecha de registro
-- Entidad
-
-Filas de ejemplo:
-- Documento: Solicitud de Cuentas Contables
-  Numero: 0001
-  Tipo de accion: Creacion
-  Estado: Elaborado
-  Sistema: Sistema Nacional de Contabilidad
-  Fecha de registro: 20/11/2023
-  Entidad: 009 - Ministerio de Economia y Finanzas
-- Documento: Solicitud de carga masiva de plan de cuentas contables
-  Numero: 0002
-  Tipo de accion: Creacion
-  Estado: Verificado
-  Sistema: Sistema Nacional de Contabilidad
-  Fecha de registro: 22/11/2023
-  Entidad: 009 - Ministerio de Economia y Finanzas
-
-## Tabla Registros
-
-Debe existir tab Registros: si
-Columnas:
-- Estado
-- Codigo de cuenta
-- Nombre de cuenta
-- Nivel
-- Naturaleza
-
-Filas de ejemplo:
-- Estado: Activo
-  Codigo de cuenta: 1101
-  Nombre de cuenta: Caja y bancos
-  Nivel: 2
-  Naturaleza: Deudora
+Agregar controles de tabla con:
+- Checkbox maestro alineado a la tabla.
+- Indeterminate con seleccion parcial.
+- Acciones ocultas hasta seleccionar.
+- Seleccion permitida solo para documentos en estado Elaborado.
+- Documentos Verificado con checkbox deshabilitado.
+- Paginacion superior e inferior.
 ```
 
-## Ejemplo: creador crea solicitud
+## Prompt corto: solicitud de cuentas contables
 
 ```md
-## Contexto
-
-Pantalla o flujo: Solicitud de registro de asiento de ajuste
+Pantalla: Solicitud de Cuentas Contables
 Rol: Creador
-Estado de la solicitud: Nuevo
-Proceso: Proceso de registro de asiento de ajuste
-Documento: Solicitud de registro de asiento de ajuste
-Tipo de accion: Creacion
-Referencia Figma: pegar link del frame
+Estado: Nuevo
 
-## Objetivo
+Necesito crear cuentas contables desde el boton +.
+Al aceptar una cuenta valida, agregarla a la tabla Lista de cuentas contables.
+Al editar una cuenta, recuperar todos los datos originales.
+Al grabar la solicitud completa, pasar a estado Elaborado y modo lectura.
 
-Armar el formulario editable para registrar una nueva solicitud.
-
-## Header de solicitud
-
-Titulo: Solicitud de registro de asiento de ajuste
-Subtitulo / tipo de accion: Creacion
-Rol del header: creator
-Estado del header: new
-Botones visibles: Cancelar, Grabar, Verificar
-Botones ocultos: Eliminar, Editar
-Boton principal: Grabar
-Comportamiento al volver: regresar a documentos del proceso
-
-## Modo de pantalla
-
-Editable: si
-Solo lectura: no
-Estado visual: Nuevo
-Campos bloqueados: ninguno
-Campos que se pueden editar: todos los campos del formulario
-
-## Navegacion
-
-Al guardar: mostrar modal de confirmacion
-Al aceptar modal: pasar a modo lectura elaborado y mostrar snackbar con numero de documento
+Codigo contable:
+- Usar punto como separador.
+- Primer segmento de 1 digito.
+- Segmentos siguientes de 1 o 2 digitos.
+- Permitir crear solo el primer segmento.
+- Rechazar codigo existente.
 ```
 
-## Ejemplo: creador edita solicitud elaborada
-
-```md
-## Contexto
-
-Pantalla o flujo: Solicitud de registro de asiento de ajuste
-Rol: Creador
-Estado de la solicitud: Edicion
-Proceso: Proceso de registro de asiento de ajuste
-Documento: Solicitud de registro de asiento de ajuste
-Tipo de accion: Creacion
-Referencia Figma: pegar link del frame
-
-## Header de solicitud
-
-Titulo: Solicitud de registro de asiento de ajuste
-Subtitulo / tipo de accion: Creacion
-Rol del header: creator
-Estado del header: edit
-Botones visibles: Cancelar, Grabar
-Botones ocultos: Eliminar, Editar, Verificar
-Boton principal: Grabar
-
-## Modo de pantalla
-
-Editable: si
-Solo lectura: no
-Estado visual: Elaborado + tag Edicion
-Campos bloqueados: datos de entidad y numero de documento
-Campos que se pueden editar: campos de la solicitud
-
-## Navegacion
-
-Al guardar: confirmar cambios y volver a modo lectura elaborado
-```
-
-## Ejemplo: aprobador revisa solicitud
-
-```md
-## Contexto
-
-Pantalla o flujo: Solicitud de registro de asiento de ajuste
-Rol: Aprobador
-Estado de la solicitud: Verificado
-Proceso: Proceso de registro de asiento de ajuste
-Documento: Solicitud de registro de asiento de ajuste
-Tipo de accion: Creacion
-Referencia Figma: pegar link del frame
-
-## Header de solicitud
-
-Titulo: Solicitud de registro de asiento de ajuste
-Subtitulo / tipo de accion: Creacion
-Rol del header: approver
-Estado del header: verified
-Botones visibles: Aprobar, Observar, Rechazar
-Botones ocultos: Grabar, Editar, Eliminar, Verificar
-Boton principal: Aprobar
-
-## Modo de pantalla
-
-Editable: no
-Solo lectura: si
-Estado visual: Verificado
-Campos bloqueados: todos
-Campos que se pueden editar: ninguno
-
-## Modales
-
-Modal: Confirmar aprobacion
-Cuando aparece: al dar clic en Aprobar
-Accion al aceptar: cambiar estado a Aprobado y mostrar snackbar
-
-Modal: Observar solicitud
-Cuando aparece: al dar clic en Observar
-Campos: motivo de observacion
-Accion al aceptar: cambiar estado a Observado
-
-Modal: Rechazar solicitud
-Cuando aparece: al dar clic en Rechazar
-Campos: motivo de rechazo
-Accion al aceptar: cambiar estado a Rechazado
-```
-
-## Checklist antes de enviarme el prompt
+## Checklist antes de enviar un prompt
 
 - Indicar rol y estado.
+- Indicar si la pantalla es editable o solo lectura.
+- Listar campos obligatorios.
+- Indicar validaciones y casuisticas.
+- Decir que botones se ven y cuales se ocultan.
+- Indicar comportamiento de tablas, filtros y paginacion.
+- Indicar que pasa al guardar, editar, verificar, aprobar, observar o rechazar.
 - Pegar link exacto de Figma si existe.
-- Decir que botones deben verse.
-- Decir si la pantalla es editable o solo lectura.
-- Listar campos obligatorios y validaciones.
-- Indicar si algun campo tiene validacion asincrona que requiera alert de 3 estados (info/error/success).
-- Indicar que pasa al guardar, aceptar, editar, verificar, aprobar, observar o rechazar.
-- Indicar la ruta de breadcrumbs o el arbol de procesos esperado.
-- Si hay tabla, indicar columnas, acciones por fila y si necesita paginacion.
-
-## Prompt corto recomendado
-
-Cuando ya tengamos claro el patron, puedes mandarlo asi:
-
-```md
-Rol: Creador
-Estado: Elaborado
-Pantalla: Solicitud de registro de asiento de ajuste
-Figma: link
-
-Necesito que esta pantalla quede en modo lectura.
-Botones visibles: Eliminar, Editar, Verificar.
-Al dar Editar debe pasar a estado Edicion, mantener los datos cargados y permitir modificar solo los campos del formulario.
-Al Grabar debe volver a estado Elaborado y mostrar snackbar con el numero de documento.
-```

@@ -1,298 +1,260 @@
-# Guía de implementación de pantallas SIAF
+# Guia de implementacion de pantallas SIAF
 
-Este documento registra las decisiones que se van tomando al convertir los frames de Figma a Angular + Tailwind. Debe mantenerse actualizado cada vez que se ajuste un componente transversal o una regla visual.
+Este documento registra las reglas actuales para construir pantallas SIAF con Angular, Tailwind y el sistema de diseno del proyecto. Debe actualizarse cuando cambie un componente transversal, una regla visual o un flujo reutilizable.
 
 ## Objetivo
 
-Construir pantallas como composición de componentes reutilizables. La información de cada formulario puede cambiar, pero la estructura, padding, gaps, radius, botoneras, tablas, paginación, sidebar, navbar, headers y modales deben venir del design system.
-
----
+Construir pantallas como composicion de componentes reutilizables. La informacion de cada formulario puede variar, pero estructura, paddings, gaps, radius, botoneras, tablas, filtros, paginacion, sidebar, navbar, headers, modales, elevaciones y estados deben venir del design system.
 
 ## Flujo de trabajo
 
-1. Recibir el link exacto del frame o componente de Figma.
-2. Obtener contexto del nodo con Figma MCP.
-3. Identificar si el bloque es transversal o específico de una pantalla.
-4. Decidir dónde va el componente según la regla de arquitectura:
-   - **UI puro sin lógica de negocio** → `src/app/shared/ui/`
-   - **Reutilizable entre features con lógica de negocio** → `src/app/shared/components/`
-   - **Exclusivo del shell** → `src/app/layout/`
-   - **Específico de un feature** → `src/app/features/[feature]/components/`
-5. Usar tokens CSS ya existentes antes de hardcodear valores.
-6. Validar con `npm run build`.
-7. Levantar o refrescar el servidor local con `npm start`.
-8. Actualizar este documento cuando haya una nueva regla.
+1. Recibir el link exacto del frame o componente de Figma cuando exista.
+2. Identificar si el bloque es transversal o especifico de una pantalla.
+3. Decidir la capa correcta del componente.
+4. Usar tokens CSS y clases del sistema antes de crear estilos nuevos.
+5. Implementar con componentes existentes cuando aplique.
+6. Validar con `npm run typecheck`.
+7. Actualizar esta guia si aparece una regla nueva.
 
----
-
-## Regla de arquitectura de componentes
+## Capas
 
 | Carpeta | Criterio | Ejemplos |
-|---|---|---|
-| `shared/ui/` | 100% presentacional, sin HTTP ni lógica SIAF. Reutilizable en cualquier sistema. | `siaf-button`, `siaf-alert`, `siaf-input`, `siaf-badge` |
-| `shared/components/` | Tiene lógica de negocio pero se usa en ≥ 2 features | `siaf-solicitude-header`, `siaf-pagination`, `siaf-data-table` |
-| `layout/` | Usado únicamente por `AppShellComponent` | `siaf-navbar`, `siaf-sidebar`, `siaf-create-document` |
-| `features/X/components/` | Específico de un solo feature | Componentes propios de `adjustment-seat` o `chart-accounts` |
+| --- | --- | --- |
+| `shared/ui/` | UI puro, sin logica SIAF. | `siaf-button`, `siaf-input`, `readonly-field`, `siaf-flow-status-tag` |
+| `shared/components/` | Reutilizable entre features con logica de negocio. | `siaf-custom-filter`, `siaf-table-controls`, `siaf-pagination` |
+| `layout/` | Exclusivo del shell. | `siaf-navbar`, `siaf-sidebar`, `siaf-create-document` |
+| `features/[feature]/components/` | Especifico de un proceso. | Componentes internos de `chart-accounts` |
+| `features/[feature]/pages/[page]/` | Pantallas del proceso. | `request`, `documents`, `form` |
 
-**Los features no se importan entre sí.** Si algo se necesita en dos features, sube a `shared/components/`.
+Reglas:
 
----
+- Los features no se importan entre si.
+- Si algo se necesita en dos features, subir a `shared/components/`.
+- `shared/ui/` nunca importa de `shared/components/`, `layout/` ni `features/`.
 
-## Componentes disponibles por capa
+## Tokens y estilos
 
-### `shared/ui/` — UI Kit puro
+Los colores, elevaciones, radios, bordes y estados deben salir de tokens.
 
-**Formularios:**
-- `siaf-input` (`TextFieldComponent`) — campo unificado. Tipos: `text`, `number`, `email`, `password`, `select`, `select-multiple`. Props: `label`, `error`, `hint`, `state`, `leadingIcon`, `trailingIcon`, `disabled`.
-- `siaf-date-time-picker` — fechas y fechas+hora. Variantes: `date`, `datetime`. **No usar `siaf-input` para fechas.**
-- `siaf-button` — variantes: `primary`, `secondary`, `ghost`, `danger`, `accent`. Tamaños: `sm`, `md`, `lg`.
-- `siaf-checkbox`, `siaf-radio-group`, `siaf-switch`, `siaf-uploader`, `text-area-control`
+Reglas:
 
-**Retroalimentación:**
-- `siaf-alert` — alert inline. Tonos: `neutral`, `info`, `success`, `warning`, `error`. Props: `title`, `description`, `showClose`.
-- `siaf-snackbar` — notificación temporal flotante.
-- `siaf-modal` — diálogo modal con variantes predefinidas.
+- No usar hexadecimales hardcodeados en `src/app/`.
+- No usar `box-shadow` hardcodeado en componentes.
+- Usar tokens semanticos `--sys-color-*` para colores.
+- Usar tokens de efectos `--sys-effects-*` o clases `shadow-siaf-*` para elevaciones.
+- Required `*` debe salir de la propiedad `[required]="true"` del componente, no escribirse manualmente.
+- El color del `*` debe usar `--sys-color-text-feedback-danger`.
 
-**Visualización:**
-- `siaf-badge`, `siaf-tag`, `siaf-flow-status-tag`, `siaf-icon`, `siaf-tabs`, `siaf-accordion`, `siaf-steps`
-
-### `shared/components/` — Transversales de negocio
-
-- `siaf-breadcrumb` — ruta de navegación.
-- `siaf-pagination` — paginación con selector de filas (10/25/50/100).
-- `siaf-data-table` — tabla con columnas configurables.
-- `siaf-timeline` — línea de tiempo con estados.
-- `siaf-custom-filter` — filtros dinámicos campo/condición/valor.
-- `siaf-solicitude-page-layout` — layout transversal de pantallas de solicitud.
-- `siaf-solicitude-form-card` — card de sección del formulario.
-- `siaf-solicitude-info-card` — card de datos generales de solicitud.
-- `siaf-solicitude-header` — cabecera con matriz `role` + `state`.
-
-### `layout/` — Exclusivos del shell
-
-- `siaf-navbar`, `siaf-sidebar`, `siaf-side-panel`
-- `siaf-process-menu-tree` — árbol flotante de procesos.
-- `siaf-create-document` — panel flotante de creación de documentos.
-- `siaf-tray-menu`, `siaf-tray-documents-view` — bandeja de documentos.
-- `siaf-mobile-navigation-menu` — menú móvil.
-
----
-
-## Tokens de color
-
-Los colores del proyecto salen de los tokens exportados desde Figma.
-
-El build de tokens genera:
-- `--figma-light-sys-color-*` — valor directo desde Figma.
-- `--sys-color-*` — alias semántico que consumen los componentes.
-
-**Regla:** usar siempre tokens semánticos, nunca hex directos en `src/app/`.
+Ejemplo:
 
 ```css
-/* Usar */
-background: var(--sys-color-bg-feedback-light-info);
+/* Correcto */
 color: var(--sys-color-text-feedback-danger);
+box-shadow: var(--sys-effects-elevation-e0) var(--sys-effects-elevation-e1) var(--sys-effects-blur-b3) 0 rgba(0, 0, 0, 0.14);
 
-/* No usar */
-background: #B0DEFD;
+/* Evitar */
 color: #821C1E;
+box-shadow: 0 8px 10px rgba(0, 0, 0, 0.14);
 ```
 
----
+## Componentes disponibles
+
+### UI Kit
+
+| Componente | Uso |
+| --- | --- |
+| `siaf-input` | Texto, password, number, select y select multiple. |
+| `text-area-control` | Textarea con required, contador y estados. |
+| `readonly-field` | Campo de solo lectura para cualquier valor del formulario. |
+| `siaf-button` | Acciones del sistema. |
+| `siaf-alert` | Validaciones inline. |
+| `siaf-modal` | Confirmaciones bloqueantes. |
+| `siaf-snackbar` | Confirmaciones no bloqueantes. |
+| `siaf-flow-status-tag` | Estado visual de documentos y registros. |
+| `siaf-upload-side-panel` | Carga de documentos. |
+| `siaf-uploaded-file-card` | Archivo cargado. |
+
+### Componentes transversales
+
+| Componente | Uso |
+| --- | --- |
+| `siaf-breadcrumb` | Ruta de navegacion. |
+| `siaf-custom-filter` | Filtros dinamicos campo/condicion/valor. |
+| `siaf-table-controls` | Checkbox maestro, acciones y paginacion de tablas. |
+| `siaf-pagination` | Paginacion superior/inferior. |
+| `siaf-data-table` | Tabla configurable. |
+| `siaf-solicitude-page-layout` | Layout de solicitudes. |
+| `siaf-solicitude-form-card` | Card de formulario. |
+| `siaf-solicitude-info-card` | Datos generales de solicitud. |
+| `siaf-solicitude-header` | Cabecera por rol y estado. |
 
 ## Inputs y formularios
 
-### Campo de texto — `siaf-input`
+### `siaf-input`
 
 ```html
-<siaf-input label="Código *" type="text" />
-<siaf-input label="Contraseña" type="password" />
-<siaf-input label="Tipo" type="select" [options]="options" />
-<siaf-input label="Estado" error="Campo requerido" />
-<siaf-input label="Válido" state="success" />
-<siaf-input label="Deshabilitado" [disabled]="true" />
+<siaf-input label="Codigo" [required]="true" />
+<siaf-input label="Estado" type="select" [options]="statusOptions" />
+<siaf-input label="Ambito" type="select-multiple" [options]="scopeOptions" />
+<siaf-input label="Nombre" state="success" />
 ```
 
-Tipos disponibles: `text`, `number`, `email`, `password`, `select`, `select-multiple`.
+Reglas:
 
-### Fecha — `siaf-date-time-picker`
+- Usar `[required]="true"` para mostrar el `*`.
+- Usar `state="success"` cuando el valor ingresado ya cumple la validacion.
+- Usar `[clearable]="true"` cuando el campo no sea obligatorio y pueda quedar vacio.
+- Select y select multiple deben usar el dropdown del sistema, no el nativo del navegador.
+
+### `text-area-control`
 
 ```html
-<siaf-date-time-picker label="Fecha inicio" variant="date" />
-<siaf-date-time-picker label="Fecha y hora" variant="datetime" />
-```
-
-### Alerts en formularios
-
-Patrón estándar para validación de campos:
-
-```html
-@if (selectedPlan()) {
-  @if (validationState() === 'idle') {
-    <siaf-alert tone="info" title="Instrucción" description="Ingrese el valor para continuar." />
-  } @else if (validationState() === 'error') {
-    <siaf-alert tone="error" title="Valor ya registrado" description="Ingrese un valor diferente." />
-  } @else if (validationState() === 'valid') {
-    <siaf-alert tone="success" title="Validación exitosa" description="El valor está disponible." />
-  }
-}
-```
-
-Los íconos del alert usan `variant="filled"` (relleno sólido).
-
----
-
-## Select inputs
-
-Los campos tipo select no deben mostrar el menú nativo del navegador.
-
-- `siaf-input` con `type="select"` o `type="select-multiple"` usa `siaf-select-options` internamente.
-- El menú sigue Figma: superficie `--sys-color-bg-surfaces-surface-highest`, radio `8px`.
-- Cada opción tiene mínimo `48px`, padding horizontal `16px`.
-
----
-
-## Date picker
-
-- Usar `siaf-date-time-picker`, nunca inputs nativos aislados.
-- Variante `date` para solo fecha; `datetime` para fecha y hora.
-- El popup usa `--sys-color-bg-surfaces-surface`, radio `8px`.
-- Día seleccionado: `--sys-color-bg-brand-primary`.
-
----
-
-## Íconos
-
-- Usar `material-icons` instalado por npm, nunca CDN.
-- Siempre consumir mediante `siaf-icon`.
-- El default del `siaf-icon` es `variant="outlined"`.
-- Para íconos con relleno sólido usar `variant="filled"`.
-- Si Figma usa un nombre no disponible, agregar alias en `icon.component.ts`.
-
-Fuentes cargadas en `styles.css`:
-```css
-@import "material-icons/iconfont/material-icons.css";      /* filled */
-@import "material-icons/iconfont/outlined.css";             /* outlined */
-```
-
----
-
-## Reglas de layout
-
-- El navbar va arriba y ocupa el ancho completo de la pantalla.
-- El layout con sidebar comienza debajo del navbar.
-- El sidebar tiene ancho fijo de `64px`.
-- El contenido principal usa `lg:pl-16` para respetar el espacio del sidebar.
-- Los formularios deben ser responsive.
-- No duplicar componentes transversales dentro de una pantalla.
-
-### Sidebar
-
-```html
-<siaf-sidebar
-  [navigation]="activeNavigation"
-  (created)="openSidebarCreateDocument()"
-  (navigationChanged)="onNavigationChange($event)"
+<text-area-control
+  placeholder="Justificacion del requerimiento solicitado"
+  [required]="true"
+  [maxlength]="500"
+  [value]="justification()"
+  (valueChange)="justification.set($event)"
 />
-
-@if (processMenuOpen) {
-  <siaf-process-menu-tree (nodeSelected)="onProcessNodeSelected($event)" />
-}
-
-@if (sidebarCreateDocumentOpen) {
-  <siaf-create-document />
-}
 ```
 
-El `+` del sidebar abre `siaf-create-document`. El botón `Procesos` abre `siaf-process-menu-tree`. Click fuera cierra cualquier flotante.
+Reglas:
 
----
+- Debe soportar required, success, disabled y contador.
+- En modo lectura se reemplaza por `readonly-field`.
 
-## Solicitud — layout transversal
+## Modo lectura
+
+Toda pantalla en modo lectura debe usar `readonly-field` para representar valores.
+
+Reglas:
+
+- Inputs de texto: `readonly-field` con el valor.
+- Select: `readonly-field` con el label de la opcion.
+- Select multiple: `readonly-field` con labels separados por coma.
+- Radio button: `readonly-field` con `Si`, `No` o `--`.
+- Checkbox: `readonly-field` con `Si` o `No`.
+- Textarea: `readonly-field` con el contenido.
+- Botones de accion contextual: ocultar, no solo deshabilitar.
+- Tablas de detalle: ocultar checkboxes y acciones en lectura.
+
+Ejemplo:
 
 ```html
-<siaf-solicitude-page-layout
-  [breadcrumbs]="breadcrumbs"
-  role="creator"
-  state="new"
-  heading="Nombre de la solicitud"
-  secondaryText="Creación"
-  [showReturn]="true"
-  (returned)="goBack()"
-  (canceled)="goBack()"
->
-  <siaf-solicitude-info-card [fields]="entityFields" [liveDate]="true" />
-
-  <siaf-solicitude-form-card title="Sección del formulario">
-    <!-- campos aquí -->
-  </siaf-solicitude-form-card>
-</siaf-solicitude-page-layout>
+@if (isReadOnly) {
+  <readonly-field caption="Naturaleza" [required]="true" [value]="optionLabel(natureOptions, accountNature())" />
+  <readonly-field caption="Ambito institucional" [value]="optionLabels(scopeOptions, scope())" />
+  <readonly-field caption="Tiene dinamica contable" [value]="yesNoLabel(hasDynamics())" />
+} @else {
+  <siaf-input label="Naturaleza" type="select" [required]="true" [options]="natureOptions" />
+}
 ```
 
-### Header de solicitud — roles y estados
+## Filtros personalizados
 
-| Rol | Valor |
-|---|---|
-| Creador | `creator` |
-| Revisor | `reviewer` |
-| Aprobador | `approver` |
+`siaf-custom-filter` es el componente global para agregar filtros personalizados.
 
-Estados: `new`, `edit`, `readonly`, `elaborated`, `registered`, `verified`, `validated`, `reviewed`, `generated`, `in_process`, `authorized`, `signed`, `approved`, `accepted`, `published`, `processed`, `observed`, `pending`, `failed`, `deleted`, `rejected`, `annulled`.
+Reglas:
 
----
+- Debe ser responsive en mobile, tablet y desktop.
+- En desktop/tablet, los dropdowns deben abrirse sin romper el layout ni superponerse visualmente.
+- Botones Cancelar y Aplicar deben alinearse horizontalmente cuando el ancho lo permite.
+- La elevacion debe salir de tokens o clases del sistema.
+- Debe aplicarse en Documentos y registros, Bandeja y cualquier tabla que requiera filtros dinamicos.
 
-## Estados oficiales del documento — `siaf-flow-status-tag`
+## Tablas
 
-```html
-<siaf-flow-status-tag status="Elaborado" size="standard" />
-```
+### Controles de tabla
+
+Usar `siaf-table-controls` cuando una tabla tenga seleccion, acciones o paginacion.
+
+Reglas:
+
+- El checkbox maestro va alineado con los checkboxes de la tabla.
+- Las acciones de editar, eliminar y menu se ocultan hasta que exista seleccion.
+- Si hay seleccion parcial, el checkbox maestro muestra indeterminate.
+- La paginacion puede ir arriba y abajo segun la variante del flujo.
+- En modo lectura se ocultan checkboxes y acciones.
+
+### Documentos y registros
+
+Reglas:
+
+- Los checkboxes usan tokens de color:
+  - Enabled: `--sys-color-icon-states-enabled`.
+  - Disabled: `--sys-color-icon-states-disabled`.
+  - Active: `--sys-color-icon-states-active`.
+- La verificacion multiple solo aplica a documentos en estado `Elaborado`.
+- Los documentos `Verificado` deben tener checkbox deshabilitado.
+- Los filtros deben aplicar en Documentos, Registros y Bandeja.
+
+## Estados oficiales
+
+Usar `siaf-flow-status-tag` para estados de documentos y registros.
 
 | Tono | Estados |
-|---|---|
+| --- | --- |
 | Default | Elaborado, Registrado |
 | Info | Verificado, Validado, Revisado, Generado, En proceso |
 | Success | Autorizado, Firmado, Aprobado, Aceptado, Publicado, Procesado |
 | Warning | Observado, Pendiente, Fallido |
 | Danger | Eliminado, Rechazado, Anulado |
 
----
+## Solicitudes
 
-## Paginación
+Toda solicitud debe usar:
 
 ```html
-<siaf-pagination
-  navigation="Activate"
-  position="Bottom"
-  [rowPage]="true"
-  [page]="page"
-  [pageSize]="rowsPerPage"
-  [totalItems]="totalItems"
-  [totalPages]="totalPages"
-  [rowsPerPageOptions]="[10, 25, 50, 100]"
-  (rowsPerPageChange)="onRowsPerPageChange($event)"
-/>
+<siaf-solicitude-page-layout
+  [breadcrumbs]="breadcrumbs"
+  role="creator"
+  [state]="solicitudeHeaderState"
+  heading="Solicitud de cuentas contables"
+  secondaryText="Creacion"
+>
+  <siaf-solicitude-info-card [fields]="entityFields" />
+  <siaf-solicitude-form-card title="Seccion del formulario">
+    <!-- contenido -->
+  </siaf-solicitude-form-card>
+</siaf-solicitude-page-layout>
 ```
 
-Al cambiar filas por página, regresar a `page = 1`.
+Reglas:
 
----
+- En estado `new`, la solicitud es editable.
+- Al grabar correctamente, pasa a `elaborated` y modo lectura.
+- En `elaborated`, las acciones de modificacion solo aparecen al presionar Editar.
+- En modo lectura, el usuario puede revisar informacion sin modificarla.
+
+## Solicitud de cuentas contables
+
+Reglas actuales:
+
+- El formulario de cuenta se abre con el boton `+`.
+- El boton Aceptar se habilita solo cuando el formulario cumple sus casuisticas.
+- Al aceptar, la cuenta se agrega a la tabla de `Lista de cuentas contables`.
+- Al editar una cuenta creada, se recuperan los datos originales.
+- En modo lectura, hacer click en una fila abre el detalle en modo lectura.
+- Los botones editar/eliminar y checkboxes se ocultan en modo lectura.
+- `Vigencia`, `Visible` y `Tiene dinamica contable` tienen reglas automaticas.
+- Si `Es una cuenta imputable` es `No`, `Tiene dinamica contable` se marca `No` y sus controles quedan bloqueados.
+
+Codigo contable:
+
+- El punto `.` separa niveles.
+- Se aceptan de 1 a 7 segmentos.
+- Primer segmento: 1 digito.
+- Segmentos siguientes: 1 o 2 digitos.
+- `1`, `1.1`, `1.22.31.1` son validos.
+- `1101` es invalido porque no usa separadores.
 
 ## Validaciones antes de cerrar una pantalla
 
-- `npm run build` sin errores.
-- Los componentes transversales no están duplicados dentro de la pantalla.
-- No hay hex directos en el template ni en el TS del componente.
-- Navbar, sidebar, breadcrumb y paginación mantienen sus medidas.
-- La data dinámica no está hardcodeada.
-- Responsive revisado en mobile y desktop.
-
----
-
-## Cómo actualizar esta guía
-
-Cada vez que se corrija un componente transversal:
-
-1. Agregar la regla en la sección correspondiente.
-2. Indicar si aplica a todas las pantallas o solo a una feature.
-3. Si hay valores CSS exactos desde Figma, pegarlos aquí.
-4. Si cambia el API del componente, agregar un ejemplo de uso actualizado.
+- `npm run typecheck` sin errores.
+- No hay hex directos ni sombras hardcodeadas en componentes.
+- No hay componentes transversales duplicados dentro de una pantalla.
+- Los campos required usan `[required]="true"`.
+- El modo lectura usa `readonly-field`.
+- Los controles de accion se ocultan cuando no corresponden.
+- La tabla mantiene paginacion, seleccion e indeterminate.
+- Responsive revisado en mobile, tablet y desktop.

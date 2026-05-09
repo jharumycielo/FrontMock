@@ -4,6 +4,7 @@ import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../
 import { FlowStatusTagComponent } from '../../shared/ui/flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
+import { TableControlsComponent } from '../../shared/components/table-controls/table-controls.component';
 
 type TrayDocumentRow = {
   document: string;
@@ -30,7 +31,7 @@ type AppliedCustomFilter = {
 @Component({
   selector: 'siaf-tray-documents-view',
   standalone: true,
-  imports: [CustomFilterComponent, FlowStatusTagComponent, IconComponent, PaginationComponent],
+  imports: [CustomFilterComponent, FlowStatusTagComponent, IconComponent, PaginationComponent, TableControlsComponent],
   template: `
     <section class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest,rgba(32,32,32,0.04))]">
       <section class="bg-surface">
@@ -62,7 +63,7 @@ type AppliedCustomFilter = {
               <label class="flex h-10 min-w-0 flex-1 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-md">
                 <siaf-icon class="shrink-0 text-text-muted" name="search" [size]="24" />
                 <span class="sr-only">Buscar</span>
-                <input class="min-w-0 flex-1 bg-transparent text-sm leading-normal tracking-[0.025px] outline-none placeholder:text-text-muted" placeholder="Buscar" />
+                <input class="min-w-0 flex-1 bg-transparent text-sm leading-normal tracking-[0.025px] outline-none placeholder:text-text-muted" placeholder="Buscar" [value]="searchTerm" (input)="onSearchChange(inputValue($event))" />
               </label>
 
               <div class="flex shrink-0 items-center justify-end gap-siaf-xs">
@@ -195,20 +196,15 @@ type AppliedCustomFilter = {
               </button>
             </div>
 
-            <div class="flex min-h-10 items-center justify-between gap-siaf-md">
-              <label class="inline-flex h-10 items-center gap-siaf-xs px-siaf-xxs">
-                <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" />
-              </label>
-              <div class="ml-auto flex h-10 items-center gap-siaf-md text-xs text-text-muted">
-                <span>1-{{ filteredRows.length }} de {{ filteredRows.length }}</span>
-                <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text-muted transition hover:bg-surface-muted" type="button" aria-label="Anterior">
-                  <siaf-icon name="chevron_left" [size]="24" />
-                </button>
-                <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted" type="button" aria-label="Siguiente">
-                  <siaf-icon name="chevron_right" [size]="24" />
-                </button>
-              </div>
-            </div>
+            <siaf-table-controls
+              selectAllLabel="Seleccionar documentos de bandeja"
+              [page]="page"
+              [pageSize]="rowsPerPage"
+              [totalItems]="filteredRows.length"
+              [totalPages]="totalPages"
+              (previous)="onPreviousPage()"
+              (next)="onNextPage()"
+            />
 
             <div class="min-w-0 overflow-x-auto">
               <table class="w-full min-w-[1216px] border-collapse text-left text-sm">
@@ -258,9 +254,11 @@ type AppliedCustomFilter = {
               [page]="page"
               [pageSize]="rowsPerPage"
               [totalItems]="filteredRows.length"
-              [totalPages]="1"
+              [totalPages]="totalPages"
               [rowsPerPage]="rowsPerPage"
               [rowsPerPageOptions]="rowsPerPageOptions"
+              (previous)="onPreviousPage()"
+              (next)="onNextPage()"
               (rowsPerPageChange)="onRowsPerPageChange($event)"
             />
           </div>
@@ -296,6 +294,7 @@ export class TrayDocumentsViewComponent {
   selectedStatusFilter = '';
   actionTypeFilterMenuOpen = false;
   selectedActionTypeFilter = '';
+  searchTerm = '';
   appliedCustomFilters: AppliedCustomFilter[] = [];
   customFilterInitialRows: FilterRow[] = [];
   editingCustomFilterId = '';
@@ -362,12 +361,18 @@ export class TrayDocumentsViewComponent {
 
   get filteredRows(): TrayDocumentRow[] {
     return this.rowsForCurrentTray.filter((row) => {
+      const normalizedSearch = this.normalize(this.searchTerm);
+      const matchesSearch = !normalizedSearch || this.normalize(Object.values(row).join(' ')).includes(normalizedSearch);
       const matchesStatus = !this.selectedStatusFilter || row.status === this.selectedStatusFilter;
       const matchesActionType = !this.selectedActionTypeFilter || row.actionType === this.selectedActionTypeFilter;
       const matchesCustomFilters = this.appliedCustomFilters.every((filter) => this.matchesCustomFilter(row, filter));
 
-      return matchesStatus && matchesActionType && matchesCustomFilters;
+      return matchesSearch && matchesStatus && matchesActionType && matchesCustomFilters;
     });
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredRows.length / this.rowsPerPage));
   }
 
   get rowsForCurrentTray(): TrayDocumentRow[] {
@@ -407,6 +412,15 @@ export class TrayDocumentsViewComponent {
   selectFieldsMenuOption(option: string): void {
     void option;
     this.closeFieldsMenu();
+  }
+
+  inputValue(event: Event): string {
+    return (event.target as HTMLInputElement).value;
+  }
+
+  onSearchChange(value: string): void {
+    this.searchTerm = value;
+    this.page = 1;
   }
 
   toggleFavoriteMenu(): void {
@@ -531,6 +545,14 @@ export class TrayDocumentsViewComponent {
   onRowsPerPageChange(value: number): void {
     this.rowsPerPage = value;
     this.page = 1;
+  }
+
+  onPreviousPage(): void {
+    this.page = Math.max(1, this.page - 1);
+  }
+
+  onNextPage(): void {
+    this.page = Math.min(this.totalPages, this.page + 1);
   }
 
   private closeInlineMenus(): void {

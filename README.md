@@ -1,98 +1,94 @@
-# SIAF-RP — Sistema Integrado de Administración Financiera de los Recursos Públicos
+# SIAF-RP - Sistema Integrado de Administracion Financiera de los Recursos Publicos
 
-Aplicación web para la gestión de procesos financieros y contables del Estado Peruano. Construida con Angular y Tailwind CSS 4, implementa un sistema de diseño propio basado en tokens de Figma.
+Aplicacion web para la gestion de procesos financieros y contables del Estado Peruano. Esta construida con Angular y Tailwind CSS 4, y usa un sistema de diseno propio basado en tokens exportados desde Figma.
 
----
+## Tecnologias
 
-## Tecnologías
-
-| Herramienta | Versión |
-|---|---|
+| Herramienta | Version |
+| --- | --- |
 | Angular | 19+ |
 | Tailwind CSS | 4 |
 | TypeScript | 5+ |
 | RxJS | 7.8+ |
 | Material Icons | 1.13+ |
-| Node.js requerido | ≥ 20.19.0 < 21 |
-| NPM requerido | ≥ 10 |
+| Node.js requerido | >= 20.19.0 < 21 |
+| NPM requerido | >= 10 |
 
----
-
-## Instalación y desarrollo
+## Instalacion y desarrollo
 
 ```bash
 npm install
-npm start          # http://localhost:4200
-npm run build      # Build de producción
+npm start
+npm run build
+npm run typecheck
+npm run tokens:build
 ```
 
----
+Servidor local por defecto: `http://localhost:4200`.
 
 ## Estructura del proyecto
 
-```
+```text
 src/app/
-├── core/
-│   └── auth/                        # Guards, servicios de sesión, modelos de rol
-│
-├── layout/                          # Componentes del shell (instancia única cada uno)
-│   ├── shell/                       # AppShellComponent con router-outlet
-│   ├── navbar/
-│   ├── sidebar/
-│   ├── side-panel/
-│   ├── mobile-navigation-menu/
-│   ├── process-menu-tree/
-│   ├── tray-menu/
-│   ├── tray-documents-view/
-│   ├── create-document/
-│   └── index.ts
-│
-├── shared/
-│   ├── ui/                          # UI Kit puro — sin lógica de negocio SIAF
-│   │   └── index.ts                 # Único punto de exportación
-│   └── components/                  # Componentes reutilizables entre features
-│       ├── breadcrumb/
-│       ├── custom-filter/
-│       ├── pagination/
-│       ├── data-table/
-│       ├── timeline/
-│       ├── solicitude-header/
-│       ├── solicitude-form-card/
-│       ├── solicitude-page-layout/
-│       ├── solicitude-info-card/
-│       └── index.ts
-│
-├── features/
-│   ├── adjustment-seat/
-│   │   └── pages/
-│   │       ├── documents/           # /procesos/registro-asiento-ajuste
-│   │       ├── request/             # /procesos/registro-asiento-ajuste/solicitud
-│   │       └── form/                # /procesos/registro-asiento-ajuste/formulario
-│   ├── chart-accounts/
-│   │   └── pages/
-│   │       ├── documents/           # /procesos/plan-cuentas-contables
-│   │       └── request/             # /procesos/plan-cuentas-contables/solicitud
-│   ├── login/
-│   ├── otp-verification/
-│   ├── virtual-desk/
-│   ├── showcase/                    # Catálogo visual de componentes
-│   └── process-configs/             # Configuración de documentos por proceso
-│
-├── app.routes.ts
-└── app.component.ts
+|-- core/
+|   `-- auth/                         # Roles, permisos, guards y sesion
+|-- layout/                           # Shell de la aplicacion
+|   |-- shell/
+|   |-- navbar/
+|   |-- sidebar/
+|   |-- side-panel/
+|   |-- mobile-navigation-menu/
+|   |-- process-menu-tree/
+|   |-- tray-menu/
+|   |-- tray-documents-view/
+|   |-- create-document/
+|   `-- index.ts
+|-- shared/
+|   |-- ui/                           # UI Kit puro, sin logica SIAF
+|   |   `-- index.ts
+|   `-- components/                   # Componentes transversales con logica de negocio
+|       |-- breadcrumb/
+|       |-- custom-filter/
+|       |-- data-table/
+|       |-- pagination/
+|       |-- table-controls/
+|       |-- timeline/
+|       |-- solicitude-header/
+|       |-- solicitude-form-card/
+|       |-- solicitude-page-layout/
+|       |-- solicitude-info-card/
+|       `-- index.ts
+|-- features/
+|   |-- adjustment-seat/
+|   |   `-- pages/
+|   |       |-- documents/
+|   |       |-- request/
+|   |       `-- form/
+|   |-- chart-accounts/
+|   |   `-- pages/
+|   |       |-- documents/
+|   |       `-- request/
+|   |-- documents-records/
+|   |-- login/
+|   |-- otp-verification/
+|   |-- process-configs/
+|   |-- showcase/
+|   `-- virtual-desk/
+|-- app.routes.ts
+`-- app.component.ts
 
 src/styles/
-└── tokens/
-    ├── generated/                   # tokens.css, tailwind.tokens.css (generados desde Figma)
-    └── figma-tokens.css
+`-- tokens/
+    |-- generated/
+    |   |-- tokens.css
+    |   `-- tailwind.tokens.css
+    `-- figma-tokens.css
 ```
 
----
-
-## Rutas
+## Rutas principales
 
 | Ruta | Componente |
-|---|---|
+| --- | --- |
 | `/login` | `LoginComponent` |
 | `/login/recuperar-contrasena` | `OtpVerificationComponent` |
 | `/panel` | `VirtualDeskComponent` |
@@ -103,50 +99,91 @@ src/styles/
 | `/procesos/plan-cuentas-contables/solicitud` | `ChartAccountsRequestComponent` |
 | `/showcase` | `ShowcaseComponent` |
 
----
-
 ## Reglas de arquitectura
 
 | Carpeta | Criterio |
-|---|---|
-| `shared/ui/` | 100% presentacional, sin HTTP ni lógica SIAF. Reutilizable en cualquier sistema. |
-| `shared/components/` | Tiene lógica de negocio pero se usa en ≥ 2 features distintas. |
-| `layout/` | Usado únicamente por `AppShellComponent`. |
-| `features/X/components/` | Específico de un solo feature. |
-| `features/X/pages/Y/` | Cada pantalla del feature. |
+| --- | --- |
+| `shared/ui/` | Componentes presentacionales, sin HTTP ni logica SIAF. Reutilizables en cualquier sistema. |
+| `shared/components/` | Componentes transversales con logica de negocio compartida entre dos o mas features. |
+| `layout/` | Componentes exclusivos del shell. Se instancian desde `AppShellComponent`. |
+| `features/[feature]/components/` | Componentes especificos de un proceso. |
+| `features/[feature]/pages/[page]/` | Pantallas del proceso. |
 
-- Los features **no se importan entre sí**.
-- Si algo se necesita en dos features → sube a `shared/components/`.
-- `shared/ui/` nunca importa de `shared/components/` ni de `layout/`.
-- Importar siempre desde el `index.ts` de la capa correspondiente.
+Reglas:
 
----
+- Los features no se importan entre si.
+- Si algo se necesita en dos features, debe subir a `shared/components/`.
+- `shared/ui/` nunca importa desde `shared/components/`, `layout/` ni `features/`.
+- Las rutas de procesos cargan pantallas con `loadComponent`.
 
-## Roles y permisos
+## Tokens y estilos
 
-| Archivo | Responsabilidad |
-|---|---|
-| `core/auth/role.model.ts` | Define roles, permisos y matriz. |
-| `core/auth/permission.service.ts` | `hasRole`, `can`, `canAny`. |
-| `core/auth/role.guard.ts` | Restringe rutas por `data.roles` y `data.permissions`. |
+- Los colores, radios, elevaciones y estados visuales deben salir de tokens.
+- No usar hexadecimales ni sombras hardcodeadas en componentes.
+- `src/styles.css` contiene imports globales, reset y reglas base.
+- `src/styles/tokens/generated/tailwind.tokens.css` expone tokens consumibles por Tailwind.
+- `src/styles/tokens/generated/tokens.css` expone variables CSS del sistema.
+- Para elevaciones usar clases/tokens como `shadow-siaf-sm`, `shadow-siaf-md`, `shadow-siaf-lg` o variables `--sys-effects-*`.
 
----
+## Componentes clave
 
-## Assets
+| Componente | Capa | Uso |
+| --- | --- | --- |
+| `siaf-input` | `shared/ui` | Inputs de texto, select y select multiple. |
+| `text-area-control` | `shared/ui` | Textareas con estado, contador y required. |
+| `readonly-field` | `shared/ui` | Representacion de campos en modo lectura. |
+| `siaf-flow-status-tag` | `shared/ui` | Estados oficiales de documentos y registros. |
+| `siaf-custom-filter` | `shared/components` | Filtros personalizados globales. |
+| `siaf-table-controls` | `shared/components` | Checkbox maestro, acciones de tabla y paginacion superior/inferior. |
+| `siaf-pagination` | `shared/components` | Paginacion reutilizable. |
+| `siaf-solicitude-page-layout` | `shared/components` | Layout de solicitudes. |
+| `siaf-solicitude-form-card` | `shared/components` | Secciones de formularios. |
+| `siaf-create-document` | `layout` | Creacion de documentos desde el sidebar. |
 
-```
-src/assets/figma/
-├── login/          # Hero, logos, iconos de proveedores de identidad
-├── logos/          # Variantes del logo SIAF-RP
-└── modals/         # Ilustraciones para modales
-```
+## Modo lectura
 
----
+Cuando una solicitud pasa a estado elaborado o se abre para visualizar:
 
-## Documentación
+- Los campos editables deben convertirse a `readonly-field`.
+- Los radio buttons muestran solo el texto seleccionado (`Si`, `No` o `--`).
+- Los select muestran el label de la opcion, no el value interno.
+- Los select multiple muestran los labels separados por coma.
+- Los textareas muestran su contenido en `readonly-field`.
+- Los botones de accion contextual se ocultan, no se dejan solo deshabilitados.
+- Las tablas de detalle ocultan checkboxes y acciones; el registro puede abrirse en vista lectura.
+
+## Tablas y seleccion
+
+- Usar `siaf-table-controls` cuando una tabla tenga seleccion masiva, acciones o paginacion.
+- Los iconos de editar, eliminar y menu solo se muestran cuando hay seleccion.
+- El checkbox maestro usa estado indeterminado cuando hay seleccion parcial.
+- En `Documentos y registros`, la seleccion multiple para verificar solo aplica a documentos en estado `Elaborado`; los estados `Verificado` quedan deshabilitados.
+
+## Flujo de cuentas contables
+
+La solicitud de cuentas contables permite:
+
+- Seleccionar plan de cuentas.
+- Crear cuentas contables con validacion de codigo.
+- Agregar las cuentas creadas a la tabla de detalle.
+- Editar una cuenta creada recuperando los datos originales.
+- Eliminar solo cuando hay seleccion.
+- Grabar cuando la solicitud esta completa.
+- Pasar a modo lectura elaborado despues de grabar.
+
+Reglas del codigo contable:
+
+- El punto `.` es separador visual y funcional.
+- Se aceptan de 1 a 7 segmentos.
+- El primer segmento acepta 1 digito.
+- Los segmentos siguientes aceptan 1 o 2 digitos.
+- Ejemplos validos: `1`, `1.1`, `1.22.31.1`.
+- Ejemplo invalido: `1101` porque no usa separadores.
+
+## Documentacion
 
 | Documento | Contenido |
-|---|---|
-| `docs/guia-implementacion-pantallas-siaf.md` | Componentes disponibles, tokens, patrones de uso y reglas visuales. |
-| `docs/plantilla-prompts-pantallas-siaf.md` | Plantillas para pedir nuevas pantallas o modificar flujos. |
-| `RESTRUCTURACION_REALIZADA.md` | Historial de la restructuración arquitectural del proyecto. |
+| --- | --- |
+| `docs/guia-implementacion-pantallas-siaf.md` | Reglas de implementacion, tokens, componentes y patrones. |
+| `docs/plantilla-prompts-pantallas-siaf.md` | Plantillas para solicitar pantallas y flujos. |
+| `RESTRUCTURACION_REALIZADA.md` | Registro de cambios arquitecturales y mejoras aplicadas. |

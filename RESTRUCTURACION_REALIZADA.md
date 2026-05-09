@@ -1,154 +1,150 @@
-# RESTRUCTURACIÓN ARQUITECTURAL — SIAF-RP
+# Reestructuracion arquitectural - SIAF-RP
 
-**Fecha de ejecución:** 4 de Mayo, 2026
-**Estado:** ✅ COMPLETADO Y VERIFICADO (build sin errores)
-
----
+**Fecha base:** 4 de mayo de 2026  
+**Ultima actualizacion:** 8 de mayo de 2026  
+**Estado:** completado y verificado con `npm run typecheck`.
 
 ## Objetivo
 
-Reorganizar el proyecto para que sea escalable, con separación clara de responsabilidades y sin duplicados. La arquitectura anterior tenía componentes de layout, negocio y UI Kit mezclados en `shared/ui/`, y las features como archivos sueltos sin estructura interna.
-
----
+Reorganizar el proyecto para que sea escalable, con separacion clara entre UI Kit, componentes transversales, layout y features. La arquitectura anterior mezclaba componentes de shell, negocio y UI dentro de `shared/ui/`, y algunas pantallas vivian como carpetas sueltas.
 
 ## Estructura resultante
 
-```
+```text
 src/app/
-├── core/
-│   └── auth/                        # Guards, servicios de sesión, modelos de rol
-│
-├── layout/                          # Componentes estructurales del shell (instancia única)
-│   ├── shell/                       # AppShellComponent — layout principal con router-outlet
-│   ├── navbar/                      # Barra superior
-│   ├── sidebar/                     # Navegación lateral
-│   ├── side-panel/                  # Panel lateral auxiliar
-│   ├── mobile-navigation-menu/      # Menú móvil
-│   ├── process-menu-tree/           # Árbol de procesos del sidenav
-│   ├── tray-menu/                   # Menú de bandeja
-│   ├── tray-documents-view/         # Vista de documentos de bandeja
-│   ├── create-document/             # Panel de creación de documentos
-│   └── index.ts
-│
-├── shared/
-│   ├── ui/                          # UI Kit puro — CERO lógica de negocio
-│   │   ├── button/, alert/, badge/, input, checkbox, radio, switch...
-│   │   └── index.ts                 # Único punto de exportación del UI Kit
-│   │
-│   └── components/                  # Componentes reutilizables con lógica de negocio
-│       ├── breadcrumb/
-│       ├── custom-filter/
-│       ├── pagination/              # movido desde shared/ui
-│       ├── data-table/              # movido desde shared/ui
-│       ├── timeline/                # movido desde shared/ui
-│       ├── solicitude-header/       # movido desde shared/ui
-│       ├── solicitude-form-card/    # movido desde shared/ui
-│       ├── solicitude-page-layout/  # movido desde shared/ui
-│       ├── solicitude-info-card/    # movido desde shared/ui
-│       └── index.ts
-│
-└── features/
-    ├── adjustment-seat/             # Feature: Asiento de Ajuste
-    │   ├── pages/
-    │   │   ├── documents/           # Lista de solicitudes
-    │   │   ├── request/             # Crear nueva solicitud
-    │   │   └── form/                # Formulario de asiento
-    │   └── index.ts
-    │
-    ├── chart-accounts/              # Feature: Plan de Cuentas Contables
-    │   ├── pages/
-    │   │   ├── documents/           # Lista de solicitudes
-    │   │   └── request/             # Crear nueva solicitud
-    │   └── index.ts
-    │
-    ├── login/
-    ├── otp-verification/
-    ├── virtual-desk/
-    ├── showcase/
-    └── process-configs/             # Configuraciones por proceso (documentos, rutas)
+|-- core/
+|   `-- auth/
+|-- layout/
+|   |-- shell/
+|   |-- navbar/
+|   |-- sidebar/
+|   |-- side-panel/
+|   |-- mobile-navigation-menu/
+|   |-- process-menu-tree/
+|   |-- tray-menu/
+|   |-- tray-documents-view/
+|   |-- create-document/
+|   `-- index.ts
+|-- shared/
+|   |-- ui/
+|   `-- components/
+|-- features/
+|   |-- adjustment-seat/
+|   |-- chart-accounts/
+|   |-- documents-records/
+|   |-- process-configs/
+|   |-- showcase/
+|   `-- virtual-desk/
+|-- app.routes.ts
+`-- app.component.ts
 ```
-
----
 
 ## Cambios ejecutados
 
-### 1. Eliminación de duplicados en `layout/`
+### 1. Separacion de capas
 
-`shared/ui/navbar/` y `shared/ui/side-panel/` existían como copias idénticas de sus versiones en `layout/`. Se eliminaron las copias de `shared/ui/` y se corrigió el import relativo roto en `layout/side-panel/side-panel.component.ts`.
+| Capa | Responsabilidad |
+| --- | --- |
+| `shared/ui/` | UI Kit puro, presentacional y reusable. |
+| `shared/components/` | Componentes transversales con logica de negocio. |
+| `layout/` | Shell, navegacion, sidebar, bandeja y creacion de documentos. |
+| `features/` | Pantallas y flujos por proceso. |
 
-### 2. Movidos a `shared/components/` (componentes con lógica de negocio)
+### 2. Componentes movidos a `shared/components/`
 
-| Componente | Origen | Destino |
-|---|---|---|
-| `solicitude-header` | `shared/ui/` | `shared/components/` |
-| `solicitude-form-card` | `shared/ui/` | `shared/components/` |
-| `solicitude-page-layout` | `shared/ui/` | `shared/components/` |
-| `solicitude-info-card` | `shared/ui/` | `shared/components/` |
-| `pagination` | `shared/ui/` | `shared/components/` |
-| `data-table` | `shared/ui/` | `shared/components/` |
-| `timeline` | `shared/ui/` | `shared/components/` |
+| Componente | Motivo |
+| --- | --- |
+| `solicitude-header` | Cabecera transversal de solicitudes. |
+| `solicitude-form-card` | Card de formulario transversal. |
+| `solicitude-page-layout` | Layout estandar de solicitudes. |
+| `solicitude-info-card` | Datos generales de la solicitud. |
+| `pagination` | Paginacion compartida. |
+| `data-table` | Tabla reusable. |
+| `timeline` | Historial de flujo. |
+| `custom-filter` | Filtros personalizados globales. |
+| `table-controls` | Checkbox maestro, acciones y paginacion de tablas. |
 
-### 3. Movidos a `layout/` (componentes exclusivos del shell)
+### 3. Componentes exclusivos del shell
 
-| Componente | Origen | Destino |
-|---|---|---|
-| `mobile-navigation-menu` | `shared/ui/` | `layout/` |
-| `process-menu-tree` | `shared/ui/` | `layout/` |
-| `tray-menu` | `shared/ui/` | `layout/` |
-| `tray-documents-view` | `shared/ui/` | `layout/` |
-| `create-document` | `shared/ui/` | `layout/` |
+| Componente | Ubicacion |
+| --- | --- |
+| `navbar` | `layout/navbar/` |
+| `sidebar` | `layout/sidebar/` |
+| `side-panel` | `layout/side-panel/` |
+| `mobile-navigation-menu` | `layout/mobile-navigation-menu/` |
+| `process-menu-tree` | `layout/process-menu-tree/` |
+| `tray-menu` | `layout/tray-menu/` |
+| `tray-documents-view` | `layout/tray-documents-view/` |
+| `create-document` | `layout/create-document/` |
 
-### 4. Reorganización de features en `pages/`
+### 4. Reorganizacion de features
 
-| Feature | Antes | Después |
-|---|---|---|
-| Asiento de Ajuste | `features/adjustment-seat-documents/` `features/adjustment-seat-request/` `features/adjustment-seat-form/` | `features/adjustment-seat/pages/documents/` `features/adjustment-seat/pages/request/` `features/adjustment-seat/pages/form/` |
-| Plan de Cuentas | `features/chart-accounts-documents/` `features/chart-accounts-request/` | `features/chart-accounts/pages/documents/` `features/chart-accounts/pages/request/` |
+| Feature | Estructura actual |
+| --- | --- |
+| Registro de asiento de ajuste | `features/adjustment-seat/pages/documents`, `request`, `form` |
+| Plan de cuentas contables | `features/chart-accounts/pages/documents`, `request` |
+| Documentos y registros | `features/documents-records/` |
+| Catalogo visual | `features/showcase/` |
 
-`app.routes.ts` actualizado con las nuevas rutas de `loadComponent`.
+### 5. Tokens y estilos
 
-### 5. Tipos exportados desde `shared/ui/index.ts`
+Se consolido la estrategia de tokens:
 
-Se agregó `export` a los tipos internos de los componentes más usados para habilitar autocompletado TypeScript:
+- `src/styles.css` queda como entrada global: imports, reset y reglas base.
+- `src/styles/tokens/generated/tokens.css` contiene variables CSS.
+- `src/styles/tokens/generated/tailwind.tokens.css` contiene tokens consumibles desde Tailwind.
+- No se deben usar colores ni sombras hardcodeadas en componentes.
+- Elevaciones, colores de checkbox, estados y required usan tokens semanticos.
 
-- `AlertTone`, `BadgeTone`, `TagTone`
-- `TextFieldType`, `TextFieldState`
-- `DatePickerVariant`, `DatePickerState`
-- `IconVariant`
+### 6. Componentes y patrones agregados o consolidados
 
-### 6. Nuevos componentes UI Kit
+| Componente / patron | Estado |
+| --- | --- |
+| `readonly-field` | Usado para modo lectura en inputs, selects, select multiple, radios, checkboxes y textareas. |
+| `siaf-table-controls` | Global para seleccion, acciones y paginacion de tablas. |
+| `siaf-custom-filter` | Global para filtros personalizados responsive. |
+| `siaf-flow-status-tag` | Estados oficiales del documento y registros. |
+| Checkbox global | Usa tokens de enabled, disabled, active e indeterminate. |
+| Required global | Usa token semantico de danger para el `*`. |
 
-- `siaf-alert` — alert inline con 5 tonos (`neutral`, `info`, `success`, `warning`, `error`), título, descripción, botón de cierre. Rediseñado desde cero para coincidir con el Figma (reemplazó el toast oscuro anterior).
-- `material-icons-outlined` — fuente cargada en `styles.css` (antes solo se cargaba `material-icons` filled).
+### 7. Solicitud de cuentas contables
 
----
+La pantalla `ChartAccountsRequestComponent` quedo alineada con el flujo de solicitudes:
 
-## Reglas de arquitectura establecidas
+- Permite crear cuentas contables y agregarlas a una tabla de detalle.
+- El boton Aceptar del formulario de cuenta se habilita segun casuisticas.
+- El boton Grabar de la solicitud se habilita cuando la solicitud esta completa.
+- Al grabar, pasa a estado elaborado y modo lectura.
+- En modo lectura se ocultan acciones, checkboxes y botones contextuales.
+- Al editar, recupera todos los datos ingresados previamente.
+- Al visualizar un registro de la tabla, abre el detalle en modo lectura.
+- `Vigencia`, `Visible` y `Tiene dinamica contable` se controlan por reglas del formulario.
+- Si una cuenta no es imputable, la dinamica contable queda en `No` y sus controles quedan deshabilitados.
 
-### ¿Dónde va cada componente?
+### 8. Documentos, registros y bandeja
 
-| Carpeta | Criterio |
-|---|---|
-| `shared/ui/` | Componente 100% presentacional, sin HTTP, sin lógica de negocio SIAF. Reutilizable en cualquier sistema. |
-| `shared/components/` | Tiene lógica de negocio pero se usa en ≥2 features distintas. |
-| `layout/` | Usado únicamente por `AppShellComponent`. Singleton. |
-| `features/X/components/` | Específico de un solo feature. |
+- Los filtros personalizados se aplican en documentos, registros y bandeja.
+- La tabla de documentos usa seleccion solo para estados permitidos.
+- La verificacion multiple aplica solo a documentos en estado `Elaborado`.
+- Los documentos en estado `Verificado` deshabilitan su checkbox.
+- El checkbox maestro muestra indeterminate cuando hay seleccion parcial.
+- Las acciones de tabla solo aparecen cuando hay seleccion.
 
-### Regla de imports
+## Reglas de arquitectura vigentes
 
-- Los features no se importan entre sí.
-- Si algo se necesita en dos features → sube a `shared/components/`.
-- `shared/ui/` nunca importa de `shared/components/` ni de `layout/`.
+- No importar entre features.
+- Subir a `shared/components/` si se reutiliza entre dos o mas features.
+- Mantener `shared/ui/` sin logica de negocio.
+- Usar tokens semanticos antes de agregar nuevos valores.
+- No usar hexadecimales ni `box-shadow` hardcodeado.
+- Validar con `npm run typecheck` despues de cambios relevantes.
 
----
+## Estado de verificacion
 
-## Resumen numérico
+Ultima validacion realizada:
 
-| Aspecto | Antes | Después |
-|---|---|---|
-| Componentes en `shared/ui/` | ~56 | 46 (UI Kit puro) |
-| Componentes en `shared/components/` | 2 | 9 |
-| Componentes en `layout/` | 3 | 9 |
-| Features con estructura `pages/` | 0 | 2 (adjustment-seat, chart-accounts) |
-| Duplicados de layout | 2 | 0 |
-| Tipos TypeScript exportados | parcial | completo para componentes clave |
+```bash
+npm run typecheck
+```
+
+Resultado: build de desarrollo generado correctamente.

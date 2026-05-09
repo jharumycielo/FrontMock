@@ -8,7 +8,7 @@ import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
       <span class="absolute -top-2.5 left-3 z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium text-text-muted">
         {{ captionText }}@if (required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
       </span>
-      <span class="min-w-0 text-sm leading-normal tracking-[0.0249px] text-text">{{ value }}</span>
+      <span class="min-w-0 text-sm leading-normal tracking-[0.0249px] text-text">{{ displayValue }}</span>
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -20,6 +20,10 @@ export class ReadonlyFieldComponent {
 
   get captionText(): string {
     return this.caption.replace(/\s*\*$/, '');
+  }
+
+  get displayValue(): string {
+    return this.value?.trim() ? this.value : '--';
   }
 }
 
