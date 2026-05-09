@@ -15,7 +15,7 @@ export interface SelectOption {
   imports: [NgClass, IconComponent],
   template: `
     <div
-      class="max-h-72 w-full overflow-y-auto rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest)] py-siaf-xs shadow-siaf-elevation-1"
+      class="max-h-72 w-full overflow-y-auto rounded-siaf-md bg-[var(--sys-color-bg-surfaces-floating,var(--sys-color-bg-surfaces-surface))] py-siaf-xs shadow-siaf-elevation-1"
       role="listbox"
       [attr.aria-multiselectable]="multiple"
     >

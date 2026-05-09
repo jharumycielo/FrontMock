@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { RouterLink } from '@angular/router';
 
 import type { DocumentsRecordsColumn, DocumentsRecordsRow, DocumentsRecordsTab } from '../../types/documents-records.types';
+import { FlowStatus, FlowStatusTagComponent } from '../flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../icon/icon.component';
 import { RecordStatus, RecordStatusTagComponent } from '../record-status-tag/record-status-tag.component';
 
@@ -14,7 +15,7 @@ export type DocumentsRecordsSelectionChange = {
 @Component({
   selector: 'siaf-documents-records-table',
   standalone: true,
-  imports: [IconComponent, NgClass, RecordStatusTagComponent, RouterLink],
+  imports: [FlowStatusTagComponent, IconComponent, NgClass, RecordStatusTagComponent, RouterLink],
   template: `
     <div class="min-w-0 overflow-x-auto">
       <table class="w-full border-collapse text-left text-sm" [ngClass]="minWidthClass">
@@ -44,7 +45,7 @@ export type DocumentsRecordsSelectionChange = {
                   @if (column.kind === 'document-link') {
                     <a class="line-clamp-2 text-sm leading-normal text-text hover:text-brand-primary" [routerLink]="documentRoute(row)">{{ row[column.key] }}</a>
                   } @else if (column.kind === 'flow-status') {
-                    <span class="inline-flex min-h-6 items-center rounded-siaf-sm px-siaf-xs text-xs text-white" [class.bg-[var(--sys-color-bg-status-flow-status-elaborado)]]="row[column.key] === 'Elaborado'" [class.bg-[var(--sys-color-bg-status-flow-status-verificado)]]="row[column.key] === 'Verificado'">{{ row[column.key] }}</span>
+                    <siaf-flow-status-tag [status]="flowStatus(row[column.key])" size="standard" />
                   } @else if (column.kind === 'record-status') {
                     <siaf-record-status-tag [status]="recordStatus(row[column.key])" size="standard" />
                   } @else {
@@ -92,6 +93,32 @@ export class DocumentsRecordsTableComponent {
   recordStatus(value: unknown): RecordStatus {
     const statuses: RecordStatus[] = ['Activo', 'Inactivo', 'Anulado', 'En Proceso', 'Validado', 'Eliminado'];
     return statuses.includes(value as RecordStatus) ? (value as RecordStatus) : 'Activo';
+  }
+
+  flowStatus(value: unknown): FlowStatus {
+    const statuses: FlowStatus[] = [
+      'Elaborado',
+      'Registrado',
+      'Verificado',
+      'Validado',
+      'Revisado',
+      'Generado',
+      'En proceso',
+      'Autorizado',
+      'Firmado',
+      'Aprobado',
+      'Aceptado',
+      'Publicado',
+      'Procesado',
+      'Observado',
+      'Pendiente',
+      'Fallido',
+      'Eliminado',
+      'Rechazado',
+      'Anulado'
+    ];
+
+    return statuses.includes(value as FlowStatus) ? (value as FlowStatus) : 'Elaborado';
   }
 }
 

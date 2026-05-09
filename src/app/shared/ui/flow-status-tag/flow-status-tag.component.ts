@@ -23,28 +23,27 @@ export type FlowStatus =
   | 'Anulado';
 
 export type FlowStatusTagSize = 'standard' | 'small';
-type FlowStatusTone = 'default' | 'info' | 'success' | 'warning' | 'danger';
 
-const FLOW_STATUS_TONE: Record<FlowStatus, FlowStatusTone> = {
-  Elaborado: 'default',
-  Registrado: 'default',
-  Verificado: 'info',
-  Validado: 'info',
-  Revisado: 'info',
-  Generado: 'info',
-  'En proceso': 'info',
-  Autorizado: 'success',
-  Firmado: 'success',
-  Aprobado: 'success',
-  Aceptado: 'success',
-  Publicado: 'success',
-  Procesado: 'success',
-  Observado: 'warning',
-  Pendiente: 'warning',
-  Fallido: 'warning',
-  Eliminado: 'danger',
-  Rechazado: 'danger',
-  Anulado: 'danger'
+const FLOW_STATUS_CLASS: Record<FlowStatus, string> = {
+  Elaborado: 'bg-[var(--sys-color-bg-status-flow-status-elaborado)]',
+  Registrado: 'bg-[var(--sys-color-bg-status-flow-status-elaborado)]',
+  Verificado: 'bg-[var(--sys-color-bg-status-flow-status-verificado)]',
+  Validado: 'bg-[var(--sys-color-bg-status-flow-status-validado)]',
+  Revisado: 'bg-[var(--sys-color-bg-status-flow-status-revisado)]',
+  Generado: 'bg-[var(--sys-color-bg-status-flow-status-verificado)]',
+  'En proceso': 'bg-[var(--sys-color-bg-status-flow-status-verificado)]',
+  Autorizado: 'bg-[var(--sys-color-bg-status-flow-status-autorizado)]',
+  Firmado: 'bg-[var(--sys-color-bg-status-flow-status-firmado)]',
+  Aprobado: 'bg-[var(--sys-color-bg-status-flow-status-aprobado)]',
+  Aceptado: 'bg-[var(--sys-color-bg-status-flow-status-aceptado)]',
+  Publicado: 'bg-[var(--sys-color-bg-status-flow-status-aprobado)]',
+  Procesado: 'bg-[var(--sys-color-bg-status-flow-status-aprobado)]',
+  Observado: 'bg-[var(--sys-color-bg-status-flow-status-observado)]',
+  Pendiente: 'bg-[var(--sys-color-bg-status-flow-status-observado)]',
+  Fallido: 'bg-[var(--sys-color-bg-status-flow-status-observado)]',
+  Eliminado: 'bg-[var(--sys-color-bg-status-flow-status-eliminado)]',
+  Rechazado: 'bg-[var(--sys-color-bg-status-flow-status-rechazado)]',
+  Anulado: 'bg-[var(--sys-color-bg-status-flow-status-anulado)]'
 };
 
 @Component({
@@ -67,14 +66,6 @@ export class FlowStatusTagComponent {
 
   get statusClass(): string {
     const sizeClass = this.size === 'standard' ? 'min-h-6 py-siaf-xxs' : 'min-h-4';
-    const toneClass: Record<FlowStatusTone, string> = {
-      default: 'bg-[var(--sys-color-bg-feedback-dark-default)]',
-      info: 'bg-[var(--sys-color-bg-feedback-dark-info)]',
-      success: 'bg-[var(--sys-color-bg-feedback-dark-success)]',
-      warning: 'bg-[var(--sys-color-bg-feedback-dark-warning)]',
-      danger: 'bg-[var(--sys-color-bg-feedback-dark-danger)]'
-    };
-
-    return `${sizeClass} ${toneClass[FLOW_STATUS_TONE[this.status]]}`;
+    return `${sizeClass} ${FLOW_STATUS_CLASS[this.status]}`;
   }
 }

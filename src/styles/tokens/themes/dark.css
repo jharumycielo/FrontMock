@@ -12,6 +12,8 @@
   --sys-color-bg-surfaces-surface-low: #1B1E25;
   --sys-color-bg-surfaces-surface-lowest: #101216;
   --sys-color-bg-surfaces-surface-muted: #242832;
+  --sys-color-bg-surfaces-floating: #20232B;
+  --sys-color-bg-surfaces-field: #292D36;
   --sys-color-bg-surfaces-disabled: #2E3440;
   --sys-color-bg-surfaces-highlight: #143A5A;
 
@@ -64,6 +66,19 @@
   --sys-color-bg-feedback-light-success: #173D3A;
   --sys-color-bg-feedback-light-warning: #463716;
 
+  --sys-color-bg-status-flow-status-aceptado: #1D6F69;
+  --sys-color-bg-status-flow-status-anulado: #8F2635;
+  --sys-color-bg-status-flow-status-aprobado: #1D6F69;
+  --sys-color-bg-status-flow-status-autorizado: #0B5CAD;
+  --sys-color-bg-status-flow-status-elaborado: #4A515F;
+  --sys-color-bg-status-flow-status-eliminado: #9E2F44;
+  --sys-color-bg-status-flow-status-firmado: #0B5CAD;
+  --sys-color-bg-status-flow-status-observado: #8A6516;
+  --sys-color-bg-status-flow-status-rechazado: #9E2F44;
+  --sys-color-bg-status-flow-status-revisado: #5E6675;
+  --sys-color-bg-status-flow-status-validado: #4A515F;
+  --sys-color-bg-status-flow-status-verificado: #0B5CAD;
+
   --sys-color-text-feedback-default: #F4F7FB;
   --sys-color-text-feedback-danger: #FFB4BE;
   --sys-color-text-feedback-info: #B7DCFF;
@@ -81,6 +96,7 @@
   --sys-color-icon-feedback-dark-info: #101216;
   --sys-color-icon-feedback-dark-success: #101216;
   --sys-color-icon-feedback-dark-warning: #101216;
+  --sys-color-icon-snackbar-success: var(--figma-light-sys-color-icon-feedback-dark-success);
   --sys-color-icon-feedback-light-default: #D5DCE7;
   --sys-color-icon-feedback-light-danger: #FFB4BE;
   --sys-color-icon-feedback-light-info: #B7DCFF;

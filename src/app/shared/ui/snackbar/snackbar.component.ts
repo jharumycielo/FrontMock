@@ -124,7 +124,7 @@ const SNACKBAR_PRESETS: Record<Exclude<SnackbarVariant, 'custom'>, SnackbarPrese
         role="status"
       >
         <div class="flex min-w-0 flex-1 items-center gap-siaf-xs">
-          <siaf-icon class="shrink-0 text-[var(--sys-color-icon-feedback-dark-success)]" name="check_circle" [size]="24" />
+          <siaf-icon class="shrink-0 text-[var(--sys-color-icon-snackbar-success,var(--sys-color-icon-feedback-dark-success))]" name="check_circle" [size]="24" />
 
           <div class="min-w-0 flex-1">
             @if (message) {

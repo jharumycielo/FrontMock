@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestro
 import { Router } from '@angular/router';
 
 import { BreadcrumbItem } from '../../../../shared/components/breadcrumb/breadcrumb.component';
+import { FormTableSearchComponent } from '../../../../shared/components/form-table-search/form-table-search.component';
 import { ButtonComponent } from '../../../../shared/ui/button/button.component';
 import { ModalComponent } from '../../../../shared/ui/modal/modal.component';
 import { DateTimePickerComponent } from '../../../../shared/ui/date-time-picker/date-time-picker.component';
@@ -91,6 +92,7 @@ type PeriodoGroup = {
     DateTimePickerComponent,
     EmptySectionComponent,
     FlowStatusTagComponent,
+    FormTableSearchComponent,
     IconComponent,
     LoaderOverlayComponent,
     MessageBoxComponent,
@@ -336,20 +338,12 @@ type PeriodoGroup = {
                     <div class="flex flex-col gap-siaf-md">
 
                       <!-- Búsqueda + acciones -->
-                      <div class="flex items-center gap-siaf-xs">
-                        <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md">
-                          <span class="sr-only">Buscar</span>
-                          <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted disabled:text-text-muted" placeholder="Buscar"
-                            [disabled]="isReadOnly"
-                            [value]="cuentasSearch" (input)="cuentasSearch = inputVal($event)" />
-                        </label>
-                        <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:text-text-muted" type="button" aria-label="Filtrar" [disabled]="isReadOnly">
-                          <siaf-icon name="filter_list" [size]="24" />
-                        </button>
-                        <button class="inline-flex size-10 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted disabled:cursor-not-allowed disabled:text-text-muted" type="button" aria-label="Más opciones" [disabled]="isReadOnly">
-                          <siaf-icon name="more_vert" [size]="24" />
-                        </button>
-                      </div>
+                      <siaf-form-table-search
+                        [value]="cuentasSearch"
+                        [disabled]="isReadOnly"
+                        ariaLabel="Buscar cuentas contables"
+                        (valueChange)="cuentasSearch = $event"
+                      />
 
                       <!-- Paginación top -->
                       <siaf-pagination navigation="Activate" position="Top"
@@ -485,11 +479,11 @@ type PeriodoGroup = {
             <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
               <div class="flex flex-col gap-siaf-lg">
 
-                <label class="flex h-10 w-full items-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md">
-                  <span class="sr-only">Buscar</span>
-                  <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted" placeholder="Buscar"
-                    [value]="detalleAjusteSearch()" (input)="detalleAjusteSearch.set(inputVal($event))" />
-                </label>
+                <siaf-form-table-search
+                  [value]="detalleAjusteSearch()"
+                  ariaLabel="Buscar código de detalle de ajuste"
+                  (valueChange)="detalleAjusteSearch.set($event)"
+                />
 
                 <siaf-pagination navigation="Activate" position="Top"
                   [page]="detalleAjustePage" [pageSize]="detalleAjusteRowsPerPage"
@@ -561,11 +555,11 @@ type PeriodoGroup = {
             <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
               <div class="flex flex-col gap-siaf-lg">
 
-                <label class="flex h-10 w-full items-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md">
-                  <span class="sr-only">Buscar</span>
-                  <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted" placeholder="Buscar"
-                    [value]="claseAjusteSearch()" (input)="claseAjusteSearch.set(inputVal($event))" />
-                </label>
+                <siaf-form-table-search
+                  [value]="claseAjusteSearch()"
+                  ariaLabel="Buscar código de clase de ajuste"
+                  (valueChange)="claseAjusteSearch.set($event)"
+                />
 
                 <siaf-pagination navigation="Activate" position="Top"
                   [page]="claseAjustePage" [pageSize]="claseAjusteRowsPerPage"
@@ -640,15 +634,11 @@ type PeriodoGroup = {
               <div class="flex flex-col gap-siaf-lg">
 
                 <!-- Búsqueda -->
-                <label class="flex h-10 w-full items-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md">
-                  <span class="sr-only">Buscar</span>
-                  <input
-                    class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted"
-                    placeholder="Buscar"
-                    [value]="periodoSearch()"
-                    (input)="periodoSearch.set(inputVal($event))"
-                  />
-                </label>
+                <siaf-form-table-search
+                  [value]="periodoSearch()"
+                  ariaLabel="Buscar periodo"
+                  (valueChange)="periodoSearch.set($event)"
+                />
 
                 <!-- Paginación superior -->
                 <siaf-pagination

@@ -3,12 +3,14 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  Inject,
   Input,
   OnChanges,
   Output,
   SimpleChanges,
   ViewChild,
 } from "@angular/core";
+import { DOCUMENT } from "@angular/common";
 
 import { ButtonComponent } from "../button/button.component";
 import { IconComponent } from "../icon/icon.component";
@@ -292,6 +294,8 @@ export class ModalComponent implements OnChanges {
   readonly descriptionId = `siaf-modal-description-${Math.random().toString(36).slice(2)}`;
   private previouslyFocusedElement: HTMLElement | null = null;
 
+  constructor(@Inject(DOCUMENT) private readonly document: Document) {}
+
   ngOnChanges(changes: SimpleChanges): void {
     if (!changes["open"]) {
       return;
@@ -325,7 +329,8 @@ export class ModalComponent implements OnChanges {
   }
 
   get resolvedIllustrationSrc(): string {
-    return this.illustrationSrc || this.preset?.illustration || "";
+    const illustration = this.illustrationSrc || this.preset?.illustration || "";
+    return this.resolveThemeIllustration(illustration);
   }
 
   get resolvedConfirmLabel(): string {
@@ -412,5 +417,19 @@ export class ModalComponent implements OnChanges {
   private restoreFocus(): void {
     this.previouslyFocusedElement?.focus();
     this.previouslyFocusedElement = null;
+  }
+
+  private resolveThemeIllustration(src: string): string {
+    if (!src || !this.isDarkTheme()) {
+      return src;
+    }
+
+    return src.startsWith("assets/figma/modals/")
+      ? src.replace("assets/figma/modals/", "assets/figma/modals-dark/")
+      : src;
+  }
+
+  private isDarkTheme(): boolean {
+    return this.document.documentElement.getAttribute("data-theme") === "dark";
   }
 }

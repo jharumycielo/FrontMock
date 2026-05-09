@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, forwardRef, Input } from '@angular/core';
 
 import { BreadcrumbComponent, BreadcrumbItem } from '../../../../shared/components/breadcrumb/breadcrumb.component';
+import { FormTableSearchComponent } from '../../../../shared/components/form-table-search/form-table-search.component';
 import { IconComponent } from '../../../../shared/ui/icon/icon.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { findProcessPathById } from '../../../../layout/process-menu-tree/process-menu-tree.component';
@@ -42,6 +43,7 @@ type AccountingRow = {
   standalone: true,
   imports: [
     BreadcrumbComponent,
+    FormTableSearchComponent,
     IconComponent,
     PaginationComponent,
     forwardRef(() => ReadonlyCardComponent),
@@ -153,20 +155,7 @@ type AccountingRow = {
                       <h3 class="text-sm font-bold uppercase text-text">Cuentas contables</h3>
                     </div>
 
-                    <div class="flex flex-col gap-siaf-md md:flex-row md:items-center">
-                      <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-border bg-surface px-siaf-md">
-                        <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted" placeholder="Buscar" />
-                      </label>
-
-                      <div class="flex shrink-0 items-center justify-end gap-siaf-xs">
-                        <button class="inline-flex size-10 items-center justify-center rounded-siaf-md hover:bg-surface-muted" type="button" aria-label="Filtrar">
-                          <siaf-icon name="filter_list" [size]="24" />
-                        </button>
-                        <button class="inline-flex size-10 items-center justify-center rounded-siaf-md hover:bg-surface-muted" type="button" aria-label="Mas opciones">
-                          <siaf-icon name="more_vert" [size]="24" />
-                        </button>
-                      </div>
-                    </div>
+                    <siaf-form-table-search ariaLabel="Buscar cuentas contables" />
 
                     <div class="flex justify-end">
                       <siaf-pagination

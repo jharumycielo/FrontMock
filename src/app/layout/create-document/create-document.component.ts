@@ -54,7 +54,7 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
   imports: [ButtonComponent, IconComponent, NgClass, SelectOptionsComponent],
   template: `
     <section
-      class="flex flex-col items-start bg-surface"
+      class="flex flex-col items-start bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface))]"
       [ngClass]="variantClass"
       aria-label="Crear documento"
     >
@@ -66,7 +66,7 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
 
       <div
         class="flex w-full items-start"
-        [ngClass]="variant === 'sidepanel' ? 'min-h-0 flex-1' : 'bg-[var(--sys-color-bg-surfaces-surface-highest)]'"
+        [ngClass]="variant === 'sidepanel' ? 'min-h-0 flex-1' : 'bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface))]'"
       >
         <div
           class="flex min-w-0 flex-1 flex-col px-siaf-md"
@@ -131,7 +131,7 @@ const CREATE_DOCUMENT_PROCESSES: CreateDocumentProcessOption[] = collectProcessO
 
                     @if (showProcessResults(field)) {
                       <div
-                        class="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-72 overflow-y-auto rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest)] py-siaf-xs shadow-siaf-elevation-1"
+                        class="absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-72 overflow-y-auto rounded-siaf-md bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface))] py-siaf-xs shadow-siaf-elevation-1"
                         role="listbox"
                       >
                         @for (process of filteredProcessOptions; track process.id) {

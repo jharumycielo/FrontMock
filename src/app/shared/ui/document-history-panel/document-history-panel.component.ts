@@ -1,6 +1,6 @@
-import { NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 
+import { FlowStatusTagComponent } from '../flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../icon/icon.component';
 
 export type DocumentHistoryStatus = 'Elaborado' | 'Verificado';
@@ -27,7 +27,7 @@ type ReadonlyField = {
 @Component({
   selector: 'siaf-document-history-panel',
   standalone: true,
-  imports: [IconComponent, NgClass],
+  imports: [FlowStatusTagComponent, IconComponent],
   template: `
     @if (open) {
       <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="document-history-title" (click)="closed.emit()">
@@ -94,9 +94,7 @@ type ReadonlyField = {
                         <td class="min-h-12 px-siaf-md py-siaf-sm text-sm leading-normal text-text">{{ row.unit }}</td>
                         <td class="min-h-12 px-siaf-md py-siaf-sm text-sm leading-normal text-text">{{ row.date }} <span class="ml-siaf-md">{{ row.time }}</span></td>
                         <td class="min-h-12 px-siaf-md py-siaf-sm">
-                          <span class="inline-flex min-h-6 items-center justify-center rounded-siaf-sm px-siaf-xs text-xs leading-normal text-white" [ngClass]="statusClass(row.status)">
-                            {{ row.status }}
-                          </span>
+                          <siaf-flow-status-tag [status]="row.status" size="standard" />
                         </td>
                       </tr>
                     }
@@ -140,11 +138,5 @@ export class DocumentHistoryPanelComponent {
       { label: 'Nro de documento', value: this.summary.number },
       { label: 'Tipo de acción', value: this.summary.actionType }
     ];
-  }
-
-  statusClass(status: DocumentHistoryStatus): string {
-    return status === 'Verificado'
-      ? 'bg-[var(--sys-color-bg-status-flow-status-verificado)]'
-      : 'bg-[var(--sys-color-bg-status-flow-status-elaborado)]';
   }
 }

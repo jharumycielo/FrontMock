@@ -43,7 +43,7 @@ const RAIL_ITEMS: RailItem[] = [
           >
             <span
               class="relative inline-flex size-10 items-center justify-center rounded-siaf-md transition duration-150"
-              [ngClass]="ctaAdd ? 'bg-[var(--sys-color-bg-brand-accent)] text-white group-hover:brightness-90 group-active:brightness-75' : 'bg-white text-[var(--sys-color-text-neutral-disabled)]'"
+              [ngClass]="ctaAdd ? 'bg-[var(--sys-color-bg-brand-accent)] text-white group-hover:brightness-90 group-active:brightness-75' : 'bg-[var(--sys-color-bg-surfaces-disabled)] text-[var(--sys-color-text-neutral-disabled)]'"
             >
               @if (!ctaAdd) {
                 <span class="absolute inset-0 rounded-siaf-md bg-[var(--sys-color-bg-states-dark-disabled)]"></span>
@@ -77,7 +77,7 @@ const RAIL_ITEMS: RailItem[] = [
               type="button"
               (click)="help.emit()"
             >
-              <span class="inline-flex size-8 items-center justify-center rounded-siaf-md transition duration-150 group-hover:bg-[rgba(32,32,32,0.08)] group-active:bg-[rgba(32,32,32,0.16)]">
+              <span class="inline-flex size-8 items-center justify-center rounded-siaf-md transition duration-150 group-hover:bg-[var(--sys-color-bg-states-light-hover)] group-active:bg-[var(--sys-color-bg-states-light-pressed)]">
                 <siaf-icon name="help_outline" [size]="24" />
               </span>
               <span class="font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)]">Ayuda</span>
@@ -146,6 +146,6 @@ export class SidebarComponent {
   iconShellClass(item: SidebarNavigation): string {
     return this.isActive(item)
       ? 'bg-brand-primary/10 text-brand-primary group-hover:bg-brand-primary/15 group-active:bg-brand-primary/25'
-      : 'bg-transparent text-[var(--sys-color-text-neutral-medium)] group-hover:bg-[rgba(32,32,32,0.08)] group-active:bg-[rgba(32,32,32,0.16)]';
+      : 'bg-transparent text-[var(--sys-color-text-neutral-medium)] group-hover:bg-[var(--sys-color-bg-states-light-hover)] group-active:bg-[var(--sys-color-bg-states-light-pressed)]';
   }
 }

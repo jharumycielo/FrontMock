@@ -14,23 +14,26 @@ import { IconComponent } from '../../ui/icon/icon.component';
           class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)] outline-none placeholder:text-[var(--sys-color-text-neutral-low)]"
           [placeholder]="placeholder"
           [value]="value"
+          [disabled]="disabled"
           (input)="onInput($event)"
         />
       </label>
 
       <div class="flex shrink-0 items-start gap-siaf-xs">
         <button
-          class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+          class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)] disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)] disabled:hover:bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
           type="button"
           [attr.aria-label]="filterLabel"
+          [disabled]="disabled"
           (click)="filter.emit()"
         >
           <siaf-icon name="filter_list" [size]="24" />
         </button>
         <button
-          class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+          class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-dark-pressed)] disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)] disabled:hover:bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
           type="button"
           [attr.aria-label]="moreLabel"
+          [disabled]="disabled"
           (click)="more.emit()"
         >
           <siaf-icon name="more_vert" [size]="24" />
@@ -46,6 +49,7 @@ export class FormTableSearchComponent {
   @Input() ariaLabel = 'Buscar';
   @Input() filterLabel = 'Filtrar';
   @Input() moreLabel = 'Mas opciones';
+  @Input() disabled = false;
 
   @Output() valueChange = new EventEmitter<string>();
   @Output() filter = new EventEmitter<void>();

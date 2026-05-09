@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router } from '@angular/router';
 
 import { BreadcrumbItem } from '../../../../shared/components/breadcrumb/breadcrumb.component';
+import { FormTableSearchComponent } from '../../../../shared/components/form-table-search/form-table-search.component';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import { TableControlsComponent } from '../../../../shared/components/table-controls/table-controls.component';
 import { ButtonComponent } from '../../../../shared/ui/button/button.component';
@@ -114,6 +115,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
     AlertComponent,
     ButtonComponent,
     FlowStatusTagComponent,
+    FormTableSearchComponent,
     IconComponent,
     ModalComponent,
     ReadonlyFieldComponent,
@@ -649,20 +651,11 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 
             <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
               <div class="flex flex-col gap-siaf-lg">
-              <div class="flex items-start gap-siaf-md">
-                <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md">
-                  <span class="sr-only">Buscar</span>
-                  <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted" placeholder="Buscar" [value]="externalEntitySearch()" (input)="externalEntitySearch.set(inputValue($event))" />
-                </label>
-                <div class="flex shrink-0 items-center gap-siaf-xs">
-                  <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted" type="button" aria-label="Filtros">
-                    <siaf-icon name="filter_list" [size]="24" />
-                  </button>
-                  <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted" type="button" aria-label="Mas opciones">
-                    <siaf-icon name="more_vert" [size]="24" />
-                  </button>
-                </div>
-              </div>
+              <siaf-form-table-search
+                [value]="externalEntitySearch()"
+                ariaLabel="Buscar entidad proveniente"
+                (valueChange)="externalEntitySearch.set($event)"
+              />
 
               <siaf-pagination navigation="Activate" position="Top" [page]="externalEntityPage" [pageSize]="externalEntityRowsPerPage" [totalItems]="externalEntityTotalItems" [totalPages]="externalEntityTotalPages" (previous)="onExternalEntityPreviousPage()" (next)="onExternalEntityNextPage()" />
 
@@ -723,20 +716,11 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 
             <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
               <div class="flex flex-col gap-siaf-lg">
-                <div class="flex items-start gap-siaf-md">
-                  <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface px-siaf-md">
-                    <span class="sr-only">Buscar</span>
-                    <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted" placeholder="Buscar" [value]="tipoPlanSearch()" (input)="tipoPlanSearch.set(inputValue($event))" />
-                  </label>
-                  <div class="flex shrink-0 items-center gap-siaf-xs">
-                    <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted" type="button" aria-label="Filtros">
-                      <siaf-icon name="filter_list" [size]="24" />
-                    </button>
-                    <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted" type="button" aria-label="Mas opciones">
-                      <siaf-icon name="more_vert" [size]="24" />
-                    </button>
-                  </div>
-                </div>
+                <siaf-form-table-search
+                  [value]="tipoPlanSearch()"
+                  ariaLabel="Buscar tipo plan de cuentas contable"
+                  (valueChange)="tipoPlanSearch.set($event)"
+                />
 
                 <div class="min-h-0 flex-1 overflow-auto">
                   <table class="w-full border-collapse text-left">
