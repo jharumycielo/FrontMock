@@ -18,7 +18,7 @@ type DeskCard = {
   template: `
       <section class="min-w-0">
         <header class="flex h-[56px] items-center bg-surface px-siaf-md">
-          <h1 class="m-0 text-sm font-bold uppercase leading-normal text-text">Panel</h1>
+          <h1 class="m-0 text-sm font-bold uppercase leading-normal text-[var(--sys-color-text-brand-secondary)]">Panel</h1>
         </header>
 
         <section class="min-h-[calc(100vh-112px)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] p-siaf-md">
@@ -31,8 +31,8 @@ type DeskCard = {
                 <siaf-icon name="inbox" [size]="64" />
               </span>
               <div class="min-w-0">
-                <p class="m-0 text-[30px] font-medium leading-normal tracking-[-0.63px] text-brand-secondary">Bandeja de Documentos</p>
-                <strong class="block text-[54px] font-bold leading-none tracking-[-0.62px] text-brand-secondary">09</strong>
+                <p class="m-0 text-[30px] font-medium leading-normal tracking-[-0.63px] text-[var(--sys-color-text-brand-secondary)]">Bandeja de Documentos</p>
+                <strong class="block text-[54px] font-bold leading-none tracking-[-0.62px] text-[var(--sys-color-text-brand-secondary)]">09</strong>
               </div>
             </article>
 
@@ -48,7 +48,7 @@ type DeskCard = {
               <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] text-[var(--sys-color-text-brand-primary)] sm:size-[98px]">
                 <siaf-icon name="picture_in_picture" [size]="64" />
               </span>
-              <p class="m-0 text-[30px] font-medium leading-normal tracking-[-0.63px] text-brand-secondary">Procesos</p>
+              <p class="m-0 text-[30px] font-medium leading-normal tracking-[-0.63px] text-[var(--sys-color-text-brand-secondary)]">Procesos</p>
             </article>
           </div>
 
@@ -57,8 +57,8 @@ type DeskCard = {
               @for (card of smallCards; track card.title) {
                 <article class="flex min-h-[120px] items-center justify-between rounded-siaf-md bg-surface p-siaf-xl">
                   <div>
-                    <p class="m-0 text-[22px] font-medium leading-normal tracking-[-0.19px] text-brand-secondary">{{ card.title }}</p>
-                    <strong class="block text-[44px] font-bold leading-none tracking-[-0.62px] text-brand-secondary">{{ card.value }}</strong>
+                    <p class="m-0 text-[22px] font-medium leading-normal tracking-[-0.19px] text-[var(--sys-color-text-brand-secondary)]">{{ card.title }}</p>
+                    <strong class="block text-[44px] font-bold leading-none tracking-[-0.62px] text-[var(--sys-color-text-brand-secondary)]">{{ card.value }}</strong>
                   </div>
                   <span class="inline-flex size-[74px] shrink-0 items-center justify-center text-[var(--card-color)]" [style.--card-color]="card.iconClass">
                     <siaf-icon [name]="card.icon" [size]="58" />
@@ -73,7 +73,7 @@ type DeskCard = {
                   <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))]" [style.color]="card.iconClass">
                     <siaf-icon [name]="card.icon" [size]="58" />
                   </span>
-                  <p class="m-0 text-[30px] font-medium leading-normal tracking-[-0.63px] text-brand-secondary">{{ card.title }}</p>
+                  <p class="m-0 text-[30px] font-medium leading-normal tracking-[-0.63px] text-[var(--sys-color-text-brand-secondary)]">{{ card.title }}</p>
                 </article>
               }
             </div>

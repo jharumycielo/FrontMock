@@ -19,7 +19,7 @@ import { ReadonlyFieldComponent } from '../../../../shared/ui/readonly-field/rea
 import { TextAreaControlComponent } from '../../../../shared/ui/text-area-control/text-area-control.component';
 import { TextFieldComponent } from '../../../../shared/ui/text-field/text-field.component';
 import { UploadedFileCardComponent } from '../../../../shared/ui/uploaded-file-card/uploaded-file-card.component';
-import { UploadSidePanelComponent } from '../../../../shared/ui/upload-side-panel/upload-side-panel.component';
+import { UploadSideNavComponent } from '../../../../shared/ui/upload-side-nav/upload-side-nav.component';
 import { ActionTrackerComponent, ActionTrackerSummary } from '../../../../shared/ui/action-tracker/action-tracker.component';
 import { CurrentUserService } from '../../../../core/auth/current-user.service';
 
@@ -99,7 +99,7 @@ type PeriodoGroup = {
     SolicitudePageLayoutComponent,
     SnackbarComponent,
     UploadedFileCardComponent,
-    UploadSidePanelComponent,
+    UploadSideNavComponent,
     ReadonlyFieldComponent,
     TextAreaControlComponent,
     TextFieldComponent,
@@ -458,7 +458,7 @@ type PeriodoGroup = {
           }
       </siaf-solicitude-page-layout>
 
-      <siaf-upload-side-panel
+      <siaf-upload-side-nav
         [open]="uploadPanelOpen()"
         (closed)="uploadPanelOpen.set(false)"
         (fileSelected)="uploadedFile.set($event)"

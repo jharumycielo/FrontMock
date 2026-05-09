@@ -7,6 +7,7 @@
 export { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 export { CustomFilterComponent } from './custom-filter/custom-filter.component';
 export type { FilterRow, CustomFilterApplyEvent } from './custom-filter/custom-filter.component';
+export { FormTableSearchComponent } from './form-table-search/form-table-search.component';
 export { SolicitudeHeaderComponent } from './solicitude-header/solicitude-header.component';
 export type { SolicitudeHeaderRole, SolicitudeHeaderState, SolicitudeHeaderType } from './solicitude-header/solicitude-header.component';
 export { SolicitudeFormCardComponent } from './solicitude-form-card/solicitude-form-card.component';

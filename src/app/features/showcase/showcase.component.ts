@@ -49,7 +49,7 @@ import { TooltipComponent } from '../../shared/ui/tooltip/tooltip.component';
 import { TrayDocumentsViewComponent } from '../../layout/tray-documents-view/tray-documents-view.component';
 import { TrayMenuComponent } from '../../layout/tray-menu/tray-menu.component';
 import { TreeViewComponent } from '../../shared/ui/tree-view/tree-view.component';
-import { UploadSidePanelComponent } from '../../shared/ui/upload-side-panel/upload-side-panel.component';
+import { UploadSideNavComponent } from '../../shared/ui/upload-side-nav/upload-side-nav.component';
 import { UploadedFileCardComponent } from '../../shared/ui/uploaded-file-card/uploaded-file-card.component';
 import { UploaderComponent } from '../../shared/ui/uploader/uploader.component';
 import { TableComponent } from '../../shared/ui/table/table.component';
@@ -73,7 +73,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
     StepperCardComponent, StepsComponent, SummaryCardComponent, SwitchComponent,
     TabsComponent, TagComponent, TextAreaControlComponent, TextFieldComponent,
     TimelineComponent, TooltipComponent, TrayDocumentsViewComponent, TrayMenuComponent,
-    TreeViewComponent, UploadSidePanelComponent, UploadedFileCardComponent,
+    TreeViewComponent, UploadSideNavComponent, UploadedFileCardComponent,
     UploaderComponent, TableComponent, CreateDocumentComponent,
   ],
   template: `
@@ -425,11 +425,11 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
         </div>
       </section>
 
-      <!-- UPLOAD SIDE PANEL -->
-      <section id="sc-upload-side-panel">
-        <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Upload Side Panel</h2>
+      <!-- UPLOAD SIDE NAV -->
+      <section id="sc-upload-side-nav">
+        <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Upload Side Nav</h2>
         <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="height:420px;position:relative">
-          <siaf-upload-side-panel [open]="true" title="Cargar Documento de Sustento"
+          <siaf-upload-side-nav [open]="true" title="Cargar Documento de Sustento"
             description="Sube un archivo .PDF en el formato correcto."
             acceptedLabel="Solo admite archivos .pdf" hint="Archivos de hasta 10 MB" />
         </div>

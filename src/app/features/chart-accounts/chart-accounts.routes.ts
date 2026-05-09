@@ -17,7 +17,9 @@ export const CHART_ACCOUNTS_ROUTES: Routes = [
   },
   {
     path: 'carga-masiva/solicitud',
-    redirectTo: '',
-    pathMatch: 'full',
+    loadComponent: () =>
+      import('./pages/bulk-request/chart-accounts-bulk-request.component').then(
+        (m) => m.ChartAccountsBulkRequestComponent,
+      ),
   },
 ];

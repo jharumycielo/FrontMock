@@ -5,6 +5,7 @@
 @import "./styles/tokens/generated/tokens.css";
 @import "./styles/tokens/generated/tailwind.tokens.css";
 @import "./styles/figma-tokens.css";
+@import "./styles/tokens/themes/index.css";
 
 @theme {
   --font-sans: var(--sys-typography-font-family-base);
@@ -110,6 +111,20 @@ body {
   color: var(--sys-color-text-neutral-high);
   font-family: var(--sys-typography-font-family-base);
   font-size: var(--sys-typography-size-body);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+}
+
+::view-transition-old(root) {
+  z-index: 0;
 }
 
 button,

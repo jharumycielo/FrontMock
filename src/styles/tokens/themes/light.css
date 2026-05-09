@@ -6,49 +6,33 @@
 [data-theme="light"] {
   --sys-color-bg-surfaces-surface: #FFFFFF;
   --sys-color-bg-surfaces-surface-high: #F5F5F5;
+  --sys-color-bg-surfaces-surface-low: rgba(32, 32, 32, 0.04);
+  --sys-color-bg-surfaces-surface-lowest: rgba(32, 32, 32, 0.04);
   --sys-color-bg-surfaces-surface-muted: #EEEEEE;
   --sys-color-text-neutral-high: #202020;
   --sys-color-text-neutral-medium: #29292a;
   --sys-color-text-neutral-low: #6f6f71;
   --sys-color-text-neutral-disabled: #999999;
+  --sys-color-text-brand-secondary: var(--figma-light-sys-color-text-brand-secondary);
+  --sys-color-divider-default: rgba(32, 32, 32, 0.12);
   --sys-color-border-states-enabled: rgba(32, 32, 32, 0.4);
+  --sys-color-border-states-disabled: rgba(32, 32, 32, 0.12);
+  --sys-color-border-states-white: #FFFFFF;
   --sys-color-border-states-hover: rgba(32, 32, 32, 0.6);
   --sys-color-border-states-focused: rgba(1, 72, 153, 0.8);
+  --sys-color-icon-states-enabled: #29292a;
+  --sys-color-icon-states-active: #004899;
+  --sys-color-icon-states-disabled: #999999;
   --sys-color-bg-states-light-enabled: rgba(32, 32, 32, 0.04);
   --sys-color-bg-states-light-hover: rgba(1, 72, 153, 0.56);
   --sys-color-bg-states-light-pressed: rgba(32, 32, 32, 0.16);
   --sys-color-bg-states-light-disabled: rgba(32, 32, 32, 0.08);
   --sys-color-bg-brand-primary: #004899;
+  --sys-color-bg-brand-primary-hover: #00366f;
   --sys-color-bg-brand-secondary: #20635e;
   --sys-color-bg-brand-accent: #E6375D;
   --sys-color-text-brand-white: #FFFFFF;
   --sys-shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
   --sys-shadow-md: 0 8px 24px rgb(16 24 40 / 0.08);
   --sys-shadow-lg: 0 12px 32px rgb(16 24 40 / 0.12);
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --sys-color-bg-surfaces-surface: #FFFFFF;
-    --sys-color-bg-surfaces-surface-high: #F5F5F5;
-    --sys-color-bg-surfaces-surface-muted: #EEEEEE;
-    --sys-color-text-neutral-high: #202020;
-    --sys-color-text-neutral-medium: #29292a;
-    --sys-color-text-neutral-low: #6f6f71;
-    --sys-color-text-neutral-disabled: #999999;
-    --sys-color-border-states-enabled: rgba(32, 32, 32, 0.4);
-    --sys-color-border-states-hover: rgba(32, 32, 32, 0.6);
-    --sys-color-border-states-focused: rgba(1, 72, 153, 0.8);
-    --sys-color-bg-states-light-enabled: rgba(32, 32, 32, 0.04);
-    --sys-color-bg-states-light-hover: rgba(1, 72, 153, 0.56);
-    --sys-color-bg-states-light-pressed: rgba(32, 32, 32, 0.16);
-    --sys-color-bg-states-light-disabled: rgba(32, 32, 32, 0.08);
-    --sys-color-bg-brand-primary: #004899;
-    --sys-color-bg-brand-secondary: #20635e;
-    --sys-color-bg-brand-accent: #E6375D;
-    --sys-color-text-brand-white: #FFFFFF;
-    --sys-shadow-sm: 0 1px 2px rgb(16 24 40 / 0.06);
-    --sys-shadow-md: 0 8px 24px rgb(16 24 40 / 0.08);
-    --sys-shadow-lg: 0 12px 32px rgb(16 24 40 / 0.12);
-  }
 }

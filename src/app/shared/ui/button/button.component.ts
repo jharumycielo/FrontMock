@@ -49,10 +49,12 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
     }
 
     .siaf-button:disabled {
-      background:
-        linear-gradient(var(--sys-color-bg-states-light-disabled), var(--sys-color-bg-states-light-disabled)),
-        var(--sys-color-bg-brand-white);
+      border-color: var(--sys-color-border-states-disabled);
+      background: var(--sys-color-bg-surfaces-disabled);
       color: var(--sys-color-text-neutral-disabled);
+      opacity: 1;
+      box-shadow: none;
+      filter: none;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush

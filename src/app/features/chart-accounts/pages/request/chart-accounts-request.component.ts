@@ -19,7 +19,7 @@ import { TextAreaControlComponent } from '../../../../shared/ui/text-area-contro
 import { AlertComponent } from '../../../../shared/ui/alert/alert.component';
 import { TextFieldComponent, TextFieldOption } from '../../../../shared/ui/text-field/text-field.component';
 import { UploadedFileCardComponent } from '../../../../shared/ui/uploaded-file-card/uploaded-file-card.component';
-import { UploadSidePanelComponent } from '../../../../shared/ui/upload-side-panel/upload-side-panel.component';
+import { UploadSideNavComponent } from '../../../../shared/ui/upload-side-nav/upload-side-nav.component';
 
 type TipoPlanContable = {
   id: string;
@@ -126,7 +126,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
     TextAreaControlComponent,
     TextFieldComponent,
     UploadedFileCardComponent,
-    UploadSidePanelComponent
+    UploadSideNavComponent
   ],
   template: `
     <div class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
@@ -626,7 +626,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
           }
         </siaf-solicitude-page-layout>
 
-      <siaf-upload-side-panel
+      <siaf-upload-side-nav
         [open]="uploadPanelOpen()"
         (closed)="uploadPanelOpen.set(false)"
         (confirmed)="onUploadConfirmed($event)"
