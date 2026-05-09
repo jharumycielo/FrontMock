@@ -9,29 +9,29 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
   standalone: true,
   imports: [ButtonComponent, IconComponent, RouterLink],
   template: `
-    <main class="flex min-h-screen items-center justify-center bg-[var(--sys-color-bg-surfaces-surface-lowest,rgba(32,32,32,0.04))] p-siaf-xxl">
-      <div class="w-full max-w-[1077px] rounded-siaf-lg bg-surface p-siaf-xxl shadow-siaf-sm">
-        <div class="flex flex-col items-center justify-between gap-10 min-h-[440px]">
+    <main class="flex min-h-screen items-center justify-center bg-[var(--sys-color-bg-surfaces-surface-lowest,rgba(32,32,32,0.04))] px-siaf-md py-siaf-lg sm:p-siaf-xxl">
+      <div class="w-full max-w-[1077px] rounded-siaf-lg bg-surface px-siaf-md py-siaf-xl shadow-siaf-sm sm:p-siaf-xxl">
+        <div class="flex min-h-[420px] flex-col items-center justify-between gap-8 sm:min-h-[440px] sm:gap-10">
 
           <!-- Contenido principal -->
-          <div class="flex flex-col items-center gap-5 w-full">
+          <div class="flex w-full flex-col items-center gap-5">
 
             <!-- Título y descripción -->
-            <div class="flex flex-col items-center gap-5">
-              <h1 class="m-0 text-[27px] font-bold leading-[36px] tracking-[-0.31px] text-[var(--sys-color-text-brand-primary)]">
+            <div class="flex w-full max-w-[360px] flex-col items-center gap-5">
+              <h1 class="m-0 text-center text-[24px] font-bold leading-[32px] tracking-[-0.31px] text-[var(--sys-color-text-brand-primary)] sm:text-[27px] sm:leading-[36px]">
                 Verificación de código OTP
               </h1>
-              <p class="m-0 w-[302px] text-center text-sm font-medium leading-5 text-[var(--sys-color-text-neutral-medium)]">
+              <p class="m-0 w-full text-center text-sm font-medium leading-5 text-[var(--sys-color-text-neutral-medium)]">
                 Hemos enviado el código OTP a su correo electrónico. Por favor, ingrese el código en el campo a continuación.
               </p>
             </div>
 
             <!-- Inputs OTP -->
-            <div class="flex items-center gap-5">
+            <div class="flex w-full max-w-[248px] items-center justify-center gap-siaf-sm sm:max-w-none sm:gap-5">
               @for (digit of otp; track $index; let i = $index) {
                 <input
                   #otpInput
-                  class="h-10 w-[42px] rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface text-center text-sm text-text outline-none transition focus:border-2 focus:border-[rgba(1,72,153,0.8)]"
+                  class="h-10 w-10 rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface text-center text-sm text-text outline-none transition focus:border-2 focus:border-[rgba(1,72,153,0.8)] sm:w-[42px]"
                   type="text"
                   inputmode="numeric"
                   maxlength="1"
@@ -44,14 +44,14 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
             </div>
 
             <!-- Botón Iniciar sesión -->
-            <div class="w-[336px]">
-              <siaf-button class="block w-full" variant="primary" [disabled]="!isComplete()" routerLink="/panel">
+            <div class="w-full max-w-[336px]">
+              <siaf-button class="block w-full" variant="primary" size="md" [disabled]="!isComplete()" routerLink="/panel">
                 Iniciar sesión
               </siaf-button>
             </div>
 
             <!-- Sección de ayuda -->
-            <div class="w-[320px]">
+            <div class="w-full max-w-[336px]">
               <p class="m-0 text-sm font-bold leading-5 text-[var(--sys-color-text-neutral-medium)]">¿Necesitas ayuda?</p>
               <p class="m-0 text-xs leading-5 text-[var(--sys-color-text-neutral-medium)]">
                 Si no puedes recibir el código o si cambiaste tu correo electrónico o número de teléfono,
@@ -61,7 +61,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
           </div>
 
           <!-- Ir a inicio -->
-          <div class="flex w-full justify-end">
+          <div class="flex w-full justify-center sm:justify-end">
             <a
               class="inline-flex min-h-10 items-center gap-siaf-xs rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-neutral-medium)] transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
               routerLink="/login"
