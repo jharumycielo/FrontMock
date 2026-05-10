@@ -32,7 +32,7 @@ const RAIL_ITEMS: RailItem[] = [
   imports: [IconComponent, NgClass],
   template: `
     @if (variant === 'rail') {
-      <aside class="flex h-full min-h-[745px] w-16 flex-col items-center gap-0 border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-[var(--sys-color-bg-surfaces-surface)] px-siaf-xxs py-siaf-xs">
+      <aside class="flex h-full min-h-0 w-16 flex-col items-center gap-0 overflow-y-auto border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-[var(--sys-color-bg-surfaces-surface)] px-siaf-xxs py-siaf-xs">
         <div class="z-[1] flex min-h-0 w-full flex-1 flex-col items-center gap-siaf-xxs">
           <button
             class="group flex w-full flex-col items-center gap-siaf-xxs px-0 py-siaf-xs text-center font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)] transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.98] disabled:cursor-not-allowed"

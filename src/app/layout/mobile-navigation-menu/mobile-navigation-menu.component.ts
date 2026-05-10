@@ -14,12 +14,12 @@ type MobileNavigationItem = {
   standalone: true,
   imports: [IconComponent],
   template: `
-    <aside class="min-h-[calc(100vh-56px)] w-full border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-[var(--sys-color-bg-surfaces-surface-highest,white)]">
-      <header class="sticky top-0 z-[2] bg-surface p-siaf-md">
+    <aside class="min-h-[calc(100vh-56px)] w-full border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface-highest))]">
+      <header class="sticky top-0 z-[2] bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface))] p-siaf-md">
         <h2 class="m-0 min-h-6 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Bandeja de documentos</h2>
       </header>
 
-      <div class="flex flex-col gap-siaf-lg bg-surface px-siaf-md py-siaf-xs">
+      <div class="flex flex-col gap-siaf-lg bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface))] px-siaf-md py-siaf-xs">
         <button
           class="inline-flex min-h-10 w-full items-center justify-center gap-siaf-xs rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-white transition hover:brightness-90 active:brightness-75"
           type="button"
