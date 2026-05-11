@@ -35,6 +35,8 @@ enum AmbitoAcceso {
   unidad
 }
 
+// ELIMINADO reemplaza a ANULADO — solo el CREADOR puede eliminar
+// desde estado ELABORADO u OBSERVADO
 enum EstadoSolicitud {
   NUEVO
   ELABORADO
@@ -42,7 +44,29 @@ enum EstadoSolicitud {
   OBSERVADO
   APROBADO
   RECHAZADO
-  ANULADO
+  ELIMINADO
+}
+
+// Estados de ciclo de vida de una entidad pública
+enum EstadoEntidad {
+  activa
+  suspendida
+  migrada    // absorbida por otra entidad — definitivo
+  archivada  // cierre definitivo — solo lectura
+}
+
+// Estados de ciclo de vida de una unidad orgánica
+enum EstadoUnidad {
+  activa
+  suspendida
+  archivada  // cierre definitivo — solo lectura
+}
+
+// Tipos de plan contable — define si es editable o solo lectura
+enum TipoPlanContable {
+  gubernamental_unico   // editable vía solicitudes
+  general_empresarial   // solo lectura y consulta
+  sistema_financiero    // solo lectura y consulta
 }
 
 // ─────────────────────────────────────────────
@@ -66,36 +90,45 @@ model Usuario {
 
   perfiles             UsuarioEntidadRol[]
   sesiones             UsuarioSesion[]
-  invitacionesCreadas  UsuarioInvitacion[]       @relation("InvitacionCreador")
-  cuentasCreadas       CuentaContable[]          @relation("CuentaCreador")
-  cuentasActualizadas  CuentaContable[]          @relation("CuentaActualizador")
+  invitacionesCreadas  UsuarioInvitacion[]        @relation("InvitacionCreador")
+  cuentasCreadas       CuentaContable[]           @relation("CuentaCreador")
+  cuentasActualizadas  CuentaContable[]           @relation("CuentaActualizador")
   archivosSubidos      Archivo[]
-  solicitudesCreadas   Solicitud[]               @relation("SolicitudCreador")
+  solicitudesCreadas   Solicitud[]                @relation("SolicitudCreador")
   historialSolicitudes SolicitudEstadoHistorial[] @relation("HistorialCreador")
+  notificaciones       Notificacion[]
   eventosAuditoria     AuditoriaEvento[]
 
   @@map("usuario")
 }
 
 model EntidadPublica {
-  id             String      @id @default(uuid())
-  codigo         String      @unique @db.VarChar(30)
-  ruc            String?     @db.VarChar(20)
-  nombre         String      @db.VarChar(250)
-  tipoEntidad    TipoEntidad @map("tipo_entidad")
-  entidadPadreId String?     @map("entidad_padre_id")
-  esActiva       Boolean     @default(true) @map("es_activa")
-  createdAt      DateTime    @default(now()) @map("created_at")
-  updatedAt      DateTime    @updatedAt @map("updated_at")
+  id                 String        @id @default(uuid())
+  codigo             String        @unique @db.VarChar(30)
+  ruc                String?       @db.VarChar(20)
+  nombre             String        @db.VarChar(250)
+  tipoEntidad        TipoEntidad   @map("tipo_entidad")
+  entidadPadreId     String?       @map("entidad_padre_id")
+  // reemplaza esActiva — soporta suspensión, migración y archivo
+  estadoEntidad      EstadoEntidad @default(activa) @map("estado_entidad")
+  entidadMigracionId String?       @map("entidad_migracion_id")
+  fechaSuspension    DateTime?     @map("fecha_suspension")
+  fechaMigracion     DateTime?     @map("fecha_migracion")
+  fechaArchivado     DateTime?     @map("fecha_archivado")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
 
-  entidadPadre        EntidadPublica?              @relation("JerarquiaEntidad", fields: [entidadPadreId], references: [id])
-  subEntidades        EntidadPublica[]             @relation("JerarquiaEntidad")
+  entidadPadre        EntidadPublica?               @relation("JerarquiaEntidad", fields: [entidadPadreId], references: [id])
+  subEntidades        EntidadPublica[]              @relation("JerarquiaEntidad")
+  entidadMigracion    EntidadPublica?               @relation("MigracionEntidad", fields: [entidadMigracionId], references: [id])
+  entidadesMigradas   EntidadPublica[]              @relation("MigracionEntidad")
   unidades            UnidadOrganica[]
   perfiles            UsuarioEntidadRol[]
   invitaciones        UsuarioInvitacion[]
-  solicitudesCreadas  Solicitud[]                  @relation("SolicitudCreadora")
-  solicitudesDestino  Solicitud[]                  @relation("SolicitudDestino")
-  solicitudesExternas Solicitud[]                  @relation("SolicitudExterna")
+  tiposDocDestinoEnt  TipoDocumento[]               @relation("TipoDocDestinoEntidad")
+  solicitudesCreadas  Solicitud[]                   @relation("SolicitudCreadora")
+  solicitudesDestino  Solicitud[]                   @relation("SolicitudDestino")
+  solicitudesExternas Solicitud[]                   @relation("SolicitudExterna")
   cuentasEntidad      CuentaContableEntidadEstado[]
   solicCuentasEntidad SolicitudCuentaEntidadEstado[]
   eventosAuditoria    AuditoriaEvento[]
@@ -104,18 +137,22 @@ model EntidadPublica {
 }
 
 model UnidadOrganica {
-  id               String   @id @default(uuid())
-  entidadPublicaId String   @map("entidad_publica_id")
-  codigo           String   @db.VarChar(30)
-  nombre           String   @db.VarChar(250)
-  tipoUnidad       String   @map("tipo_unidad") @db.VarChar(50)
-  esActiva         Boolean  @default(true) @map("es_activa")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id               String       @id @default(uuid())
+  entidadPublicaId String       @map("entidad_publica_id")
+  codigo           String       @db.VarChar(30)
+  nombre           String       @db.VarChar(250)
+  tipoUnidad       String       @map("tipo_unidad") @db.VarChar(50)
+  // reemplaza esActiva — soporta suspensión y archivo
+  estadoUnidad     EstadoUnidad @default(activa) @map("estado_unidad")
+  fechaSuspension  DateTime?    @map("fecha_suspension")
+  fechaArchivado   DateTime?    @map("fecha_archivado")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
 
   entidadPublica     EntidadPublica      @relation(fields: [entidadPublicaId], references: [id])
   perfiles           UsuarioEntidadRol[]
   invitaciones       UsuarioInvitacion[]
+  tiposDocDestino    TipoDocumento[]     @relation("TipoDocDestinoUnidad")
   solicitudesCreadas Solicitud[]         @relation("SolicitudUnidadCreadora")
   solicitudesDestino Solicitud[]         @relation("SolicitudUnidadDestino")
   eventosAuditoria   AuditoriaEvento[]
@@ -134,6 +171,7 @@ model Rol {
   permisos           RolPermiso[]
   perfiles           UsuarioEntidadRol[]
   invitaciones       UsuarioInvitacion[]
+  tiposDocDestino    TipoDocumento[]
   solicitudesDestino Solicitud[]
 
   @@map("rol")
@@ -181,10 +219,11 @@ model UsuarioEntidadRol {
   rol            Rol             @relation(fields: [rolId], references: [id])
 
   sesiones             UsuarioSesion[]
-  solicitudesCreadas   Solicitud[]              @relation("SolicitudPerfilCreador")
+  solicitudesCreadas   Solicitud[]               @relation("SolicitudPerfilCreador")
   historialSolicitudes SolicitudEstadoHistorial[]
   eventosAuditoria     AuditoriaEvento[]
 
+  @@index([usuarioId])
   @@map("usuario_entidad_rol")
 }
 
@@ -263,21 +302,60 @@ model UsuarioInvitacion {
 }
 
 // ─────────────────────────────────────────────
+// CATÁLOGO DE TIPOS DE DOCUMENTO
+// Solo OGTI (ADMIN_SISTEMA) puede administrarlo
+// Define el destino fijo y acciones permitidas por proceso
+// ─────────────────────────────────────────────
+
+model TipoDocumento {
+  id               String  @id @default(uuid())
+  codigo           String  @unique @db.VarChar(50)
+  nombre           String  @db.VarChar(250)
+  modulo           String  @db.VarChar(50) // contabilidad, tesoreria, presupuesto, etc.
+  entidadDestinoId String  @map("entidad_destino_id")
+  unidadDestinoId  String  @map("unidad_destino_id")
+  rolDestinoId     String  @map("rol_destino_id")
+  esActivo         Boolean @default(true) @map("es_activo")
+
+  entidadDestino     EntidadPublica        @relation("TipoDocDestinoEntidad", fields: [entidadDestinoId], references: [id])
+  unidadDestino      UnidadOrganica        @relation("TipoDocDestinoUnidad", fields: [unidadDestinoId], references: [id])
+  rolDestino         Rol                   @relation(fields: [rolDestinoId], references: [id])
+  accionesPermitidas TipoDocumentoAccion[]
+  solicitudes        Solicitud[]
+
+  @@map("tipo_documento")
+}
+
+model TipoDocumentoAccion {
+  tipoDocumentoId String @map("tipo_documento_id")
+  tipoAccion      String @map("tipo_accion") @db.VarChar(50) // creacion, modificacion, reversion
+
+  tipoDocumento TipoDocumento @relation(fields: [tipoDocumentoId], references: [id])
+
+  @@id([tipoDocumentoId, tipoAccion])
+  @@map("tipo_documento_accion")
+}
+
+// ─────────────────────────────────────────────
 // PLAN DE CUENTAS CONTABLES
 // ─────────────────────────────────────────────
 
 model PlanContable {
-  id                   String    @id @default(uuid())
-  numeroPlanContable   String    @unique @map("numero_plan_contable") @db.VarChar(30)
-  descripcion          String    @db.VarChar(250)
-  fecha                DateTime  @db.Date
-  vigenciaPlanContable String    @map("vigencia_plan_contable") @db.VarChar(50)
-  fechaInicio          DateTime  @map("fecha_inicio_desde") @db.Date
-  fechaFin             DateTime? @map("fecha_fin_hasta") @db.Date
-  esVigente            Boolean   @default(true) @map("es_vigente")
-  esVisible            Boolean   @default(true) @map("es_visible")
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
+  id                   String           @id @default(uuid())
+  numeroPlanContable   String           @unique @map("numero_plan_contable") @db.VarChar(30)
+  descripcion          String           @db.VarChar(250)
+  fecha                DateTime         @db.Date
+  vigenciaPlanContable String           @map("vigencia_plan_contable") @db.VarChar(50)
+  fechaInicio          DateTime         @map("fecha_inicio_desde") @db.Date
+  fechaFin             DateTime?        @map("fecha_fin_hasta") @db.Date
+  // tipo determina si es editable o solo lectura
+  tipoPlan             TipoPlanContable @map("tipo_plan")
+  // gubernamental_unico = true, los otros = false
+  esEditable           Boolean          @default(false) @map("es_editable")
+  esVigente            Boolean          @default(true) @map("es_vigente")
+  esVisible            Boolean          @default(true) @map("es_visible")
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
 
   cuentas CuentaContable[]
 
@@ -314,6 +392,8 @@ model CuentaContable {
   dinamicaObjeto            String?  @map("dinamica_objeto")
   dinamicaSaldos            String?  @map("dinamica_saldos")
   esParaEntidadEstado       Boolean  @default(false) @map("es_para_entidad_estado")
+  // esVigente = false → cuenta inactiva, no operable
+  // esVisible = false → oculta incluso en reportes
   esVigente                 Boolean  @default(true) @map("es_vigente")
   esVisible                 Boolean  @default(true) @map("es_visible")
   createdAt                 DateTime @default(now()) @map("created_at")
@@ -321,9 +401,9 @@ model CuentaContable {
   createdBy                 String?  @map("created_by")
   updatedBy                 String?  @map("updated_by")
 
-  planContable CuentaContable?  @relation("JerarquiaCuenta", fields: [parentId], references: [id])
-  hijos        CuentaContable[] @relation("JerarquiaCuenta")
   plan         PlanContable     @relation(fields: [planContableId], references: [id])
+  parent       CuentaContable?  @relation("JerarquiaCuenta", fields: [parentId], references: [id])
+  hijos        CuentaContable[] @relation("JerarquiaCuenta")
   creador      Usuario?         @relation("CuentaCreador", fields: [createdBy], references: [id])
   actualizador Usuario?         @relation("CuentaActualizador", fields: [updatedBy], references: [id])
 
@@ -370,19 +450,21 @@ model CuentaContableEntidadEstado {
 }
 
 // ─────────────────────────────────────────────
-// SOLICITUDES
+// SOLICITUDES (DOCUMENTOS)
 // ─────────────────────────────────────────────
 
 model Solicitud {
   id                     String          @id @default(uuid())
-  numeroSolicitud        String          @unique @map("numero_solicitud") @db.VarChar(30)
-  tipoSolicitud          String          @map("tipo_solicitud") @db.VarChar(80)
+  // nullable — se genera al pasar a ELABORADO con formato: COD-AÑO-CORRELATIVO
+  numeroSolicitud        String?         @unique @map("numero_solicitud") @db.VarChar(30)
+  tipoDocumentoId        String          @map("tipo_documento_id")
   tipoAccion             String          @map("tipo_accion") @db.VarChar(50)
   fechaRequerimiento     DateTime        @map("fecha_requerimiento")
   organoLinea            String          @map("organo_linea") @db.VarChar(250)
   entidadCreadoraId      String          @map("entidad_creadora_id")
   unidadCreadoraId       String?         @map("unidad_creadora_id")
   perfilCreadorId        String          @map("perfil_creador_id")
+  // destino fijo — viene del TipoDocumento, no lo elige el usuario
   entidadDestinoId       String?         @map("entidad_destino_id")
   unidadDestinoId        String?         @map("unidad_destino_id")
   rolDestinoId           String?         @map("rol_destino_id")
@@ -395,6 +477,7 @@ model Solicitud {
   createdBy              String          @map("created_by")
   updatedBy              String?         @map("updated_by")
 
+  tipoDocumento   TipoDocumento     @relation(fields: [tipoDocumentoId], references: [id])
   entidadCreadora EntidadPublica    @relation("SolicitudCreadora", fields: [entidadCreadoraId], references: [id])
   unidadCreadora  UnidadOrganica?   @relation("SolicitudUnidadCreadora", fields: [unidadCreadoraId], references: [id])
   perfilCreador   UsuarioEntidadRol @relation("SolicitudPerfilCreador", fields: [perfilCreadorId], references: [id])
@@ -407,7 +490,11 @@ model Solicitud {
   cuentas          SolicitudCuentaContable[]
   sustentos        SolicitudSustento[]
   historialEstados SolicitudEstadoHistorial[]
+  notificaciones   Notificacion[]
 
+  @@index([estado])
+  @@index([entidadDestinoId, rolDestinoId, estado])
+  @@index([createdBy])
   @@map("solicitud")
 }
 
@@ -416,7 +503,7 @@ model SolicitudCuentaContable {
   solicitudId            String   @map("solicitud_id")
   planContableId         String   @map("plan_contable_id")
   cuentaContableOrigenId String?  @map("cuenta_contable_origen_id")
-  // snapshot de campos de la cuenta al momento de la solicitud
+  // snapshot de la cuenta al momento de la solicitud
   codigoCompleto         String   @map("codigo_completo") @db.VarChar(80)
   elemento               String   @db.VarChar(2)
   grupo                  String?  @db.VarChar(2)
@@ -441,6 +528,8 @@ model SolicitudCuentaContable {
   esParaEntidadEstado    Boolean  @default(false) @map("es_para_entidad_estado")
   esVigente              Boolean  @default(true) @map("es_vigente")
   esVisible              Boolean  @default(true) @map("es_visible")
+  // secciones que se están modificando: ["atributos", "vigencia"]
+  seccionesModificadas   String[] @map("secciones_modificadas")
   createdAt              DateTime @default(now()) @map("created_at")
   updatedAt              DateTime @updatedAt @map("updated_at")
 
@@ -510,6 +599,7 @@ model SolicitudEstadoHistorial {
   solicitudId    String           @map("solicitud_id")
   estadoAnterior EstadoSolicitud? @map("estado_anterior")
   estadoNuevo    EstadoSolicitud  @map("estado_nuevo")
+  // obligatorio en OBSERVADO y RECHAZADO
   comentario     String?
   createdAt      DateTime         @default(now()) @map("created_at")
   createdBy      String           @map("created_by")
@@ -519,11 +609,37 @@ model SolicitudEstadoHistorial {
   creador   Usuario            @relation("HistorialCreador", fields: [createdBy], references: [id])
   perfil    UsuarioEntidadRol? @relation(fields: [perfilId], references: [id])
 
+  @@index([solicitudId])
   @@map("solicitud_estado_historial")
 }
 
 // ─────────────────────────────────────────────
-// AUDITORÍA
+// NOTIFICACIONES
+// ─────────────────────────────────────────────
+
+model Notificacion {
+  id             String    @id @default(uuid())
+  usuarioId      String    @map("usuario_id")
+  solicitudId    String    @map("solicitud_id")
+  // tipos: solicitud_verificada, solicitud_observada, solicitud_rechazada, solicitud_aprobada
+  tipo           String    @db.VarChar(80)
+  titulo         String    @db.VarChar(250)
+  mensaje        String
+  leida          Boolean   @default(false)
+  leidaEn        DateTime? @map("leida_en")
+  emailEnviado   Boolean   @default(false) @map("email_enviado")
+  emailEnviadoEn DateTime? @map("email_enviado_en")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+  solicitud Solicitud @relation(fields: [solicitudId], references: [id])
+
+  @@index([usuarioId, leida])
+  @@map("notificacion")
+}
+
+// ─────────────────────────────────────────────
+// AUDITORÍA — solo INSERT, nunca UPDATE ni DELETE
 // ─────────────────────────────────────────────
 
 model AuditoriaEvento {
@@ -546,5 +662,7 @@ model AuditoriaEvento {
   entidadPublica EntidadPublica?    @relation(fields: [entidadPublicaId], references: [id])
   unidadOrganica UnidadOrganica?    @relation(fields: [unidadOrganicaId], references: [id])
 
+  @@index([usuarioId, createdAt])
+  @@index([entidadPublicaId, createdAt])
   @@map("auditoria_evento")
 }
