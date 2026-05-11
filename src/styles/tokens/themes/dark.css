@@ -86,6 +86,7 @@
   --sys-color-text-feedback-info: #B7DCFF;
   --sys-color-text-feedback-success: #B3EEE8;
   --sys-color-text-feedback-warning: #FFE2A3;
+  --sys-color-tipography-neutral-high: var(--sys-color-text-neutral-high);
 
   --sys-color-border-feedback-default: #AEB8C7;
   --sys-color-border-feedback-danger: #FF8A98;

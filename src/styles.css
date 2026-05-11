@@ -2,9 +2,8 @@
 @import "material-icons/iconfont/material-icons.css";
 @import "material-icons/iconfont/outlined.css";
 @import "./styles/tokens/index.css";
-@import "./styles/tokens/generated/tokens.css";
+@import "./styles/tokens/figma.css";
 @import "./styles/tokens/generated/tailwind.tokens.css";
-@import "./styles/figma-tokens.css";
 @import "./styles/tokens/themes/index.css";
 
 @theme {

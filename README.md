@@ -91,15 +91,19 @@ src/app/
 |-- app.routes.ts
 `-- app.component.ts
 
-src/styles/
-|-- figma-tokens.css
-`-- tokens/
-    |-- generated/
-    |   |-- tokens.css
-    |   `-- tailwind.tokens.css
-    `-- themes/
-        |-- light.css
-        `-- dark.css
+src/
+|-- styles.css
+`-- styles/
+    `-- tokens/
+        |-- base.css
+        |-- figma.css
+        |-- generated/
+        |   `-- tailwind.tokens.css
+        |-- index.css
+        `-- themes/
+            |-- dark.css
+            |-- index.css
+            `-- light.css
 ```
 
 ## Rutas principales
@@ -139,11 +143,11 @@ Reglas:
 - Los colores, radios, elevaciones y estados visuales deben salir de tokens.
 - No usar hexadecimales ni sombras hardcodeadas en componentes.
 - `src/styles.css` contiene imports globales, reset y reglas base.
-- `src/styles/figma-tokens.css` contiene variables base exportadas desde Figma.
-- `src/styles/tokens/themes/light.css` mantiene el modo claro sin overrides de color para no alterar tokens base.
+- `src/styles/tokens/base.css` contiene aliases estables que no dependen de tema.
+- `src/styles/tokens/figma.css` contiene variables base exportadas desde Figma.
+- `src/styles/tokens/themes/light.css` contiene solo overrides puntuales del modo claro.
 - `src/styles/tokens/themes/dark.css` contiene los overrides del modo oscuro y debe respetar contraste WCAG.
 - `src/styles/tokens/generated/tailwind.tokens.css` expone tokens consumibles por Tailwind.
-- `src/styles/tokens/generated/tokens.css` expone variables CSS del sistema.
 - Para elevaciones usar clases/tokens como `shadow-siaf-sm`, `shadow-siaf-md`, `shadow-siaf-lg` o variables `--sys-effects-*`.
 
 ### Tema claro y oscuro
