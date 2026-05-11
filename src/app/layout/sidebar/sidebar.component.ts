@@ -32,7 +32,7 @@ const RAIL_ITEMS: RailItem[] = [
   imports: [IconComponent, NgClass],
   template: `
     @if (variant === 'rail') {
-      <aside class="flex h-full min-h-0 w-16 flex-col items-center gap-0 overflow-y-auto border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-[var(--sys-color-bg-surfaces-surface)] px-siaf-xxs py-siaf-xs">
+      <aside class="flex h-full min-h-0 w-16 flex-col items-center gap-0 overflow-y-auto border-r border-[var(--sys-color-divider-default)] bg-[var(--sys-color-bg-surfaces-surface)] px-siaf-xxs py-siaf-xs">
         <div class="z-[1] flex min-h-0 w-full flex-1 flex-col items-center gap-siaf-xxs">
           <button
             class="group flex w-full flex-col items-center gap-siaf-xxs px-0 py-siaf-xs text-center font-['Inter'] text-[10px] font-medium leading-normal text-[var(--sys-color-text-neutral-medium)] transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.98] disabled:cursor-not-allowed"
@@ -43,7 +43,7 @@ const RAIL_ITEMS: RailItem[] = [
           >
             <span
               class="relative inline-flex size-10 items-center justify-center rounded-siaf-md transition duration-150"
-              [ngClass]="ctaAdd ? 'bg-[var(--sys-color-bg-brand-accent)] text-white group-hover:brightness-90 group-active:brightness-75' : 'bg-[var(--sys-color-bg-surfaces-disabled)] text-[var(--sys-color-text-neutral-disabled)]'"
+              [ngClass]="ctaAdd ? 'bg-[var(--sys-color-bg-brand-accent)] text-[var(--sys-color-text-brand-white)] group-hover:brightness-90 group-active:brightness-75' : 'bg-[var(--sys-color-bg-surfaces-disabled)] text-[var(--sys-color-text-neutral-disabled)]'"
             >
               @if (!ctaAdd) {
                 <span class="absolute inset-0 rounded-siaf-md bg-[var(--sys-color-bg-states-dark-disabled)]"></span>
@@ -100,17 +100,17 @@ const RAIL_ITEMS: RailItem[] = [
         </div>
       </aside>
     } @else {
-      <aside class="h-full w-64 border-r border-border bg-brand-secondary text-white">
-        <div class="flex h-16 items-center border-b border-white/10 px-6">
+      <aside class="h-full w-64 border-r border-border bg-brand-secondary text-[var(--sys-color-text-brand-white)]">
+        <div class="flex h-16 items-center border-b border-[var(--sys-color-border-on-brand-subtle)] px-6">
           <span class="text-lg font-bold tracking-normal">{{ title }}</span>
         </div>
         <nav class="grid gap-1 p-3 text-sm">
           @for (item of items; track item.label) {
             <a
-              class="flex items-center gap-2 rounded-siaf-md px-3 py-2 transition hover:bg-white/10 hover:text-white"
-              [class.bg-white\/10]="item.active"
+              class="flex items-center gap-2 rounded-siaf-md px-3 py-2 transition hover:bg-[var(--sys-color-bg-states-on-brand-hover)] hover:text-[var(--sys-color-text-brand-white)]"
+              [class.bg-[var(--sys-color-bg-states-on-brand-selected)]]="item.active"
               [class.font-medium]="item.active"
-              [class.text-white\/75]="!item.active"
+              [class.text-[var(--sys-color-text-brand-white)]\/75]="!item.active"
               [href]="item.href || '#'"
             >
               @if (item.icon) {

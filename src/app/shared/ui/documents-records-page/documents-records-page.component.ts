@@ -89,7 +89,7 @@ type AppliedCustomFilter = {
               </div>
             </header>
 
-            <nav class="flex h-10 items-end gap-siaf-md border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] px-siaf-md">
+            <nav class="flex h-10 items-end gap-siaf-md border-b border-[var(--sys-color-divider-default)] px-siaf-md">
               <button class="relative h-10 px-siaf-sm text-sm transition hover:text-brand-primary" type="button" [class.font-bold]="activeTab === 'documents'" [class.font-normal]="activeTab !== 'documents'" [class.text-brand-primary]="activeTab === 'documents'" [class.text-text-muted]="activeTab !== 'documents'" (click)="selectTab('documents')">
                 Documentos
                 @if (activeTab === 'documents') { <span class="absolute bottom-0 left-0 right-0 h-0.5 rounded-t bg-brand-primary"></span> }
@@ -114,7 +114,7 @@ type AppliedCustomFilter = {
 
               <div class="flex flex-col gap-siaf-md">
                 <div class="flex flex-col gap-siaf-sm lg:flex-row lg:items-start">
-                  <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-md">
+                  <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface px-siaf-md">
                     <span class="sr-only">Buscar</span>
                     <input class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-text-muted" placeholder="Buscar" [value]="searchTerm" (input)="onSearchChange(inputValue($event))" />
                   </label>
@@ -128,7 +128,7 @@ type AppliedCustomFilter = {
                         <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar campos" (click)="closeFieldsMenu()"></button>
                         <div class="absolute right-0 top-12 z-30 w-[248px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-siaf-elevation-1" (click)="$event.stopPropagation()">
                           @for (option of config.fieldsMenuOptions; track option.label) {
-                            <button class="flex min-h-8 w-full items-center gap-siaf-md px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFieldsMenuOption(option.label)">
+                            <button class="flex min-h-8 w-full items-center gap-siaf-md px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" (click)="selectFieldsMenuOption(option.label)">
                               <span class="min-w-0 flex-1">{{ option.label }}</span>
                               @if (option.hasChildren) { <siaf-icon name="chevron_right" [size]="24" /> }
                             </button>
@@ -144,9 +144,9 @@ type AppliedCustomFilter = {
                       @if (favoriteMenuOpen) {
                         <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar favoritos" (click)="closeFavoriteMenu()"></button>
                         <div class="absolute right-0 top-12 z-30 w-[248px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-siaf-elevation-1" (click)="$event.stopPropagation()">
-                          <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFavoriteOption('observed')">Solicitudes observadas</button>
-                          <div class="h-px w-full bg-[var(--sys-color-divider-default,rgba(32,32,32,0.12))]"></div>
-                          <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectFavoriteOption('save-search')">Guardar búsqueda actual</button>
+                          <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" (click)="selectFavoriteOption('observed')">Solicitudes observadas</button>
+                          <div class="h-px w-full bg-[var(--sys-color-divider-default)]"></div>
+                          <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" (click)="selectFavoriteOption('save-search')">Guardar búsqueda actual</button>
                         </div>
                       }
                     </div>
@@ -158,7 +158,7 @@ type AppliedCustomFilter = {
                       @if (moreOptionsMenuOpen) {
                         <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar mas opciones" (click)="closeMoreOptionsMenu()"></button>
                         <div class="absolute right-0 top-12 z-30 w-[280px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-siaf-elevation-1" (click)="$event.stopPropagation()">
-                          <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="openColumnPanel()">Ocultar o mostrar columnas</button>
+                          <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" (click)="openColumnPanel()">Ocultar o mostrar columnas</button>
                         </div>
                       }
                     </div>
@@ -168,7 +168,7 @@ type AppliedCustomFilter = {
                 <div class="flex flex-wrap items-center gap-siaf-xs">
                   <div class="relative">
                     @if (selectedStatusFilter) {
-                      <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm font-normal leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" aria-label="Filtro de estado seleccionado" (click)="toggleStatusFilterMenu()">
+                      <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active)] bg-[var(--sys-color-bg-states-light-selected)] px-siaf-xs py-siaf-xxs text-sm font-normal leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" aria-label="Filtro de estado seleccionado" (click)="toggleStatusFilterMenu()">
                         <siaf-icon name="check" [size]="20" />
                         Estado: {{ selectedStatusFilter }}
                         <span class="inline-flex size-5 items-center justify-center rounded-siaf-sm" role="button" tabindex="0" aria-label="Quitar filtro de estado" (click)="clearStatusFilter($event)" (keydown.enter)="clearStatusFilter($event)" (keydown.space)="clearStatusFilter($event)">
@@ -176,7 +176,7 @@ type AppliedCustomFilter = {
                         </span>
                       </button>
                     } @else {
-                      <button class="inline-flex h-8 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-sm text-sm font-normal leading-normal tracking-[0.025px] text-text transition hover:bg-surface-muted" type="button" aria-label="Seleccionar estado" [class.bg-surface-muted]="statusFilterMenuOpen" (click)="toggleStatusFilterMenu()">
+                      <button class="inline-flex h-8 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface px-siaf-sm text-sm font-normal leading-normal tracking-[0.025px] text-text transition hover:bg-surface-muted" type="button" aria-label="Seleccionar estado" [class.bg-surface-muted]="statusFilterMenuOpen" (click)="toggleStatusFilterMenu()">
                         Estado
                         <siaf-icon [name]="statusFilterMenuOpen ? 'expand_less' : 'expand_more'" [size]="20" />
                       </button>
@@ -185,7 +185,7 @@ type AppliedCustomFilter = {
                       <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar estados" (click)="closeStatusFilterMenu()"></button>
                       <div class="absolute left-0 top-10 z-30 w-[220px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-siaf-elevation-1" (click)="$event.stopPropagation()">
                         @for (option of config.statusFilterOptions; track option) {
-                          <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectStatusFilter(option)">{{ option }}</button>
+                          <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" (click)="selectStatusFilter(option)">{{ option }}</button>
                         }
                       </div>
                     }
@@ -193,7 +193,7 @@ type AppliedCustomFilter = {
 
                   <div class="relative">
                     @if (selectedActionTypeFilter) {
-                      <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm font-normal leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" aria-label="Filtro de tipo de accion seleccionado" (click)="toggleActionTypeFilterMenu()">
+                      <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active)] bg-[var(--sys-color-bg-states-light-selected)] px-siaf-xs py-siaf-xxs text-sm font-normal leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" aria-label="Filtro de tipo de accion seleccionado" (click)="toggleActionTypeFilterMenu()">
                         <siaf-icon name="check" [size]="20" />
                         Tipo de acción: {{ selectedActionTypeFilter }}
                         <span class="inline-flex size-5 items-center justify-center rounded-siaf-sm" role="button" tabindex="0" aria-label="Quitar filtro de tipo de accion" (click)="clearActionTypeFilter($event)" (keydown.enter)="clearActionTypeFilter($event)" (keydown.space)="clearActionTypeFilter($event)">
@@ -201,7 +201,7 @@ type AppliedCustomFilter = {
                         </span>
                       </button>
                     } @else {
-                      <button class="inline-flex h-8 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-sm text-sm font-normal leading-normal tracking-[0.025px] text-text transition hover:bg-surface-muted" type="button" aria-label="Seleccionar tipo de accion" [class.bg-surface-muted]="actionTypeFilterMenuOpen" (click)="toggleActionTypeFilterMenu()">
+                      <button class="inline-flex h-8 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface px-siaf-sm text-sm font-normal leading-normal tracking-[0.025px] text-text transition hover:bg-surface-muted" type="button" aria-label="Seleccionar tipo de accion" [class.bg-surface-muted]="actionTypeFilterMenuOpen" (click)="toggleActionTypeFilterMenu()">
                         Tipo de acción
                         <siaf-icon [name]="actionTypeFilterMenuOpen ? 'expand_less' : 'expand_more'" [size]="20" />
                       </button>
@@ -210,14 +210,14 @@ type AppliedCustomFilter = {
                       <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar tipos de accion" (click)="closeActionTypeFilterMenu()"></button>
                       <div class="absolute left-0 top-10 z-30 w-[220px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-siaf-elevation-1" (click)="$event.stopPropagation()">
                         @for (option of config.actionTypeFilterOptions; track option) {
-                          <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" (click)="selectActionTypeFilter(option)">{{ option }}</button>
+                          <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" (click)="selectActionTypeFilter(option)">{{ option }}</button>
                         }
                       </div>
                     }
                   </div>
 
                   @for (filter of appliedCustomFilters; track filter.id) {
-                    <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active)] bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))] px-siaf-xs py-siaf-xxs text-sm font-normal leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated)] transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))]" type="button" aria-label="Filtro personalizado aplicado" (click)="editCustomAppliedFilter(filter)">
+                    <button class="inline-flex h-8 items-center gap-siaf-xs overflow-hidden rounded-siaf-md border border-[var(--sys-color-border-states-active)] bg-[var(--sys-color-bg-states-light-selected)] px-siaf-xs py-siaf-xxs text-sm font-normal leading-normal tracking-[0.025px] text-[var(--sys-color-text-neutral-activated)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" aria-label="Filtro personalizado aplicado" (click)="editCustomAppliedFilter(filter)">
                       <siaf-icon name="bolt" [size]="20" />
                       {{ filter.campoLabel }}: {{ filter.valor }}
                       <span class="inline-flex size-5 items-center justify-center rounded-siaf-sm" role="button" tabindex="0" aria-label="Quitar filtro personalizado" (click)="clearCustomAppliedFilter(filter.id, $event)" (keydown.enter)="clearCustomAppliedFilter(filter.id, $event)" (keydown.space)="clearCustomAppliedFilter(filter.id, $event)">

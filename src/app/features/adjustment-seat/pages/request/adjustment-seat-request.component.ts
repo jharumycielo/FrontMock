@@ -213,7 +213,7 @@ type PeriodoGroup = {
                       </div>
                       @if (!isReadOnly) {
                         <button
-                          class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                          class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
                           type="button"
                           aria-label="Quitar periodo seleccionado"
                           (click)="selectedPeriodo.set(null)"
@@ -253,7 +253,7 @@ type PeriodoGroup = {
                       </div>
                       @if (!isReadOnly) {
                         <button
-                          class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+                          class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
                           type="button"
                           aria-label="Quitar código de clase de ajuste"
                           (click)="selectedClaseAjuste.set(null)"
@@ -294,7 +294,7 @@ type PeriodoGroup = {
                       </div>
                       @if (!isReadOnly) {
                         <button
-                          class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]"
+                          class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]"
                           type="button"
                           aria-label="Quitar código de detalle de ajuste"
                           (click)="selectedDetalleAjuste.set(null)"
@@ -354,7 +354,7 @@ type PeriodoGroup = {
                       <div class="min-w-0 overflow-x-auto">
                         <table class="w-full min-w-[700px] border-collapse text-left text-sm">
                           <thead>
-                            <tr class="bg-[var(--sys-color-bg-surfaces-surface-high,rgba(32,32,32,0.12))]">
+                            <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)]">
                               <th class="h-10 w-[190px] px-siaf-md py-siaf-sm text-xs font-bold uppercase leading-none text-text">Cod. Cuentas Contables</th>
                               <th class="h-10 px-siaf-md py-siaf-sm text-xs font-bold uppercase leading-none text-text">Nombre de la cuenta contable</th>
                               <th class="h-10 px-siaf-md py-siaf-sm text-xs font-bold uppercase leading-none text-text">Tipo de movimiento</th>
@@ -363,7 +363,7 @@ type PeriodoGroup = {
                           </thead>
                           <tbody>
                             @for (cuenta of cuentasContables; track cuenta.codigo; let i = $index) {
-                              <tr class="border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))]">
+                              <tr class="border-b border-[var(--sys-color-divider-default)]">
                                 <td class="min-h-12 px-siaf-md py-siaf-sm text-sm text-text">{{ cuenta.codigo }}</td>
                                 <td class="min-h-12 px-siaf-md py-siaf-sm text-sm text-text">{{ cuenta.nombre }}</td>
                                 <td class="min-h-12 px-siaf-sm py-siaf-sm text-sm text-text">{{ cuenta.tipoMovimiento }}</td>
@@ -385,13 +385,13 @@ type PeriodoGroup = {
                             }
 
                             <!-- Total Debe -->
-                            <tr class="border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))]">
+                            <tr class="border-b border-[var(--sys-color-divider-default)]">
                               <td colspan="3" class="min-h-12 px-siaf-md py-siaf-sm text-right text-sm text-text">Total Debe</td>
                               <td class="min-h-12 px-siaf-md py-siaf-sm text-right text-sm text-text">{{ formatImporte(totalDebe) }}</td>
                             </tr>
 
                             <!-- Total Haber -->
-                            <tr class="border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))]">
+                            <tr class="border-b border-[var(--sys-color-divider-default)]">
                               <td colspan="3" class="min-h-12 px-siaf-md py-siaf-sm text-right text-sm text-text">Total Haber</td>
                               <td class="min-h-12 px-siaf-md py-siaf-sm text-right text-sm text-text">{{ formatImporte(totalHaber) }}</td>
                             </tr>
@@ -428,7 +428,7 @@ type PeriodoGroup = {
                   <h3 class="m-0 text-sm font-bold uppercase text-text">Documento de sustento</h3>
                   @if (!isReadOnly) {
                     <button
-                      class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-white transition hover:brightness-90"
+                      class="inline-flex size-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] text-[var(--sys-color-text-brand-white)] transition hover:brightness-90"
                       type="button"
                       aria-label="Subir documento"
                       (click)="uploadPanelOpen.set(true)"
@@ -464,19 +464,19 @@ type PeriodoGroup = {
         <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="detalle-ajuste-panel-title" (click)="closeDetalleAjustePanel()">
           <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
 
-            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
+            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong)] px-siaf-md">
               <h2 id="detalle-ajuste-panel-title" class="m-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">
                 Seleccionar Código de Detalle de Ajuste
                 @if (selectedClaseAjuste()) {
                   <span class="ml-2 text-sm font-medium normal-case text-text-muted">— {{ selectedClaseAjuste()!.descripcion }}</span>
                 }
               </h2>
-              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Cerrar" (click)="closeDetalleAjustePanel()">
+              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" aria-label="Cerrar" (click)="closeDetalleAjustePanel()">
                 <siaf-icon name="close" [size]="24" />
               </button>
             </header>
 
-            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
+            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
               <div class="flex flex-col gap-siaf-lg">
 
                 <siaf-form-table-search
@@ -493,7 +493,7 @@ type PeriodoGroup = {
                 <section class="min-w-0 overflow-x-auto">
                   <table class="w-full border-collapse text-left">
                     <thead>
-                      <tr class="bg-[var(--sys-color-bg-surfaces-surface-high,rgba(32,32,32,0.12))]">
+                      <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)]">
                         <th class="h-10 w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
                         <th class="h-10 px-siaf-md py-siaf-sm text-xs font-bold uppercase leading-none text-text rounded-r-siaf-sm">Código de detalle de ajuste</th>
                       </tr>
@@ -501,15 +501,15 @@ type PeriodoGroup = {
                     <tbody>
                       @for (row of detalleAjusteRows; track row.codigo) {
                         <tr
-                          class="cursor-pointer border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] transition hover:bg-[rgba(1,72,153,0.04)]"
-                          [class.bg-[rgba(1,72,153,0.08)]]="tempSelectedDetalleAjuste?.codigo === row.codigo"
+                          class="cursor-pointer border-b border-[var(--sys-color-divider-default)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]"
+                          [class.bg-[var(--sys-color-bg-states-light-selected)]]="tempSelectedDetalleAjuste?.codigo === row.codigo"
                           (click)="selectTempDetalleAjuste(row)"
                         >
                           <td class="px-siaf-sm py-siaf-xs">
                             <span class="inline-flex size-6 items-center justify-center">
                               <span class="flex size-5 items-center justify-center rounded-full border-2 transition"
                                 [class.border-brand-primary]="tempSelectedDetalleAjuste?.codigo === row.codigo"
-                                [class.border-[rgba(32,32,32,0.4)]]="tempSelectedDetalleAjuste?.codigo !== row.codigo">
+                                [class.border-[var(--sys-color-border-states-enabled)]]="tempSelectedDetalleAjuste?.codigo !== row.codigo">
                                 @if (tempSelectedDetalleAjuste?.codigo === row.codigo) {
                                   <span class="size-2.5 rounded-full bg-brand-primary"></span>
                                 }
@@ -533,8 +533,8 @@ type PeriodoGroup = {
             </div>
 
             <div class="flex shrink-0 items-center justify-end gap-siaf-xs px-siaf-md py-siaf-sm">
-              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] px-siaf-md py-siaf-xs text-sm font-medium text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" (click)="closeDetalleAjustePanel()">Cancelar</button>
-              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-white transition hover:brightness-90 disabled:opacity-50" type="button" [disabled]="!tempSelectedDetalleAjuste" (click)="aceptarDetalleAjuste()">Aceptar</button>
+              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] px-siaf-md py-siaf-xs text-sm font-medium text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" (click)="closeDetalleAjustePanel()">Cancelar</button>
+              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-brand-white)] transition hover:brightness-90 disabled:opacity-50" type="button" [disabled]="!tempSelectedDetalleAjuste" (click)="aceptarDetalleAjuste()">Aceptar</button>
             </div>
           </aside>
         </section>
@@ -545,14 +545,14 @@ type PeriodoGroup = {
         <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="clase-ajuste-panel-title" (click)="closeClaseAjustePanel()">
           <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
 
-            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
+            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong)] px-siaf-md">
               <h2 id="clase-ajuste-panel-title" class="m-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Seleccionar Código de Clase de Ajuste</h2>
-              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Cerrar" (click)="closeClaseAjustePanel()">
+              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" aria-label="Cerrar" (click)="closeClaseAjustePanel()">
                 <siaf-icon name="close" [size]="24" />
               </button>
             </header>
 
-            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
+            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
               <div class="flex flex-col gap-siaf-lg">
 
                 <siaf-form-table-search
@@ -569,7 +569,7 @@ type PeriodoGroup = {
                 <section class="min-w-0 overflow-x-auto">
                   <table class="w-full border-collapse text-left">
                     <thead>
-                      <tr class="bg-[var(--sys-color-bg-surfaces-surface-high,rgba(32,32,32,0.12))]">
+                      <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)]">
                         <th class="h-10 w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
                         <th class="h-10 px-siaf-md py-siaf-sm text-xs font-bold uppercase leading-none text-text rounded-r-siaf-sm">Código de clase de ajuste</th>
                       </tr>
@@ -577,15 +577,15 @@ type PeriodoGroup = {
                     <tbody>
                       @for (row of claseAjusteRows; track row.codigo) {
                         <tr
-                          class="cursor-pointer border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] transition hover:bg-[rgba(1,72,153,0.04)]"
-                          [class.bg-[rgba(1,72,153,0.08)]]="tempSelectedClaseAjuste?.codigo === row.codigo"
+                          class="cursor-pointer border-b border-[var(--sys-color-divider-default)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]"
+                          [class.bg-[var(--sys-color-bg-states-light-selected)]]="tempSelectedClaseAjuste?.codigo === row.codigo"
                           (click)="selectTempClaseAjuste(row)"
                         >
                           <td class="px-siaf-sm py-siaf-xs">
                             <span class="inline-flex size-6 items-center justify-center">
                               <span class="flex size-5 items-center justify-center rounded-full border-2 transition"
                                 [class.border-brand-primary]="tempSelectedClaseAjuste?.codigo === row.codigo"
-                                [class.border-[rgba(32,32,32,0.4)]]="tempSelectedClaseAjuste?.codigo !== row.codigo">
+                                [class.border-[var(--sys-color-border-states-enabled)]]="tempSelectedClaseAjuste?.codigo !== row.codigo">
                                 @if (tempSelectedClaseAjuste?.codigo === row.codigo) {
                                   <span class="size-2.5 rounded-full bg-brand-primary"></span>
                                 }
@@ -609,8 +609,8 @@ type PeriodoGroup = {
             </div>
 
             <div class="flex shrink-0 items-center justify-end gap-siaf-xs px-siaf-md py-siaf-sm">
-              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] px-siaf-md py-siaf-xs text-sm font-medium text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" (click)="closeClaseAjustePanel()">Cancelar</button>
-              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-white transition hover:brightness-90 disabled:opacity-50" type="button" [disabled]="!tempSelectedClaseAjuste" (click)="aceptarClaseAjuste()">Aceptar</button>
+              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] px-siaf-md py-siaf-xs text-sm font-medium text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" (click)="closeClaseAjustePanel()">Cancelar</button>
+              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-brand-white)] transition hover:brightness-90 disabled:opacity-50" type="button" [disabled]="!tempSelectedClaseAjuste" (click)="aceptarClaseAjuste()">Aceptar</button>
             </div>
           </aside>
         </section>
@@ -622,15 +622,15 @@ type PeriodoGroup = {
           <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
 
             <!-- Header -->
-            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
+            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong)] px-siaf-md">
               <h2 id="periodo-panel-title" class="m-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Seleccionar Periodo</h2>
-              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Cerrar panel de periodo" (click)="closePeriodoPanel()">
+              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" aria-label="Cerrar panel de periodo" (click)="closePeriodoPanel()">
                 <siaf-icon name="close" [size]="24" />
               </button>
             </header>
 
             <!-- Cuerpo -->
-            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
+            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
               <div class="flex flex-col gap-siaf-lg">
 
                 <!-- Búsqueda -->
@@ -656,7 +656,7 @@ type PeriodoGroup = {
                 <section class="min-w-0 overflow-x-auto">
                   <table class="w-full min-w-[760px] border-collapse text-left">
                     <thead>
-                      <tr class="bg-[var(--sys-color-bg-surfaces-surface-high,rgba(32,32,32,0.12))]">
+                      <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)]">
                         <th class="h-10 w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm text-xs font-bold uppercase leading-none text-text"></th>
                         <th class="h-10 w-[130px] px-siaf-md py-siaf-sm text-xs font-bold uppercase leading-none text-text">Periodo</th>
                         <th class="h-10 w-[100px] px-siaf-md py-siaf-sm text-xs font-bold uppercase leading-none text-text">Vigencia</th>
@@ -669,7 +669,7 @@ type PeriodoGroup = {
                     </thead>
                     <tbody>
                       @for (group of periodoGroups; track group.anio) {
-                        <tr class="border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))]">
+                        <tr class="border-b border-[var(--sys-color-divider-default)]">
                           <td class="px-siaf-sm py-siaf-xs">
                             <button class="inline-flex size-6 items-center justify-center rounded-siaf-sm transition hover:bg-surface-muted" type="button" (click)="toggleGroup(group)">
                               <siaf-icon [name]="group.expanded ? 'expand_less' : 'expand_more'" [size]="20" />
@@ -691,15 +691,15 @@ type PeriodoGroup = {
                         @if (group.expanded) {
                           @for (row of group.subPeriodos; track row.periodo) {
                             <tr
-                              class="cursor-pointer border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] transition hover:bg-[rgba(1,72,153,0.04)]"
-                              [class.bg-[rgba(1,72,153,0.08)]]="tempSelectedPeriodo?.periodo === row.periodo"
+                              class="cursor-pointer border-b border-[var(--sys-color-divider-default)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]"
+                              [class.bg-[var(--sys-color-bg-states-light-selected)]]="tempSelectedPeriodo?.periodo === row.periodo"
                               (click)="selectTempPeriodo(row)"
                             >
                               <td class="px-siaf-sm py-siaf-xs">
                                 <span class="inline-flex size-6 items-center justify-center">
                                   <span class="flex size-5 items-center justify-center rounded-full border-2 transition"
                                     [class.border-brand-primary]="tempSelectedPeriodo?.periodo === row.periodo"
-                                    [class.border-[rgba(32,32,32,0.4)]]="tempSelectedPeriodo?.periodo !== row.periodo">
+                                    [class.border-[var(--sys-color-border-states-enabled)]]="tempSelectedPeriodo?.periodo !== row.periodo">
                                     @if (tempSelectedPeriodo?.periodo === row.periodo) {
                                       <span class="size-2.5 rounded-full bg-brand-primary"></span>
                                     }
@@ -745,10 +745,10 @@ type PeriodoGroup = {
 
             <!-- Footer -->
             <div class="flex shrink-0 items-center justify-end gap-siaf-xs px-siaf-md py-siaf-sm">
-              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md border border-[rgba(32,32,32,0.4)] px-siaf-md py-siaf-xs text-sm font-medium text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" (click)="closePeriodoPanel()">
+              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] px-siaf-md py-siaf-xs text-sm font-medium text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" (click)="closePeriodoPanel()">
                 Cancelar
               </button>
-              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-white transition hover:brightness-90 disabled:opacity-50" type="button" [disabled]="!tempSelectedPeriodo" (click)="aceptarPeriodo()">
+              <button class="inline-flex min-h-10 items-center justify-center rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-brand-white)] transition hover:brightness-90 disabled:opacity-50" type="button" [disabled]="!tempSelectedPeriodo" (click)="aceptarPeriodo()">
                 Aceptar
               </button>
             </div>

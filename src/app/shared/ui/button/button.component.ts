@@ -75,8 +75,8 @@ export class ButtonComponent {
       primary: 'border-[var(--sys-color-bg-brand-accent)] bg-[var(--sys-color-bg-brand-accent)] text-brand-contrast enabled:hover:brightness-90 enabled:active:brightness-75 focus-visible:outline-[var(--sys-color-bg-brand-accent)]',
       secondary: 'border-[var(--sys-color-border-states-enabled)] bg-[var(--sys-color-bg-states-light-enabled)] text-[var(--sys-color-text-neutral-medium)] enabled:hover:bg-surface-muted enabled:active:bg-[var(--sys-color-bg-states-dark-pressed)] focus-visible:outline-brand-primary',
       ghost: 'border-transparent bg-transparent text-text enabled:hover:bg-surface-muted enabled:active:bg-[var(--sys-color-bg-states-dark-pressed)] focus-visible:outline-brand-primary',
-      danger: 'border-[var(--sys-color-border-feedback-danger)] bg-[var(--sys-color-bg-feedback-dark-danger)] text-white enabled:hover:brightness-90 enabled:active:brightness-75 focus-visible:outline-[var(--sys-color-border-feedback-danger)]',
-      accent: 'border-[var(--sys-color-bg-brand-accent)] bg-[var(--sys-color-bg-brand-accent)] text-white enabled:hover:brightness-90 enabled:active:brightness-75 focus-visible:outline-[var(--sys-color-bg-brand-accent)]'
+      danger: 'border-[var(--sys-color-border-feedback-danger)] bg-[var(--sys-color-bg-feedback-dark-danger)] text-[var(--sys-color-text-brand-white)] enabled:hover:brightness-90 enabled:active:brightness-75 focus-visible:outline-[var(--sys-color-border-feedback-danger)]',
+      accent: 'border-[var(--sys-color-bg-brand-accent)] bg-[var(--sys-color-bg-brand-accent)] text-[var(--sys-color-text-brand-white)] enabled:hover:brightness-90 enabled:active:brightness-75 focus-visible:outline-[var(--sys-color-bg-brand-accent)]'
     };
 
     return classes[this.variant];

@@ -192,7 +192,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                       <span class="absolute left-[-1px] top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-siaf-sm bg-brand-primary"></span>
                       <span class="flex-1 text-sm font-bold text-text">{{ selectedTipoPlan()!.nombre }}</span>
                       @if (!isReadOnly) {
-                        <button class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Quitar plan contable" (click)="selectedTipoPlan.set(null)">
+                        <button class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" aria-label="Quitar plan contable" (click)="selectedTipoPlan.set(null)">
                           <siaf-icon name="close" [size]="20" />
                         </button>
                       }
@@ -502,7 +502,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                   </thead>
                   <tbody>
                     @for (account of pagedCreatedAccountingAccounts(); track account.code) {
-                      <tr class="h-12 border-b border-[var(--sys-color-divider-default)] bg-surface text-[var(--sys-color-text-neutral-medium)]" [class.cursor-pointer]="isReadOnly" [class.hover:bg-[rgba(1,72,153,0.04)]]="isReadOnly" (click)="openCreatedAccountReadonly(account)">
+                      <tr class="h-12 border-b border-[var(--sys-color-divider-default)] bg-surface text-[var(--sys-color-text-neutral-medium)]" [class.cursor-pointer]="isReadOnly" [class.hover:bg-[var(--sys-color-bg-states-light-hover)]]="isReadOnly" (click)="openCreatedAccountReadonly(account)">
                         @if (!isReadOnly) {
                           <td class="px-siaf-sm py-siaf-sm">
                             <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" [checked]="isCreatedAccountSelected(account.code)" [attr.aria-label]="'Seleccionar ' + account.name" (click)="$event.stopPropagation()" (change)="toggleCreatedAccount(account.code, checkedValue($event))" />
@@ -569,7 +569,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 
               @if (acceptedExternalEntity()) {
                 <div class="relative flex items-center gap-siaf-md rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface p-siaf-md">
-                  <span class="absolute left-[-1px] top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-br-siaf-sm rounded-tr-siaf-sm bg-[var(--sys-color-icon-states-active,#014899)]"></span>
+                  <span class="absolute left-[-1px] top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-br-siaf-sm rounded-tr-siaf-sm bg-[var(--sys-color-icon-states-active)]"></span>
                   <div class="grid min-w-0 flex-1 gap-siaf-md sm:grid-cols-2">
                     <div class="flex min-w-0 flex-col gap-siaf-xxs">
                       <span class="truncate text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-[var(--sys-color-text-neutral-low)]">Código</span>
@@ -637,10 +637,10 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
       @if (externalEntityPanelOpen()) {
         <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="external-entity-panel-title" (click)="closeExternalEntityPanel()">
           <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
-            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
+            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong)] px-siaf-md">
               <h2 id="external-entity-panel-title" class="m-0 min-w-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Selecciona la entidad externa</h2>
               <button
-                class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]"
+                class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]"
                 type="button"
                 aria-label="Cerrar selección de entidad externa"
                 (click)="closeExternalEntityPanel()"
@@ -649,7 +649,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
               </button>
             </header>
 
-            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
+            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
               <div class="flex flex-col gap-siaf-lg">
               <siaf-form-table-search
                 [value]="externalEntitySearch()"
@@ -707,14 +707,14 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
       @if (tipoPlanPanelOpen()) {
         <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="tipo-plan-panel-title" (click)="closeTipoPlanPanel()">
           <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
-            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
+            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong)] px-siaf-md">
               <h2 id="tipo-plan-panel-title" class="m-0 min-w-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Seleccionar plan de cuentas contable</h2>
-              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Cerrar selección de plan de cuentas contable" (click)="closeTipoPlanPanel()">
+              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" aria-label="Cerrar selección de plan de cuentas contable" (click)="closeTipoPlanPanel()">
                 <siaf-icon name="close" [size]="24" />
               </button>
             </header>
 
-            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
+            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
               <div class="flex flex-col gap-siaf-lg">
                 <siaf-form-table-search
                   [value]="tipoPlanSearch()"

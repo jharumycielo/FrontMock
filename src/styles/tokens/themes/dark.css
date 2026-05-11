@@ -16,6 +16,7 @@
   --sys-color-bg-surfaces-field: #292D36;
   --sys-color-bg-surfaces-disabled: #2E3440;
   --sys-color-bg-surfaces-highlight: #143A5A;
+  --sys-color-bg-snackbar: #20232B;
 
   --sys-color-text-neutral-high: #F4F7FB;
   --sys-color-text-neutral-medium: #D5DCE7;
@@ -34,6 +35,7 @@
   --sys-color-border-states-white: rgba(255, 255, 255, 0.8);
   --sys-color-border-states-hover: rgba(213, 220, 231, 0.54);
   --sys-color-border-states-focused: #91C9FF;
+  --sys-color-border-states-focus: var(--sys-color-border-states-focused);
 
   --sys-color-icon-states-enabled: #D5DCE7;
   --sys-color-icon-states-active: #91C9FF;

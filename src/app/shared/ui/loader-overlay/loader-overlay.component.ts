@@ -14,11 +14,11 @@ import { LoaderComponent } from '../loader/loader.component';
         aria-live="polite"
         [attr.aria-label]="label"
       >
-        <div class="grid place-items-center gap-siaf-md text-white">
+        <div class="grid place-items-center gap-siaf-md text-[var(--sys-color-text-brand-white)]">
           <siaf-loader [size]="size" [dotSize]="dotSize" tone="light" [decorative]="true" />
 
           @if (message) {
-            <p class="m-0 text-center text-sm font-medium text-white">
+            <p class="m-0 text-center text-sm font-medium text-[var(--sys-color-text-brand-white)]">
               {{ message }}
             </p>
           }

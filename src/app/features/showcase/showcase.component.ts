@@ -82,7 +82,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- BUTTON -->
       <section id="sc-button">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Button</h2>
-        <div class="flex flex-wrap gap-3 items-center bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-wrap gap-3 items-center bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-button variant="primary">Primary</siaf-button>
           <siaf-button variant="secondary">Secondary</siaf-button>
           <siaf-button variant="ghost">Ghost</siaf-button>
@@ -100,7 +100,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- TEXT FIELD -->
       <section id="sc-text-field">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Text Field</h2>
-        <div class="grid grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div class="grid grid-cols-3 gap-4 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-input label="Texto simple" />
           <siaf-input label="Con error" error="Campo requerido" />
           <siaf-input label="Con hint" hint="Texto de ayuda" />
@@ -116,7 +116,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- DATE TIME PICKER -->
       <section id="sc-date-time-picker">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Date Time Picker</h2>
-        <div class="grid grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div class="grid grid-cols-3 gap-4 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-date-time-picker label="Fecha" variant="date" />
           <siaf-date-time-picker label="Fecha y Hora" variant="datetime" />
           <siaf-date-time-picker label="Con error" variant="date" error="Fecha requerida" />
@@ -127,7 +127,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- BADGE -->
       <section id="sc-badge">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Badge</h2>
-        <div class="flex flex-wrap gap-3 bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-wrap gap-3 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-badge tone="info" label="Info" />
           <siaf-badge tone="success" label="Success" />
           <siaf-badge tone="warning" label="Warning" />
@@ -139,7 +139,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- TAG -->
       <section id="sc-tag">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Tag</h2>
-        <div class="flex flex-wrap gap-3 bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-wrap gap-3 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-tag tone="neutral" label="Neutral" />
           <siaf-tag tone="info" label="Info" />
           <siaf-tag tone="success" label="Success" />
@@ -153,7 +153,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- ALERT -->
       <section id="sc-alert">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Alert</h2>
-        <div class="flex flex-col gap-3 bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-col gap-3 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-alert tone="neutral" title="Notificación" description="Esta es un mensaje de alerta neutral del sistema." />
           <siaf-alert tone="success" title="Operación exitosa" description="La cuenta contable fue registrada correctamente." />
           <siaf-alert tone="info" title="Información" description="Revisa los datos antes de continuar con el proceso." />
@@ -165,7 +165,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- FLOW STATUS TAG -->
       <section id="sc-flow-status">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Flow Status Tag</h2>
-        <div class="flex flex-wrap gap-2 bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-wrap gap-2 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-flow-status-tag status="Elaborado" />
           <siaf-flow-status-tag status="Verificado" />
           <siaf-flow-status-tag status="Aprobado" />
@@ -183,7 +183,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- RECORD STATUS TAG -->
       <section id="sc-record-status">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Record Status Tag</h2>
-        <div class="flex flex-wrap gap-2 bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-wrap gap-2 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-record-status-tag status="Activo" size="small" />
           <siaf-record-status-tag status="Activo" size="standard" />
           <siaf-record-status-tag status="Inactivo" size="small" />
@@ -202,7 +202,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- CHECKBOX · SWITCH · RADIO -->
       <section id="sc-controls">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Checkbox · Switch · Radio</h2>
-        <div class="flex flex-wrap gap-8 bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-wrap gap-8 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <div class="flex flex-col gap-2">
             <span class="text-[10px] text-gray-400 uppercase font-bold mb-1">Checkbox</span>
             <siaf-checkbox label="Opción marcada" [checked]="true" />
@@ -225,7 +225,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- TABS -->
       <section id="sc-tabs">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Tabs</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-tabs [tabs]="tabItems" activeId="tab1" />
         </div>
       </section>
@@ -233,7 +233,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- STEPS -->
       <section id="sc-steps">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Steps</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-steps [steps]="stepItems" [activeStep]="1" />
         </div>
       </section>
@@ -241,7 +241,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- ACCORDION -->
       <section id="sc-accordion">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Accordion</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-accordion [items]="accordionItems" openId="ac1" />
         </div>
       </section>
@@ -249,7 +249,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- READONLY -->
       <section id="sc-readonly">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Readonly · Readonly Field</h2>
-        <div class="grid grid-cols-2 gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div class="grid grid-cols-2 gap-4 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-readonly label="Nombre completo" value="Ricardo Bustamante" />
           <siaf-readonly label="Código" value="RPT-2024-001" />
           <readonly-field caption="Entidad" value="Ministerio de Economía y Finanzas" />
@@ -260,7 +260,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- DIVIDER -->
       <section id="sc-divider">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Divider</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm space-y-3">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm space-y-3">
           <span class="text-sm">Contenido arriba</span>
           <siaf-divider />
           <span class="text-sm">Contenido abajo</span>
@@ -275,7 +275,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- TEXT AREA CONTROL -->
       <section id="sc-textarea">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Text Area Control</h2>
-        <div class="grid grid-cols-2 gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div class="grid grid-cols-2 gap-4 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <text-area-control placeholder="Escribe aquí..." [maxlength]="500" />
           <text-area-control title="Con título" placeholder="Con título flotante" [maxlength]="200" value="Texto de ejemplo" />
         </div>
@@ -284,7 +284,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- ICON -->
       <section id="sc-icon">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Icon</h2>
-        <div class="flex flex-wrap gap-4 items-center bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-wrap gap-4 items-center bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-icon name="home" [size]="24" />
           <siaf-icon name="search" [size]="24" />
           <siaf-icon name="add" [size]="24" />
@@ -302,7 +302,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- LIST -->
       <section id="sc-list">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">List</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm max-w-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm max-w-sm">
           <siaf-list [items]="listItems" />
         </div>
       </section>
@@ -310,7 +310,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- MENU -->
       <section id="sc-menu">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Menu</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm max-w-xs">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm max-w-xs">
           <siaf-menu [items]="menuItems" />
         </div>
       </section>
@@ -318,7 +318,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- LOADING -->
       <section id="sc-loading">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Loading Progress</h2>
-        <div class="flex flex-wrap gap-8 items-center bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-wrap gap-8 items-center bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-loading-progress variant="spinner" [size]="32" />
           <siaf-loading-progress variant="spinner" [size]="48" />
           <div class="w-48"><siaf-loading-progress variant="bar" [value]="60" /></div>
@@ -329,7 +329,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- PAGINATION -->
       <section id="sc-pagination">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Pagination</h2>
-        <div class="flex flex-col gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-col gap-4 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-pagination navigation="Activate" position="Top" [page]="2" [pageSize]="25" [totalItems]="200" [totalPages]="8" />
           <siaf-pagination navigation="Activate" position="Bottom" [rowPage]="true" [page]="1" [pageSize]="25" [totalItems]="200" [totalPages]="8" />
         </div>
@@ -338,7 +338,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- TOOLTIP -->
       <section id="sc-tooltip">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Tooltip</h2>
-        <div class="flex gap-8 items-center bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex gap-8 items-center bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-tooltip text="Tooltip arriba">
             <siaf-button variant="secondary">Hover top</siaf-button>
           </siaf-tooltip>
@@ -354,7 +354,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- POPOVER -->
       <section id="sc-popover">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Popover</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-popover [open]="true">
             <siaf-button variant="secondary" popover-trigger>Abrir popover</siaf-button>
             <div class="space-y-2">
@@ -368,7 +368,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- MODAL -->
       <section id="sc-modal">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Modal</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-modal [open]="true" variant="delete-request" confirmLabel="Eliminar" />
         </div>
       </section>
@@ -376,7 +376,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- EMPTY SECTION -->
       <section id="sc-empty">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Empty Section</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <empty-section title="Sin documentos" />
         </div>
       </section>
@@ -384,7 +384,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- TIMELINE -->
       <section id="sc-timeline">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Timeline</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-timeline [items]="timelineItems" />
         </div>
       </section>
@@ -392,7 +392,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- SNACKBAR -->
       <section id="sc-snackbar">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Snackbar</h2>
-        <div class="flex flex-col gap-3 bg-white p-4 rounded-lg shadow-sm">
+        <div class="flex flex-col gap-3 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-snackbar message="Cambios guardados correctamente" />
           <siaf-snackbar variant="creation-elaborated" />
           <siaf-snackbar variant="creation-verified" />
@@ -403,7 +403,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- SUMMARY CARD -->
       <section id="sc-summary-card">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Summary Card</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-summary-card [fields]="summaryFields" [showClose]="true" />
         </div>
       </section>
@@ -411,7 +411,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- ACTION TRACKER -->
       <section id="sc-action-tracker">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Action Tracker</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-action-tracker [showSummaryCards]="true" [showTabs]="false" [summaryItems]="trackerItems" />
         </div>
       </section>
@@ -419,7 +419,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- UPLOADER -->
       <section id="sc-uploader">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Uploader</h2>
-        <div class="grid grid-cols-2 gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div class="grid grid-cols-2 gap-4 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-uploader variant="extended" />
           <siaf-uploader variant="compact" />
         </div>
@@ -428,7 +428,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- UPLOAD SIDE NAV -->
       <section id="sc-upload-side-nav">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Upload Side Nav</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="height:420px;position:relative">
+        <div class="relative h-[420px] overflow-hidden rounded-lg bg-surface shadow-siaf-sm">
           <siaf-upload-side-nav [open]="true" title="Cargar Documento de Sustento"
             description="Sube un archivo .PDF en el formato correcto."
             acceptedLabel="Solo admite archivos .pdf" hint="Archivos de hasta 10 MB" />
@@ -438,7 +438,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- UPLOADED FILE CARD -->
       <section id="sc-uploaded-file-card">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Uploaded File Card</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm max-w-md">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm max-w-md">
           <siaf-uploaded-file-card [file]="demoFile" />
         </div>
       </section>
@@ -446,7 +446,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- SELECT OPTIONS -->
       <section id="sc-select-options">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Select Options</h2>
-        <div class="grid grid-cols-2 gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div class="grid grid-cols-2 gap-4 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-select-options [options]="selectOptions" selectedValue="op2" />
           <siaf-select-options [options]="selectOptions" [selectedValues]="['op1','op3']" [multiple]="true" />
         </div>
@@ -455,7 +455,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- CARD -->
       <section id="sc-card">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Card</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-card title="Título del card" description="Descripción del contenido de la tarjeta">
             <p class="text-sm text-gray-500 mt-2">Contenido del slot interno</p>
           </siaf-card>
@@ -465,7 +465,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- MESSAGE BOX -->
       <section id="sc-message-box">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Message Box</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <message-box message="Este es un mensaje informativo del sistema para el usuario." />
         </div>
       </section>
@@ -473,7 +473,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- ANNULMENT MODAL -->
       <section id="sc-annulment-modal">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Annulment Modal</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm" style="position:relative;min-height:300px">
+        <div class="relative min-h-[300px] rounded-lg bg-surface p-4 shadow-siaf-sm">
           <siaf-annulment-modal [open]="true" [step]="1" />
         </div>
       </section>
@@ -481,7 +481,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- SIDE PANEL -->
       <section id="sc-side-panel">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Side Panel</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="height:300px;position:relative">
+        <div class="relative h-[300px] overflow-hidden rounded-lg bg-surface shadow-siaf-sm">
           <siaf-side-panel [open]="true" title="Panel lateral">
             <p class="p-4 text-sm text-gray-500">Contenido del panel lateral.</p>
           </siaf-side-panel>
@@ -491,7 +491,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- COLUMN VISIBILITY PANEL -->
       <section id="sc-column-visibility-panel">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Column Visibility Panel</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="height:360px;position:relative">
+        <div class="relative h-[360px] overflow-hidden rounded-lg bg-surface shadow-siaf-sm">
           <siaf-column-visibility-panel [open]="true" [defaultColumns]="defaultColumns" />
         </div>
       </section>
@@ -499,7 +499,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- DOCUMENT HISTORY PANEL -->
       <section id="sc-document-history-panel">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Document History Panel</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="height:420px;position:relative">
+        <div class="relative h-[420px] overflow-hidden rounded-lg bg-surface shadow-siaf-sm">
           <siaf-document-history-panel [open]="true" />
         </div>
       </section>
@@ -507,7 +507,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- PROCESS MENU TREE -->
       <section id="sc-process-menu-tree">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Process Menu Tree</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="max-width:380px">
+        <div class="max-w-[380px] overflow-hidden rounded-lg bg-surface shadow-siaf-sm">
           <siaf-process-menu-tree />
         </div>
       </section>
@@ -515,7 +515,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- TREE VIEW -->
       <section id="sc-tree-view">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Tree View</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm max-w-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm max-w-sm">
           <siaf-tree-view [nodes]="treeNodes" />
         </div>
       </section>
@@ -523,7 +523,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- STEPPER CARD -->
       <section id="sc-stepper-card">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Stepper Card</h2>
-        <div class="grid grid-cols-2 gap-4 bg-white p-4 rounded-lg shadow-sm">
+        <div class="grid grid-cols-2 gap-4 bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-stepper-card [fields]="stepperFields" />
           <siaf-stepper-card [fields]="stepperFields" [selected]="true" />
         </div>
@@ -532,7 +532,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- SOLICITUDE INFO CARD -->
       <section id="sc-solicitude-info-card">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Solicitude Info Card</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-solicitude-info-card [fields]="solicitudeInfoFields" />
         </div>
       </section>
@@ -540,7 +540,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- SOLICITUDE FORM CARD -->
       <section id="sc-solicitude-form-card">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Solicitude Form Card</h2>
-        <div class="bg-white p-4 rounded-lg shadow-sm">
+        <div class="bg-surface p-4 rounded-lg shadow-siaf-sm">
           <siaf-solicitude-form-card title="Datos del documento">
             <div class="grid grid-cols-2 gap-4 mt-2">
               <siaf-input label="Código" value="RPT-2024-001" />
@@ -553,7 +553,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- SOLICITUDE HEADER -->
       <section id="sc-solicitude-header">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Solicitude Header</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="bg-surface rounded-lg shadow-siaf-sm overflow-hidden">
           <siaf-solicitude-header role="creator" state="new" heading="Registro de Asiento de Ajuste" type="readonly" />
         </div>
       </section>
@@ -561,7 +561,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- SOLICITUDE PAGE LAYOUT -->
       <section id="sc-solicitude-page-layout">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Solicitude Page Layout</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="min-height:220px">
+        <div class="min-h-[220px] overflow-hidden rounded-lg bg-surface shadow-siaf-sm">
           <siaf-solicitude-page-layout
             [breadcrumbs]="breadcrumbs"
             role="creator"
@@ -575,7 +575,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- DATA TABLE -->
       <section id="sc-data-table">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Data Table</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="bg-surface rounded-lg shadow-siaf-sm overflow-hidden">
           <siaf-data-table [columns]="dataTableColumns" [rows]="dataTableRows" />
         </div>
       </section>
@@ -583,7 +583,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- DOCUMENTS RECORDS TABLE -->
       <section id="sc-documents-records-table">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Documents Records Table</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="bg-surface rounded-lg shadow-siaf-sm overflow-hidden">
           <siaf-documents-records-table
             activeTab="documents"
             [columns]="docRecordsColumns"
@@ -595,7 +595,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- MOBILE NAVIGATION MENU -->
       <section id="sc-mobile-navigation-menu">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Mobile Navigation Menu</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="max-width:360px">
+        <div class="max-w-[360px] overflow-hidden rounded-lg bg-surface shadow-siaf-sm">
           <siaf-mobile-navigation-menu navigation="Bandeja" />
         </div>
       </section>
@@ -603,7 +603,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- TRAY MENU -->
       <section id="sc-tray-menu">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Tray Menu</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="max-width:320px;max-height:420px">
+        <div class="max-h-[420px] max-w-[320px] overflow-hidden rounded-lg bg-surface shadow-siaf-sm">
           <siaf-tray-menu selectedItem="Borradores" />
         </div>
       </section>
@@ -611,7 +611,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- TRAY DOCUMENTS VIEW -->
       <section id="sc-tray-documents-view">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Tray Documents View</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="min-height:300px">
+        <div class="min-h-[300px] overflow-hidden rounded-lg bg-surface shadow-siaf-sm">
           <siaf-tray-documents-view title="Borradores" />
         </div>
       </section>
@@ -619,7 +619,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- TABLE -->
       <section id="sc-table">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Table</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="bg-surface rounded-lg shadow-siaf-sm overflow-hidden">
           <siaf-table [columns]="dataTableColumns" [rows]="dataTableRows" />
         </div>
       </section>
@@ -627,7 +627,7 @@ import { CreateDocumentComponent } from '../../layout/create-document/create-doc
       <!-- CREATE DOCUMENT -->
       <section id="sc-create-document">
         <h2 class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3 border-b pb-1">Create Document</h2>
-        <div class="bg-white rounded-lg shadow-sm overflow-hidden" style="max-width:380px">
+        <div class="max-w-[380px] overflow-hidden rounded-lg bg-surface shadow-siaf-sm">
           <siaf-create-document variant="dropdown" title="Nuevo documento" />
         </div>
       </section>

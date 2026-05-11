@@ -27,7 +27,7 @@ type DeskCard = {
               class="flex min-h-[204px] items-center gap-siaf-lg rounded-siaf-md bg-surface px-siaf-xl py-12"
               aria-label="Bandeja de Documentos"
             >
-              <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] text-[var(--sys-color-text-brand-accent)] sm:size-[98px]">
+              <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default)] text-[var(--sys-color-text-brand-accent)] sm:size-[98px]">
                 <siaf-icon name="inbox" [size]="64" />
               </span>
               <div class="min-w-0">
@@ -37,7 +37,7 @@ type DeskCard = {
             </article>
 
             <article
-              class="flex min-h-[204px] cursor-pointer items-center gap-siaf-lg rounded-siaf-md bg-surface px-siaf-xl py-12 transition hover:bg-[rgba(1,72,153,0.04)] active:bg-[rgba(1,72,153,0.08)]"
+              class="flex min-h-[204px] cursor-pointer items-center gap-siaf-lg rounded-siaf-md bg-surface px-siaf-xl py-12 transition hover:bg-[var(--sys-color-bg-states-light-hover)] active:bg-[var(--sys-color-bg-states-light-selected)]"
               aria-label="Procesos"
               role="button"
               tabindex="0"
@@ -45,7 +45,7 @@ type DeskCard = {
               (keydown.enter)="openProcessMenu()"
               (keydown.space)="openProcessMenu()"
             >
-              <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] text-[var(--sys-color-text-brand-primary)] sm:size-[98px]">
+              <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default)] text-[var(--sys-color-text-brand-primary)] sm:size-[98px]">
                 <siaf-icon name="picture_in_picture" [size]="64" />
               </span>
               <p class="m-0 text-[30px] font-medium leading-normal tracking-[-0.63px] text-[var(--sys-color-text-brand-secondary)]">Procesos</p>
@@ -70,7 +70,7 @@ type DeskCard = {
             <div class="grid gap-siaf-md">
               @for (card of wideCards; track card.title) {
                 <article class="flex min-h-[120px] items-center gap-[25px] rounded-[12px] bg-surface px-[31px] py-siaf-xl">
-                  <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))]" [style.color]="card.iconClass">
+                  <span class="inline-flex size-[74px] shrink-0 items-center justify-center rounded-[12px] border border-[var(--sys-color-divider-default)]" [style.color]="card.iconClass">
                     <siaf-icon [name]="card.icon" [size]="58" />
                   </span>
                   <p class="m-0 text-[30px] font-medium leading-normal tracking-[-0.63px] text-[var(--sys-color-text-brand-secondary)]">{{ card.title }}</p>

@@ -120,7 +120,7 @@ const SNACKBAR_PRESETS: Record<Exclude<SnackbarVariant, 'custom'>, SnackbarPrese
   template: `
     @if (open) {
       <div
-        class="flex min-h-16 w-full max-w-[430px] items-center gap-siaf-xs rounded-siaf-md bg-[rgb(32_32_32/0.92)] p-siaf-md text-sm font-normal leading-normal tracking-[0.025px] text-white shadow-siaf-elevation-2"
+        class="flex min-h-16 w-full max-w-[430px] items-center gap-siaf-xs rounded-siaf-md bg-[var(--sys-color-bg-snackbar,var(--sys-color-bg-on-surfaces-high))] p-siaf-md text-sm font-normal leading-normal tracking-[0.025px] text-[var(--sys-color-text-brand-white)] shadow-siaf-elevation-2"
         role="status"
       >
         <div class="flex min-w-0 flex-1 items-center gap-siaf-xs">
@@ -161,7 +161,7 @@ const SNACKBAR_PRESETS: Record<Exclude<SnackbarVariant, 'custom'>, SnackbarPrese
 
         @if (dismissible) {
           <button
-            class="-mr-1 inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-sm text-white transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            class="-mr-1 inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-brand-white)] transition hover:bg-[var(--sys-color-bg-states-dark-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--sys-color-text-brand-white)]"
             type="button"
             aria-label="Cerrar mensaje"
             (click)="closed.emit()"

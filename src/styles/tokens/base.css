@@ -1,4 +1,9 @@
 /* Variables base que no dependen de tema */
 :root {
   --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --sys-color-bg-states-on-brand-hover: rgb(255 255 255 / 0.10);
+  --sys-color-bg-states-on-brand-selected: rgb(255 255 255 / 0.10);
+  --sys-color-border-on-brand-subtle: rgb(255 255 255 / 0.10);
+  --sys-color-text-on-brand-muted: rgb(255 255 255 / 0.75);
+  --sys-color-bg-switch-thumb: #FFFFFF;
 }

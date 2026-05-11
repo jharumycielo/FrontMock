@@ -14,14 +14,14 @@ type MobileNavigationItem = {
   standalone: true,
   imports: [IconComponent],
   template: `
-    <aside class="min-h-[calc(100vh-56px)] w-full border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface-highest))]">
+    <aside class="min-h-[calc(100vh-56px)] w-full border-r border-[var(--sys-color-divider-default)] bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface-highest))]">
       <header class="sticky top-0 z-[2] bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface))] p-siaf-md">
         <h2 class="m-0 min-h-6 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Bandeja de documentos</h2>
       </header>
 
       <div class="flex flex-col gap-siaf-lg bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface))] px-siaf-md py-siaf-xs">
         <button
-          class="inline-flex min-h-10 w-full items-center justify-center gap-siaf-xs rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-white transition hover:brightness-90 active:brightness-75"
+          class="inline-flex min-h-10 w-full items-center justify-center gap-siaf-xs rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-brand-white)] transition hover:brightness-90 active:brightness-75"
           type="button"
           (click)="created.emit()"
         >
@@ -32,9 +32,9 @@ type MobileNavigationItem = {
         <nav class="flex w-full flex-col">
           @for (item of items; track item.id) {
             <button
-              class="flex min-h-12 w-full items-center gap-siaf-md overflow-hidden rounded-siaf-sm px-siaf-md py-siaf-sm text-left transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+              class="flex min-h-12 w-full items-center gap-siaf-md overflow-hidden rounded-siaf-sm px-siaf-md py-siaf-sm text-left transition hover:bg-[var(--sys-color-bg-states-light-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
               type="button"
-              [class.bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))]]="isActive(item.id)"
+              [class.bg-[var(--sys-color-bg-states-light-selected)]]="isActive(item.id)"
               (click)="select(item)"
             >
               <siaf-icon

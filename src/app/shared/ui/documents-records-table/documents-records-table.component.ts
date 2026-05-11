@@ -30,7 +30,7 @@ export type DocumentsRecordsSelectionChange = {
         </thead>
         <tbody>
           @for (row of rows; track rowTrackValue(row, $index)) {
-            <tr class="border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-surface hover:bg-[rgba(1,72,153,0.04)]" [class.h-12]="activeTab === 'records'">
+            <tr class="border-b border-[var(--sys-color-divider-default)] bg-surface hover:bg-[var(--sys-color-bg-states-light-hover)]" [class.h-12]="activeTab === 'records'">
               <td class="h-[58px] px-siaf-sm py-siaf-xs">
                 <input
                   class="size-4 disabled:cursor-not-allowed"

@@ -70,7 +70,7 @@ export type AnnulmentModalStep = 1 | 2 | 3;
 
                 @if (step === 2) {
                   <div class="pointer-events-none absolute right-4 top-0 hidden sm:block">
-                    <div class="flex items-center gap-1 rounded-full bg-brand-primary px-siaf-xs py-siaf-xxs text-xs font-bold text-white shadow-siaf-md">
+                    <div class="flex items-center gap-1 rounded-full bg-brand-primary px-siaf-xs py-siaf-xxs text-xs font-bold text-[var(--sys-color-text-brand-white)] shadow-siaf-md">
                       <img class="size-6" src="assets/figma/modal-annulment/xls-file.svg" alt="" />
                       Sustento.pdf
                     </div>

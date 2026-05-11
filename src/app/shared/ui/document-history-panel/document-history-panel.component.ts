@@ -35,16 +35,16 @@ type ReadonlyField = {
           class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md"
           (click)="$event.stopPropagation()"
         >
-          <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md">
+          <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong)] px-siaf-md">
             <h2 id="document-history-title" class="m-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Historial del documento</h2>
-            <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[rgba(32,32,32,0.12)]" type="button" aria-label="Cerrar historial del documento" (click)="closed.emit()">
+            <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" aria-label="Cerrar historial del documento" (click)="closed.emit()">
               <siaf-icon name="close" [size]="24" />
             </button>
           </header>
 
-          <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] px-siaf-md py-siaf-md sm:px-siaf-xl">
+          <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
             <div class="flex flex-col gap-siaf-lg">
-              <section class="rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] p-siaf-md">
+              <section class="rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] p-siaf-md">
                 <div class="grid gap-siaf-lg md:grid-cols-3">
                   @for (field of summaryFields; track field.label) {
                     <div class="flex min-h-11 min-w-0 flex-col gap-siaf-xxs">
@@ -55,7 +55,7 @@ type ReadonlyField = {
                 </div>
               </section>
 
-              <section class="overflow-hidden rounded-siaf-sm border border-[var(--sys-color-divider-strong,rgba(32,32,32,0.24))] bg-surface">
+              <section class="overflow-hidden rounded-siaf-sm border border-[var(--sys-color-divider-strong)] bg-surface">
                 <button class="flex min-h-12 w-full items-center gap-siaf-xs px-siaf-md py-siaf-xxs text-left transition hover:bg-surface-muted" type="button" (click)="attributesOpen = !attributesOpen">
                   <span class="inline-flex size-10 items-center justify-center rounded-siaf-md">
                     <siaf-icon class="transition" [class.rotate-180]="!attributesOpen" name="expand_less" [size]="24" />
@@ -64,7 +64,7 @@ type ReadonlyField = {
                 </button>
 
                 @if (attributesOpen) {
-                  <div class="border-t border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] p-siaf-md">
+                  <div class="border-t border-[var(--sys-color-divider-default)] p-siaf-md">
                     <div class="grid gap-x-siaf-md gap-y-siaf-lg md:grid-cols-3">
                       @for (field of attributeFields; track field.label) {
                         <div class="flex min-h-11 min-w-0 flex-col gap-siaf-xxs">
@@ -80,7 +80,7 @@ type ReadonlyField = {
               <section class="min-w-0 overflow-x-auto">
                 <table class="w-full min-w-[760px] border-collapse text-left">
                   <thead>
-                    <tr class="bg-[var(--sys-color-bg-surfaces-surface-high,rgba(32,32,32,0.12))]">
+                    <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)]">
                       <th class="h-10 px-siaf-md py-siaf-sm text-xs font-bold uppercase leading-none text-text">Usuario</th>
                       <th class="h-10 px-siaf-md py-siaf-sm text-center text-xs font-bold uppercase leading-none text-text">Unidad organizacional</th>
                       <th class="h-10 w-[220px] px-siaf-md py-siaf-sm text-center text-xs font-bold uppercase leading-none text-text">Fecha</th>
@@ -89,7 +89,7 @@ type ReadonlyField = {
                   </thead>
                   <tbody>
                     @for (row of historyRows; track row.status + row.date + row.time) {
-                      <tr class="border-b border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))]">
+                      <tr class="border-b border-[var(--sys-color-divider-default)]">
                         <td class="min-h-12 px-siaf-md py-siaf-sm text-sm leading-normal text-text">{{ row.user }}</td>
                         <td class="min-h-12 px-siaf-md py-siaf-sm text-sm leading-normal text-text">{{ row.unit }}</td>
                         <td class="min-h-12 px-siaf-md py-siaf-sm text-sm leading-normal text-text">{{ row.date }} <span class="ml-siaf-md">{{ row.time }}</span></td>

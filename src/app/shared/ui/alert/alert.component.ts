@@ -112,11 +112,11 @@ export class AlertComponent {
 
   get closeButtonClass(): string {
     const classes: Record<AlertTone, string> = {
-      neutral: 'text-[var(--sys-color-icon-feedback-light-default)] hover:bg-[rgba(32,32,32,0.08)] focus-visible:outline-[var(--sys-color-text-feedback-default)]',
-      info: 'text-[var(--sys-color-icon-feedback-light-info)] hover:bg-[rgba(0,81,136,0.12)] focus-visible:outline-[var(--sys-color-text-feedback-info)]',
-      success: 'text-[var(--sys-color-icon-feedback-light-success)] hover:bg-[rgba(32,99,94,0.12)] focus-visible:outline-[var(--sys-color-text-feedback-success)]',
-      warning: 'text-[var(--sys-color-icon-feedback-light-warning)] hover:bg-[rgba(135,103,39,0.12)] focus-visible:outline-[var(--sys-color-text-feedback-warning)]',
-      error: 'text-[var(--sys-color-icon-feedback-light-danger)] hover:bg-[rgba(130,28,30,0.12)] focus-visible:outline-[var(--sys-color-text-feedback-danger)]'
+      neutral: 'text-[var(--sys-color-icon-feedback-light-default)] hover:bg-[var(--sys-color-bg-states-light-hover)] focus-visible:outline-[var(--sys-color-text-feedback-default)]',
+      info: 'text-[var(--sys-color-icon-feedback-light-info)] hover:bg-[var(--sys-color-bg-feedback-light-info)] focus-visible:outline-[var(--sys-color-text-feedback-info)]',
+      success: 'text-[var(--sys-color-icon-feedback-light-success)] hover:bg-[var(--sys-color-bg-feedback-light-success)] focus-visible:outline-[var(--sys-color-text-feedback-success)]',
+      warning: 'text-[var(--sys-color-icon-feedback-light-warning)] hover:bg-[var(--sys-color-bg-feedback-light-warning)] focus-visible:outline-[var(--sys-color-text-feedback-warning)]',
+      error: 'text-[var(--sys-color-icon-feedback-light-danger)] hover:bg-[var(--sys-color-bg-feedback-light-danger)] focus-visible:outline-[var(--sys-color-text-feedback-danger)]'
     };
 
     return classes[this.tone];

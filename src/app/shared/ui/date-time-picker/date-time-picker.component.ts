@@ -87,7 +87,7 @@ type CalendarDay = {
                   type="button"
                   [disabled]="day.disabled"
                   [class.bg-brand-primary]="day.value === selectedDate"
-                  [class.text-white]="day.value === selectedDate"
+                  [class.text-[var(--sys-color-text-brand-white)]]="day.value === selectedDate"
                   [class.text-[var(--sys-color-text-neutral-medium)]]="day.value !== selectedDate && !day.disabled"
                   [class.border]="day.value === todayDate"
                   [class.border-[var(--sys-color-border-states-hover)]]="day.value === todayDate"

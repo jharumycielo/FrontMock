@@ -46,8 +46,8 @@ const DETAIL_LABELS: Record<ActionTrackerDetailType, string> = {
   template: `
     <section class="flex w-full flex-col items-start gap-siaf-md">
       @if (variant === 'detail' || showTabs) {
-        <div class="w-full overflow-hidden rounded-siaf-md bg-[rgb(32_32_32/0.04)]">
-          <div class="flex min-h-10 w-full items-start border-b-2 border-[rgb(32_32_32/0.24)]">
+        <div class="w-full overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)]">
+          <div class="flex min-h-10 w-full items-start border-b-2 border-[var(--sys-color-divider-strong)]">
             <button
               class="flex min-h-10 items-center justify-center px-siaf-md py-siaf-xs text-sm"
               type="button"
@@ -86,14 +86,14 @@ const DETAIL_LABELS: Record<ActionTrackerDetailType, string> = {
               <div class="w-full overflow-x-auto px-siaf-xl py-siaf-md max-sm:px-siaf-md">
                 <table class="min-w-[1040px] border-collapse text-left text-sm text-[var(--sys-color-text-neutral-medium)]">
                   <thead>
-                    <tr class="bg-[rgb(32_32_32/0.12)] text-xs font-bold uppercase text-text">
-                      <th class="w-[122px] rounded-l-siaf-sm border-b border-[rgb(32_32_32/0.24)] px-siaf-md py-siaf-sm">Iteracion</th>
-                      <th class="w-[120px] border-b border-[rgb(32_32_32/0.24)] px-siaf-md py-siaf-sm">Proceso</th>
-                      <th class="w-[198px] border-b border-[rgb(32_32_32/0.24)] px-siaf-md py-siaf-sm">Comentario / motivo</th>
-                      <th class="min-w-[200px] border-b border-[rgb(32_32_32/0.24)] px-siaf-md py-siaf-sm">Descripcion</th>
-                      <th class="w-[120px] border-b border-[rgb(32_32_32/0.24)] px-siaf-md py-siaf-sm">Fecha</th>
-                      <th class="w-[110px] border-b border-[rgb(32_32_32/0.24)] px-siaf-md py-siaf-sm">Rol</th>
-                      <th class="w-[140px] rounded-r-siaf-sm border-b border-[rgb(32_32_32/0.24)] px-siaf-md py-siaf-sm">Usuario</th>
+                    <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
+                      <th class="w-[122px] rounded-l-siaf-sm border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm">Iteracion</th>
+                      <th class="w-[120px] border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm">Proceso</th>
+                      <th class="w-[198px] border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm">Comentario / motivo</th>
+                      <th class="min-w-[200px] border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm">Descripcion</th>
+                      <th class="w-[120px] border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm">Fecha</th>
+                      <th class="w-[110px] border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm">Rol</th>
+                      <th class="w-[140px] rounded-r-siaf-sm border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm">Usuario</th>
                     </tr>
                   </thead>
                   <tbody>

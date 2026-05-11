@@ -9,7 +9,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
   standalone: true,
   imports: [ButtonComponent, IconComponent, RouterLink],
   template: `
-    <main class="flex min-h-screen items-center justify-center bg-[var(--sys-color-bg-surfaces-surface-lowest,rgba(32,32,32,0.04))] px-siaf-md py-siaf-lg sm:p-siaf-xxl">
+    <main class="flex min-h-screen items-center justify-center bg-[var(--sys-color-bg-surfaces-surface-lowest)] px-siaf-md py-siaf-lg sm:p-siaf-xxl">
       <div class="w-full max-w-[1077px] rounded-siaf-lg bg-surface px-siaf-md py-siaf-xl shadow-siaf-sm sm:p-siaf-xxl">
         <div class="flex min-h-[420px] flex-col items-center justify-between gap-8 sm:min-h-[440px] sm:gap-10">
 
@@ -31,7 +31,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
               @for (digit of otp; track $index; let i = $index) {
                 <input
                   #otpInput
-                  class="h-10 w-10 rounded-siaf-md border border-[rgba(32,32,32,0.4)] bg-surface text-center text-sm text-text outline-none transition focus:border-2 focus:border-[rgba(1,72,153,0.8)] sm:w-[42px]"
+                  class="h-10 w-10 rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface text-center text-sm text-text outline-none transition focus:border-2 focus:border-[var(--sys-color-border-states-focus)] sm:w-[42px]"
                   type="text"
                   inputmode="numeric"
                   maxlength="1"

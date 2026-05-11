@@ -13,11 +13,11 @@ type ViewTransitionDocument = Document & {
   standalone: true,
   imports: [IconComponent, RouterLink],
   template: `
-    <header class="flex h-14 w-full items-center justify-between bg-brand-primary px-siaf-md py-siaf-xxs text-white">
+    <header class="flex h-14 w-full items-center justify-between bg-brand-primary px-siaf-md py-siaf-xxs text-[var(--sys-color-text-brand-white)]">
       <div class="flex min-w-0 shrink-0 items-center gap-siaf-lg">
         @if (showMenu) {
           <button
-            class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            class="inline-flex size-8 items-center justify-center rounded-siaf-md transition hover:bg-[var(--sys-color-bg-states-on-brand-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--sys-color-text-brand-white)]"
             type="button"
             aria-label="Abrir menu"
             (click)="menuClicked.emit()"
@@ -26,7 +26,7 @@ type ViewTransitionDocument = Document & {
           </button>
         }
 
-        <a class="flex h-10 items-center text-white" [routerLink]="homeHref" aria-label="SIAF-RP">
+        <a class="flex h-10 items-center text-[var(--sys-color-text-brand-white)]" [routerLink]="homeHref" aria-label="SIAF-RP">
           <img class="h-10 w-[128px] object-contain" src="assets/figma/logos/siaf-rp-default-white.svg" alt="SIAF-RP" />
         </a>
       </div>
@@ -36,7 +36,7 @@ type ViewTransitionDocument = Document & {
 
         @if (showNotifications) {
           <button
-            class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            class="inline-flex size-8 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-[var(--sys-color-bg-states-on-brand-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--sys-color-text-brand-white)]"
             type="button"
             aria-label="Notificaciones"
           >
@@ -47,7 +47,7 @@ type ViewTransitionDocument = Document & {
         @if (showProfile) {
           <div class="relative">
             <button
-              class="flex min-w-0 items-center gap-siaf-sm rounded-siaf-md py-siaf-xxs pl-siaf-sm pr-siaf-xs text-left transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              class="flex min-w-0 items-center gap-siaf-sm rounded-siaf-md py-siaf-xxs pl-siaf-sm pr-siaf-xs text-left transition hover:bg-[var(--sys-color-bg-states-on-brand-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--sys-color-text-brand-white)]"
               type="button"
               aria-label="Perfil de usuario"
               [attr.aria-expanded]="userMenuOpen()"
@@ -57,7 +57,7 @@ type ViewTransitionDocument = Document & {
               <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-[var(--sys-color-border-states-white)] bg-[var(--ref-color-solid-primary-50)] text-base font-medium text-brand-primary">
                 {{ initials }}
               </span>
-              <span class="hidden min-w-0 flex-col gap-1 text-white md:flex">
+              <span class="hidden min-w-0 flex-col gap-1 text-[var(--sys-color-text-brand-white)] md:flex">
                 <strong class="truncate text-sm font-bold leading-none">{{ userName }}</strong>
                 <span class="max-w-[200px] truncate text-xs uppercase leading-none">{{ officeName }}</span>
               </span>
@@ -66,7 +66,7 @@ type ViewTransitionDocument = Document & {
 
             @if (userMenuOpen()) {
               <div
-                class="absolute right-0 top-[calc(100%+8px)] z-50 w-[220px] overflow-hidden rounded-siaf-md bg-surface py-siaf-xs text-[var(--sys-color-text-neutral-medium)] shadow-[0_8px_10px_0_rgba(0,0,0,0.14),0_3px_14px_0_rgba(0,0,0,0.12),0_5px_5px_0_rgba(0,0,0,0.2)]"
+                class="absolute right-0 top-[calc(100%+8px)] z-50 w-[220px] overflow-hidden rounded-siaf-md bg-surface py-siaf-xs text-[var(--sys-color-text-neutral-medium)] shadow-siaf-elevation-2"
                 role="menu"
                 aria-label="Opciones de usuario"
                 (click)="$event.stopPropagation()"

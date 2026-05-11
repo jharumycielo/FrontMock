@@ -87,7 +87,7 @@ type AccountingRow = {
                     </span>
 
                     @if (field.label === 'Estado') {
-                      <span class="inline-flex h-6 w-fit items-center rounded-siaf-sm bg-[var(--sys-color-bg-feedback-dark-success)] px-siaf-xs text-xs text-white">
+                      <span class="inline-flex h-6 w-fit items-center rounded-siaf-sm bg-[var(--sys-color-bg-feedback-dark-success)] px-siaf-xs text-xs text-[var(--sys-color-text-brand-white)]">
                         {{ field.value }}
                       </span>
                     } @else {
@@ -139,7 +139,7 @@ type AccountingRow = {
                   <readonly-line label="Glosa" caption="Glosa" [required]="true" value="Glosa que nosotros ingresamos el texto" />
                 </section>
 
-                <details class="group overflow-hidden rounded-siaf-sm border border-[rgba(32,32,32,0.24)] bg-surface" open>
+                <details class="group overflow-hidden rounded-siaf-sm border border-[var(--sys-color-divider-strong)] bg-surface" open>
                   <summary class="flex min-h-14 w-full cursor-pointer list-none items-center gap-siaf-xs px-siaf-md py-siaf-xs text-left">
                     <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-siaf-md transition hover:bg-surface-muted">
                       <siaf-icon class="transition group-open:rotate-180" name="expand_more" [size]="24" />
@@ -150,7 +150,7 @@ type AccountingRow = {
                     </span>
                   </summary>
 
-                  <div class="flex flex-col gap-siaf-md border-t border-[rgba(32,32,32,0.24)] p-siaf-lg">
+                  <div class="flex flex-col gap-siaf-md border-t border-[var(--sys-color-divider-strong)] p-siaf-lg">
                     <div class="flex min-h-10 items-center">
                       <h3 class="text-sm font-bold uppercase text-text">Cuentas contables</h3>
                     </div>

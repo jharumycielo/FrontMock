@@ -139,7 +139,7 @@ const HEADER_CONFIG_BY_ROLE: Partial<Record<SolicitudeHeaderRole, Partial<Record
 
             @if (resolvedShowTag) {
               <span
-                class="inline-flex h-6 shrink-0 items-center rounded-siaf-sm px-siaf-xs text-xs font-medium leading-none text-white"
+                class="inline-flex h-6 shrink-0 items-center rounded-siaf-sm px-siaf-xs text-xs font-medium leading-none text-[var(--sys-color-text-brand-white)]"
                 [ngClass]="tagClass"
               >
                 {{ resolvedTagLabel }}

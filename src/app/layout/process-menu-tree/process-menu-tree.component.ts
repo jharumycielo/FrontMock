@@ -171,7 +171,7 @@ export function findProcessPathById(id: string, nodes: readonly ProcessMenuNode[
       </header>
 
       <div class="min-h-0 flex-1 overflow-y-auto bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface-highest))] px-siaf-md pt-siaf-xs">
-        <label class="flex h-10 w-full items-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-md py-siaf-xs">
+        <label class="flex h-10 w-full items-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface px-siaf-md py-siaf-xs">
           <span class="sr-only">{{ searchLabel }}</span>
           <input
             class="h-6 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-normal leading-normal tracking-[0.0249px] text-text outline-none placeholder:text-[var(--sys-color-text-neutral-low)]"
@@ -197,15 +197,15 @@ export function findProcessPathById(id: string, nodes: readonly ProcessMenuNode[
     <ng-template #treeTemplate let-items let-level="level">
       @for (node of items; track node.id) {
         <div class="w-full" [class.pl-[27px]]="level > 0">
-          <div class="w-full" [class.border-l]="level > 0" [style.border-color]="level > 0 ? 'rgba(32,32,32,0.24)' : null" [class.pl-3]="level > 0">
+          <div class="w-full" [class.border-l]="level > 0" [style.borderColor]="level > 0 ? 'var(--sys-color-divider-strong)' : null" [class.pl-3]="level > 0">
             <button
               class="group flex w-full items-center rounded-siaf-sm text-left transition duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary active:scale-[0.995]"
               type="button"
               [class.min-h-12]="level === 0"
               [class.min-h-8]="level > 0"
-              [class.bg-[rgba(1,72,153,0.08)]]="isNodeHighlighted(node, level)"
-              [class.hover:bg-[rgba(32,32,32,0.06)]]="!isNodeHighlighted(node, level)"
-              [class.active:bg-[rgba(32,32,32,0.12)]]="!isNodeHighlighted(node, level)"
+              [class.bg-[var(--sys-color-bg-states-light-selected)]]="isNodeHighlighted(node, level)"
+              [class.hover:bg-[var(--sys-color-bg-states-light-hover)]]="!isNodeHighlighted(node, level)"
+              [class.active:bg-[var(--sys-color-bg-states-light-pressed)]]="!isNodeHighlighted(node, level)"
               [class.px-siaf-md]="true"
               [class.py-siaf-sm]="level === 0"
               [class.py-siaf-xxs]="level > 0"

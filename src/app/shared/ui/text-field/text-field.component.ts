@@ -91,7 +91,7 @@ export type TextFieldState = 'enabled' | 'error' | 'success';
               <span class="inline-flex items-center gap-siaf-xxs rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] px-siaf-xs py-0 text-text">
                 <span class="text-sm leading-6">{{ labelForValue(val) }}</span>
                 <span
-                  class="inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full transition hover:bg-[rgba(32,32,32,0.08)]"
+                  class="inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full transition hover:bg-[var(--sys-color-bg-states-light-hover)]"
                   role="button"
                   tabindex="-1"
                   [attr.aria-label]="'Quitar ' + labelForValue(val)"
@@ -160,7 +160,7 @@ export type TextFieldState = 'enabled' | 'error' | 'success';
 
             @if (trailingIcon) {
               <button
-                class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[rgba(32,32,32,0.08)] active:bg-[rgba(32,32,32,0.16)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)]"
+                class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)] active:bg-[var(--sys-color-bg-states-light-pressed)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary disabled:cursor-not-allowed disabled:text-[var(--sys-color-text-neutral-disabled)]"
                 type="button"
                 [disabled]="disabled"
                 [attr.aria-label]="trailingButtonLabel || null"

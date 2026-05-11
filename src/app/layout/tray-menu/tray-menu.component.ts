@@ -14,7 +14,7 @@ type TrayItem = {
   standalone: true,
   imports: [IconComponent],
   template: `
-    <aside class="flex h-[calc(100vh-56px)] w-full flex-col items-center border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-siaf-elevation-1 lg:w-[300px]">
+    <aside class="flex h-[calc(100vh-56px)] w-full flex-col items-center border-r border-[var(--sys-color-divider-default)] bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-siaf-elevation-1 lg:w-[300px]">
       <header class="flex w-full items-center px-siaf-lg py-siaf-md">
         <h2 class="m-0 text-sm font-bold leading-normal text-[var(--sys-color-tipography-neutral-high)]">BANDEJA</h2>
       </header>
@@ -22,9 +22,9 @@ type TrayItem = {
       <nav class="flex w-full flex-col">
         @for (item of items; track item.label) {
           <button
-            class="flex min-h-12 w-full items-center gap-siaf-md overflow-hidden rounded-siaf-sm px-siaf-md py-siaf-sm text-left transition hover:bg-[var(--sys-color-bg-states-light-hover,rgba(32,32,32,0.04))] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
+            class="flex min-h-12 w-full items-center gap-siaf-md overflow-hidden rounded-siaf-sm px-siaf-md py-siaf-sm text-left transition hover:bg-[var(--sys-color-bg-states-light-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
             type="button"
-            [class.bg-[var(--sys-color-bg-states-light-selected,rgba(1,72,153,0.08))]]="isSelected(item)"
+            [class.bg-[var(--sys-color-bg-states-light-selected)]]="isSelected(item)"
             (click)="selected.emit(item.label)"
           >
             <siaf-icon
@@ -43,7 +43,7 @@ type TrayItem = {
             >
               {{ item.label }}
             </span>
-            <span class="inline-flex h-5 min-w-8 max-w-9 items-center justify-center rounded-full bg-[var(--sys-color-bg-brand-accent)] px-siaf-xxs text-center text-xs font-medium leading-normal text-white">
+            <span class="inline-flex h-5 min-w-8 max-w-9 items-center justify-center rounded-full bg-[var(--sys-color-bg-brand-accent)] px-siaf-xxs text-center text-xs font-medium leading-normal text-[var(--sys-color-text-brand-white)]">
               {{ item.count }}
             </span>
           </button>

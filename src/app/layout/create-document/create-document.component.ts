@@ -257,7 +257,7 @@ export class CreateDocumentComponent {
   get variantClass(): string {
     return this.variant === 'dropdown'
       ? 'w-full max-w-[360px] rounded-siaf-md py-siaf-xs shadow-siaf-elevation-1'
-      : 'h-[calc(100vh-56px)] w-screen border-r border-[var(--sys-color-divider-default,rgba(32,32,32,0.12))] shadow-siaf-elevation-1 lg:max-w-[370px]';
+      : 'h-[calc(100vh-56px)] w-screen border-r border-[var(--sys-color-divider-default)] shadow-siaf-elevation-1 lg:max-w-[370px]';
   }
 
   toggleSelect(field: CreateDocumentField): void {

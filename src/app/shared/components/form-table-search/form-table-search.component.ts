@@ -8,7 +8,7 @@ import { IconComponent } from '../../ui/icon/icon.component';
   imports: [IconComponent],
   template: `
     <div class="flex w-full items-start gap-siaf-md">
-      <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled,rgba(32,32,32,0.4))] bg-surface px-siaf-md py-siaf-xs">
+      <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface px-siaf-md py-siaf-xs">
         <span class="sr-only">{{ ariaLabel }}</span>
         <input
           class="min-w-0 flex-1 bg-transparent text-sm leading-6 tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)] outline-none placeholder:text-[var(--sys-color-text-neutral-low)]"
