@@ -104,6 +104,7 @@ model Usuario {
 
 model EntidadPublica {
   id                 String        @id @default(uuid())
+  codigoNumerico     Int           @unique @map("codigo_numerico") // asignado automáticamente al crear
   codigo             String        @unique @db.VarChar(30)
   ruc                String?       @db.VarChar(20)
   nombre             String        @db.VarChar(250)
@@ -367,9 +368,9 @@ model CuentaContable {
   planContableId            String   @map("plan_contable_id")
   parentId                  String?  @map("parent_id")
   codigoCompleto            String   @map("codigo_completo") @db.VarChar(80)
-  elemento                  String   @db.VarChar(2)
-  grupo                     String?  @db.VarChar(2)
-  cuenta                    String?  @db.VarChar(2)
+  elemento                  String   @db.VarChar(1)  // exactamente 1 dígito, valores 1-9
+  grupo                     String?  @db.VarChar(2)  // 1-2 dígitos, valores 1-99
+  cuenta                    String?  @db.VarChar(2)  // 1-2 dígitos, valores 1-99
   subcuenta1                String?  @map("subcuenta_1") @db.VarChar(2)
   subcuenta2                String?  @map("subcuenta_2") @db.VarChar(2)
   subcuenta3                String?  @map("subcuenta_3") @db.VarChar(2)
@@ -412,6 +413,8 @@ model CuentaContable {
   solicitudesCuenta SolicitudCuentaContable[]     @relation("CuentaOrigen")
 
   @@unique([planContableId, codigoCompleto])
+  @@index([codigoCompleto])
+  @@index([planContableId, nivel])
   @@map("cuenta_contable")
 }
 
@@ -505,9 +508,9 @@ model SolicitudCuentaContable {
   cuentaContableOrigenId String?  @map("cuenta_contable_origen_id")
   // snapshot de la cuenta al momento de la solicitud
   codigoCompleto         String   @map("codigo_completo") @db.VarChar(80)
-  elemento               String   @db.VarChar(2)
-  grupo                  String?  @db.VarChar(2)
-  cuenta                 String?  @db.VarChar(2)
+  elemento               String   @db.VarChar(1)  // exactamente 1 dígito, valores 1-9
+  grupo                  String?  @db.VarChar(2)  // 1-2 dígitos, valores 1-99
+  cuenta                 String?  @db.VarChar(2)  // 1-2 dígitos, valores 1-99
   subcuenta1             String?  @map("subcuenta_1") @db.VarChar(2)
   subcuenta2             String?  @map("subcuenta_2") @db.VarChar(2)
   subcuenta3             String?  @map("subcuenta_3") @db.VarChar(2)
@@ -636,6 +639,21 @@ model Notificacion {
 
   @@index([usuarioId, leida])
   @@map("notificacion")
+}
+
+// ─────────────────────────────────────────────
+// OTP VERIFICACIÓN
+// ─────────────────────────────────────────────
+
+model OtpVerificacion {
+  id        String    @id @default(uuid())
+  email     String    @db.VarChar(200)
+  codigo    String    @db.VarChar(6)
+  expiraEn  DateTime  @map("expira_en")
+  usadoEn   DateTime? @map("usado_en")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("otp_verificacion")
 }
 
 // ─────────────────────────────────────────────
