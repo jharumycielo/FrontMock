@@ -15,12 +15,15 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:validate": "prisma validate",
-    "prisma:seed": "ts-node prisma/seed.ts"
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "whatsapp:init": "ts-node src/whatsapp/init-whatsapp.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
+    "@builderbot/bot": "^1.4.1",
+    "@builderbot/provider-baileys": "^1.4.1",
     "@nestjs-modules/mailer": "^2.3.4",
     "@nestjs/common": "^10.0.0",
     "@nestjs/config": "^3.0.0",
@@ -29,6 +32,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^10.0.0",
     "@prisma/client": "^5.0.0",
+    "@whiskeysockets/baileys": "^7.0.0-rc10",
     "bcrypt": "^5.1.1",
     "class-transformer": "^0.5.0",
     "class-validator": "^0.14.0",
@@ -37,6 +41,7 @@
     "nodemailer": "^8.0.7",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
+    "qrcode-terminal": "^0.12.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0"
   },

@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { LoginDto } from './dto/login.dto';
 import { CambiarPasswordDto } from './dto/cambiar-password.dto';
 import { CambiarPerfilDto } from './dto/cambiar-perfil.dto';
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly mailer: MailerService,
+    private readonly whatsapp: WhatsappService,
   ) {}
 
   // ─────────────────────────────────────────────
@@ -426,5 +428,50 @@ export class AuthService {
     });
 
     return { message: 'Password actualizado correctamente. Inicie sesión nuevamente' };
+  }
+
+  // ─────────────────────────────────────────────
+  // REENVIAR OTP POR WHATSAPP
+  // ─────────────────────────────────────────────
+  async reenviarOtpWhatsapp(email: string) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { email } });
+
+    // Responder igual para no revelar si el email/teléfono existe
+    if (!usuario || usuario.estado !== 'activo') {
+      return { message: 'Si el número está registrado, recibirás el código por WhatsApp' };
+    }
+
+    if (!usuario.telefono) {
+      throw new BadRequestException(
+        'No tienes un número de teléfono registrado. Contacta al administrador.',
+      );
+    }
+
+    // Buscar OTP vigente del email (no generar uno nuevo)
+    const otp = await this.prisma.otpVerificacion.findFirst({
+      where: {
+        email,
+        usadoEn: null,
+        expiraEn: { gte: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!otp) {
+      throw new BadRequestException(
+        'No hay un código vigente. Solicita uno nuevo primero.',
+      );
+    }
+
+    // Enviar por WhatsApp
+    const enviado = await this.whatsapp.enviarOtp(usuario.telefono, otp.codigo);
+
+    if (!enviado) {
+      throw new BadRequestException(
+        'No se pudo enviar el código por WhatsApp. Intenta más tarde.',
+      );
+    }
+
+    return { message: 'Código enviado por WhatsApp correctamente' };
   }
 }

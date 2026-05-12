@@ -3,8 +3,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 
-import { CHART_ACCOUNTS_DOCUMENTS_CONFIG } from '../../features/process-configs/chart-accounts-documents.config';
-import { ADJUSTMENT_SEAT_DOCUMENTS_CONFIG } from '../../features/process-configs/adjustment-seat-documents.config';
+import { CHART_ACCOUNTS_DOCUMENTS_CONFIG } from '../../modules/contabilidad/config/chart-accounts-documents.config';
+import { ADJUSTMENT_SEAT_DOCUMENTS_CONFIG } from '../../modules/contabilidad/config/adjustment-seat-documents.config';
 import { CreateDocumentAccepted, CreateDocumentComponent } from '../create-document/create-document.component';
 import { MobileNavigationMenuComponent } from '../mobile-navigation-menu/mobile-navigation-menu.component';
 import { ProcessMenuNode, ProcessMenuTreeComponent } from '../process-menu-tree/process-menu-tree.component';
@@ -12,6 +12,7 @@ import { TrayDocumentsViewComponent } from '../tray-documents-view/tray-document
 import { TrayMenuComponent } from '../tray-menu/tray-menu.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { SidebarComponent, SidebarNavigation } from '../sidebar/sidebar.component';
+import { AdminMenuComponent } from '../admin-menu/admin-menu.component';
 import { CurrentUserService } from '../../core/auth/current-user.service';
 import { ShellNavigationService } from './shell-navigation.service';
 
@@ -19,6 +20,7 @@ import { ShellNavigationService } from './shell-navigation.service';
   selector: 'siaf-app-shell',
   standalone: true,
   imports: [
+    AdminMenuComponent,
     CreateDocumentComponent,
     MobileNavigationMenuComponent,
     NavbarComponent,
@@ -63,6 +65,12 @@ import { ShellNavigationService } from './shell-navigation.service';
         </div>
       }
 
+      @if (adminMenuOpen) {
+        <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
+          <siaf-admin-menu (closed)="closeFloatingPanels()" (itemSelected)="onAdminNodeSelected($event)" />
+        </div>
+      }
+
       @if (createDocumentOpen) {
         <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:left-16 lg:right-auto" (click)="$event.stopPropagation()">
           <siaf-create-document
@@ -76,7 +84,7 @@ import { ShellNavigationService } from './shell-navigation.service';
       <section
         class="min-w-0 transition-[padding] duration-200 lg:pl-16"
         [class.lg:pl-[364px]]="trayMenuOpen"
-        [class.lg:pl-[434px]]="processMenuOpen || createDocumentOpen"
+        [class.lg:pl-[434px]]="processMenuOpen || createDocumentOpen || adminMenuOpen"
       >
         @if (trayContentOpen) {
           <siaf-tray-documents-view [title]="selectedTrayItem" />
@@ -101,6 +109,7 @@ export class AppShellComponent {
   mobileNavigationOpen = false;
   selectedTrayItem = 'Borradores';
   createDocumentOpen = false;
+  adminMenuOpen = false;
 
   readonly createDocumentOptions = [
     ...ADJUSTMENT_SEAT_DOCUMENTS_CONFIG.createDocumentOptions,
@@ -139,10 +148,20 @@ export class AppShellComponent {
       return;
     }
 
+    if (navigation === 'Ajustes') {
+      this.activeNavigation = 'Ajustes';
+      this.adminMenuOpen = !this.adminMenuOpen;
+      this.processMenuOpen = false;
+      this.trayMenuOpen = false;
+      this.createDocumentOpen = false;
+      return;
+    }
+
     this.activeNavigation = navigation;
     this.processMenuOpen = navigation === 'Proceso';
     this.trayMenuOpen = navigation === 'Bandeja';
     this.createDocumentOpen = false;
+    this.adminMenuOpen = false;
   }
 
   onMobileNavigationChange(navigation: SidebarNavigation): void {
@@ -213,19 +232,39 @@ export class AppShellComponent {
     }
   }
 
+  onAdminNodeSelected(node: ProcessMenuNode): void {
+    if (node.createRoute) {
+      this.closeFloatingPanels();
+      void this.router.navigateByUrl(node.createRoute);
+      return;
+    }
+
+    // Nodo padre — no navegar, mantener menú abierto
+    if (!node.children?.length) {
+      this.activeNavigation = 'Ajustes';
+    }
+  }
+
   closeFloatingPanels(): void {
     this.mobileNavigationOpen = false;
     this.processMenuOpen = false;
     this.trayMenuOpen = false;
     this.createDocumentOpen = false;
+    this.adminMenuOpen = false;
   }
 
   get hasFloatingPanel(): boolean {
-    return this.mobileNavigationOpen || this.processMenuOpen || this.trayMenuOpen || this.createDocumentOpen;
+    return this.mobileNavigationOpen || this.processMenuOpen || this.trayMenuOpen || this.createDocumentOpen || this.adminMenuOpen;
   }
 
   private syncNavigationWithUrl(url: string): void {
-    this.activeNavigation = url.startsWith('/procesos') ? 'Proceso' : 'Panel';
+    if (url.startsWith('/admin')) {
+      this.activeNavigation = 'Ajustes';
+    } else if (url.startsWith('/procesos')) {
+      this.activeNavigation = 'Proceso';
+    } else {
+      this.activeNavigation = 'Panel';
+    }
   }
 
   private isDesktopViewport(): boolean {

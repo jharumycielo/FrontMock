@@ -5,7 +5,8 @@ import { Permission, ROLE_PERMISSIONS, UserRole } from './role.model';
 @Injectable({ providedIn: 'root' })
 export class PermissionService {
   // Demo role until authentication provides the real user profile.
-  private readonly role = signal<UserRole>('creator');
+  // Cambiar a 'creator' | 'approver' | 'admin_entidad' para probar otros roles.
+  private readonly role = signal<UserRole>('admin_sistema');
 
   readonly currentRole = this.role.asReadonly();
 

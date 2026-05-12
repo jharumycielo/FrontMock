@@ -86,4 +86,11 @@ export class AuthController {
       passwordNuevo: dto.passwordNuevo,
     });
   }
+
+  // POST /api/v1/auth/reenviar-otp-whatsapp
+  @Post('reenviar-otp-whatsapp')
+  @HttpCode(HttpStatus.OK)
+  reenviarOtpWhatsapp(@Body() dto: SolicitarOtpDto) {
+    return this.authService.reenviarOtpWhatsapp(dto.email);
+  }
 }

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, ElementRef, QueryList, ViewChildren, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
+import { ChangeDetectionStrategy, Component, ElementRef, QueryList, ViewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { ButtonComponent } from '../../shared/ui/button/button.component';
@@ -7,7 +8,7 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
 @Component({
   selector: 'siaf-otp-verification',
   standalone: true,
-  imports: [ButtonComponent, IconComponent, RouterLink],
+  imports: [ButtonComponent, IconComponent, NgClass, RouterLink],
   template: `
     <main class="flex min-h-screen items-center justify-center bg-[var(--sys-color-bg-surfaces-surface-lowest)] px-siaf-md py-siaf-lg sm:p-siaf-xxl">
       <div class="w-full max-w-[1077px] rounded-siaf-lg bg-surface px-siaf-md py-siaf-xl shadow-siaf-sm sm:p-siaf-xxl">
@@ -31,11 +32,15 @@ import { IconComponent } from '../../shared/ui/icon/icon.component';
               @for (digit of otp; track $index; let i = $index) {
                 <input
                   #otpInput
-                  class="h-10 w-10 rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface text-center text-sm text-text outline-none transition focus:border-2 focus:border-[var(--sys-color-border-states-focus)] sm:w-[42px]"
+                  class="h-10 w-10 rounded-siaf-md border bg-surface text-center text-sm text-text outline-none transition focus:border-2 sm:w-[42px]"
+                  [ngClass]="otpInputStateClass(digit)"
                   type="text"
                   inputmode="numeric"
+                  pattern="[0-9]*"
+                  autocomplete="one-time-code"
                   maxlength="1"
                   [value]="digit"
+                  (beforeinput)="onBeforeInput($event)"
                   (input)="onDigitInput($event, i)"
                   (keydown)="onKeyDown($event, i)"
                   (paste)="onPaste($event)"
@@ -86,6 +91,12 @@ export class OtpVerificationComponent {
     return this.otp.every((d) => d.length === 1);
   }
 
+  otpInputStateClass(digit: string): string {
+    return digit
+      ? 'border-2 border-[var(--sys-color-border-feedback-success)] focus:border-[var(--sys-color-border-feedback-success)]'
+      : 'border-[var(--sys-color-border-states-enabled)] focus:border-[var(--sys-color-border-states-focus)]';
+  }
+
   onDigitInput(event: Event, index: number): void {
     const input = event.target as HTMLInputElement;
     const value = input.value.replace(/\D/g, '').slice(-1);
@@ -97,7 +108,27 @@ export class OtpVerificationComponent {
     }
   }
 
+  onBeforeInput(event: Event): void {
+    const inputEvent = event as InputEvent;
+    if (inputEvent.inputType.includes('Paste')) {
+      return;
+    }
+
+    if (inputEvent.data && /\D/.test(inputEvent.data)) {
+      event.preventDefault();
+    }
+  }
+
   onKeyDown(event: KeyboardEvent, index: number): void {
+    if (event.ctrlKey || event.metaKey || event.altKey) {
+      return;
+    }
+
+    if (event.key.length === 1 && /\D/.test(event.key)) {
+      event.preventDefault();
+      return;
+    }
+
     if (event.key === 'Backspace' && !this.otp[index] && index > 0) {
       this.inputs.get(index - 1)?.nativeElement.focus();
     }

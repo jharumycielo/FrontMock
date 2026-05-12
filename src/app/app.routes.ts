@@ -6,40 +6,47 @@ export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   {
     path: 'login',
-    loadComponent: () => import('./features/login/login.component').then((m) => m.LoginComponent)
+    loadComponent: () =>
+      import('./features/login/login.component').then((m) => m.LoginComponent)
   },
   {
     path: 'login/recuperar-contrasena',
-    loadComponent: () => import('./features/otp-verification/otp-verification.component').then((m) => m.OtpVerificationComponent)
+    loadComponent: () =>
+      import('./features/otp-verification/otp-verification.component').then((m) => m.OtpVerificationComponent)
   },
   {
     path: '',
-    loadComponent: () => import('./layout/shell/app-shell.component').then((m) => m.AppShellComponent),
+    loadComponent: () =>
+      import('./layout/shell/app-shell.component').then((m) => m.AppShellComponent),
     canActivateChild: [roleChildGuard],
     children: [
+      // ── Escritorio Virtual — portal central de todos los módulos ──
       {
         path: 'panel',
         loadChildren: () =>
-          import('./features/virtual-desk/virtual-desk.routes').then((m) => m.VIRTUAL_DESK_ROUTES),
+          import('./layout/virtual-desk/virtual-desk.routes').then((m) => m.VIRTUAL_DESK_ROUTES),
         data: { permissions: ['document.read'] }
       },
+      // ── Módulo: Administración (OGTI y ADMIN_ENTIDAD) ──
       {
-        path: 'procesos/registro-asiento-ajuste',
+        path: 'admin',
         loadChildren: () =>
-          import('./features/adjustment-seat/adjustment-seat.routes').then((m) => m.ADJUSTMENT_SEAT_ROUTES),
+          import('./modules/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+        data: { permissions: ['user.read'] }
+      },
+      // ── Módulo: Gestión Contable ──
+      {
+        path: '',
+        loadChildren: () =>
+          import('./modules/contabilidad/contabilidad.routes').then((m) => m.CONTABILIDAD_ROUTES),
         data: { permissions: ['document.read'] }
       },
-      {
-        path: 'procesos/plan-cuentas-contables',
-        loadChildren: () =>
-          import('./features/chart-accounts/chart-accounts.routes').then((m) => m.CHART_ACCOUNTS_ROUTES),
-        data: { permissions: ['document.read'] }
-      }
     ]
   },
   {
     path: 'showcase',
-    loadComponent: () => import('./features/showcase/showcase.component').then((m) => m.ShowcaseComponent)
+    loadComponent: () =>
+      import('./features/showcase/showcase.component').then((m) => m.ShowcaseComponent)
   },
   { path: '**', redirectTo: 'login' }
 ];

@@ -82,6 +82,7 @@ model Usuario {
   passwordHash        String        @map("password_hash") @db.VarChar(300)
   estado              EstadoUsuario
   debeCambiarPassword Boolean       @default(true) @map("debe_cambiar_password")
+  telefono            String?       @db.VarChar(20) // formato internacional: +51987654321
   ultimoAcceso        DateTime?     @map("ultimo_acceso")
   createdAt           DateTime      @default(now()) @map("created_at")
   updatedAt           DateTime      @updatedAt @map("updated_at")

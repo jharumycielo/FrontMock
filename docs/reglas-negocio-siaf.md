@@ -61,11 +61,50 @@ Este documento consolida todas las reglas de negocio, decisiones de diseño y ac
 | `POST /auth/refresh` | Renueva access token con refresh token |
 | `POST /auth/cambiar-password` | Cambio obligatorio en primer acceso |
 | `PATCH /auth/cambiar-perfil` | Cambia perfil activo sin cerrar sesión |
+| `POST /auth/solicitar-otp` | Genera y envía código de 4 dígitos al email |
+| `POST /auth/verificar-otp` | Valida código OTP y actualiza password |
+| `POST /auth/reenviar-otp-whatsapp` | Reenvía el mismo código activo por WhatsApp |
+
+### Recuperación de password — Flujo OTP
+
+```
+1. Usuario ingresa su email en la pantalla de recuperación
+   → POST /auth/solicitar-otp
+   → Código de 4 dígitos enviado al EMAIL
+   → Válido por 10 minutos
+
+2. Si no tiene acceso al correo → click en "Prueba de otra manera"
+   → POST /auth/reenviar-otp-whatsapp
+   → El MISMO código (no uno nuevo) es enviado al WHATSAPP registrado
+   → Requiere que el usuario tenga campo telefono registrado
+
+3. Usuario ingresa el código recibido
+   → POST /auth/verificar-otp
+   → Password actualizado
+   → Todas las sesiones activas revocadas
+   → Debe hacer login nuevamente
+```
+
+### Reglas OTP
+- El código tiene exactamente **4 dígitos**
+- Expira en **10 minutos**
+- Solo el código más reciente es válido (los anteriores se invalidan)
+- El reenvío por WhatsApp usa el mismo código generado, no uno nuevo
+- Si no hay código vigente al pedir WhatsApp → error 400
+- Si el usuario no tiene teléfono registrado → error 400
+
+### WhatsApp — configuración técnica
+- Proveedor: **Baileys (@whiskeysockets/baileys)** — sin API oficial de Meta
+- Sesión guardada en: `backend/whatsapp_session/`
+- Formato del teléfono: `+51987654321` (código país + número sin 0 inicial)
+- País principal: **Perú (+51)**
+- Re-escanear QR si la sesión expira: `npm run whatsapp:init`
 
 ### Seguridad
-- Nunca revelar si el DNI existe: siempre `401 "Credenciales incorrectas"`
+- Nunca revelar si el DNI/email/teléfono existe: responder igual siempre
 - Los refresh tokens se almacenan como hash (bcrypt)
 - Las sesiones revocadas no pueden generar nuevos tokens
+- El código OTP se invalida inmediatamente después de ser usado
 
 ---
 
@@ -478,34 +517,68 @@ MAIL_FROM="SIAF-RP <tu_correo@gmail.com>"
 
 ## 11. Pendientes y Trabajo Futuro
 
+### Estado actual del backend (2026-05-12)
+
+| Módulo | Estado | Notas |
+|---|---|---|
+| Auth | ✅ Implementado | Login, logout, refresh, OTP, cambiar password/perfil |
+| Identity | ✅ Implementado | CRUD usuarios, perfiles, invitaciones |
+| Organization | ✅ Implementado | CRUD entidades, unidades, estados |
+| Requests | ✅ Implementado | Solicitudes, bandejas, flujo completo |
+| ChartAccounts | ✅ Implementado | Planes, cuentas, catálogos |
+| Documents | ✅ Implementado | Upload PDF a Cloudinary |
+| Notifications | ✅ Implementado | Email Gmail + almacenamiento en BD |
+| Socket.IO | ⬜ Pendiente | Notificaciones en tiempo real |
+| Auditoría (consulta) | ⬜ Pendiente | Módulo de consulta y exportación |
+| Carga masiva | ⬜ Pendiente | CSV/XLSX con validación fila por fila |
+
+### Estado actual del frontend (2026-05-12)
+
+| Módulo | Estado | Notas |
+|---|---|---|
+| Login / OTP | ✅ Demo | Mock data — pendiente integración |
+| Escritorio Virtual | ✅ Demo | Mock data — pendiente integración |
+| Plan de Cuentas Contables | ✅ Demo | Mock data — pendiente integración |
+| Registro de Asiento de Ajuste | ✅ Demo | Mock data — pendiente integración |
+| Admin — Usuarios | ✅ Demo | Mock data — pendiente integración |
+| Admin — Entidades | ✅ Demo | Mock data — pendiente integración |
+| Admin — Unidades | ✅ Demo | Mock data — pendiente integración |
+| Admin — Auditoría | ✅ Demo | Mock data — pendiente integración |
+| Integración con backend | ⬜ Pendiente | HttpClient, interceptors, servicios |
+
 ### Para implementar en versiones futuras
 
 | Funcionalidad | Prioridad | Notas |
 |---|---|---|
-| Tipo de acción `anulacion` de solicitudes | Media | Anula una solicitud ya creada |
-| Contabilidad automática | Alta | Procesos de otros módulos generan docs contables automáticamente |
-| Módulo Tesorería | Alta | Tendrá sus propios tipos de documento |
+| Integración frontend ↔ backend | Alta | HttpClient, JWT interceptor, servicios por módulo |
+| Socket.IO | Alta | Notificaciones en tiempo real en navbar |
+| WhatsApp (BuilderBot + Baileys) | Media | Notificaciones por WhatsApp además del email |
+| Tipo de acción `anulacion` | Media | Anula una solicitud ya creada |
+| Exportación auditoría (Excel/PDF) | Media | Usar filtros del módulo de auditoría |
+| Contabilidad automática | Alta | Procesos de otros módulos generan docs contables |
 | Módulo Presupuesto | Alta | Tendrá sus propios tipos de documento |
+| Módulo Tesorería | Alta | Tendrá sus propios tipos de documento |
 | Módulo Abastecimiento | Media | Tendrá sus propios tipos de documento |
-| Separación a microservicios | Baja | Solo cuando haya equipos distintos y necesidad real de escalar |
-| Exportación de reportes contables | Media | Usar `esVisible` para filtrar |
-| Seed inicial de datos | Alta | Roles, permisos, módulos, tipos de documento base |
+| Carga masiva CSV/XLSX | Alta | Con validación todo-o-nada y reporte TXT de errores |
+| Separación a microservicios | Baja | Solo cuando haya necesidad real de escalar |
 
-### Cambios pendientes en el schema
+### Schema — todos los cambios aplicados
 
 | Campo / Tabla | Estado | Notas |
 |---|---|---|
-| Índices de rendimiento | ✅ Agregados | En Solicitud, UsuarioEntidadRol, Historial, Auditoria, Notificacion |
-| `TipoDocumento` | ✅ Creado | Catálogo administrado por OGTI |
-| `Notificacion` | ✅ Creado | Con email y Socket.IO |
-| `EstadoEntidad` enum | ✅ Creado | Reemplaza esActiva en EntidadPublica |
-| `EstadoUnidad` enum | ✅ Creado | Reemplaza esActiva en UnidadOrganica |
-| `TipoPlanContable` enum | ✅ Creado | Determina si el plan es editable |
-| `seccionesModificadas` en SolicitudCuenta | ✅ Agregado | ["atributos", "vigencia"] |
-| `numeroSolicitud` nullable | ✅ Corregido | Se genera al pasar a ELABORADO |
-| `ELIMINADO` en EstadoSolicitud | ✅ Corregido | Reemplaza ANULADO |
+| `TipoDocumento` | ✅ | Catálogo administrado por OGTI |
+| `Notificacion` | ✅ | Con email y preparado para Socket.IO |
+| `OtpVerificacion` | ✅ | Para recuperación de password |
+| `EstadoEntidad` enum | ✅ | activa, suspendida, migrada, archivada |
+| `EstadoUnidad` enum | ✅ | activa, suspendida, archivada |
+| `TipoPlanContable` enum | ✅ | gubernamental_unico, general_empresarial, sistema_financiero |
+| `codigoNumerico` en EntidadPublica | ✅ | Auto-incremental, usado en número de solicitud |
+| `seccionesModificadas` en SolicitudCuenta | ✅ | ["atributos", "vigencia"] |
+| `numeroSolicitud` nullable | ✅ | Se genera al pasar a ELABORADO |
+| `ELIMINADO` en EstadoSolicitud | ✅ | Reemplaza ANULADO |
+| Índices de rendimiento | ✅ | Solicitud, UsuarioEntidadRol, Historial, Auditoria, Notificacion |
 
 ---
 
-*Documento generado durante el levantamiento de requerimientos del módulo de Gestión Contable SIAF-RP.*
+*Última actualización: 2026-05-12*
 *Actualizar este documento cada vez que se acuerden nuevas reglas o cambios de diseño.*

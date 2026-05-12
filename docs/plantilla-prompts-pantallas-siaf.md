@@ -199,7 +199,7 @@ Al cancelar:
 | Modal | `siaf-modal` | `shared/ui/` |
 | Snackbar | `siaf-snackbar` | `shared/ui/` |
 | Estado de flujo | `siaf-flow-status-tag` | `shared/ui/` |
-| Upload | `siaf-upload-side-panel` | `shared/ui/` |
+| Upload | `siaf-upload-side-nav` | `shared/ui/` |
 
 ## Reglas de modo lectura
 

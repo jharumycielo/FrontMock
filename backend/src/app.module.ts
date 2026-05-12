@@ -8,6 +8,7 @@ import { RequestsModule } from './requests/requests.module';
 import { ChartAccountsModule } from './chart-accounts/chart-accounts.module';
 import { DocumentsModule } from './documents/documents.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { WhatsappModule } from './whatsapp/whatsapp.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     ChartAccountsModule,
     DocumentsModule,
     NotificationsModule,
+    WhatsappModule,
     // módulos futuros:
     // RequestsModule,
     // ChartAccountsModule,

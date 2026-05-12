@@ -21,16 +21,17 @@ Construir pantallas como composicion de componentes reutilizables. La informacio
 | Carpeta | Criterio | Ejemplos |
 | --- | --- | --- |
 | `shared/ui/` | UI puro, sin logica SIAF. | `siaf-button`, `siaf-input`, `readonly-field`, `siaf-flow-status-tag` |
-| `shared/components/` | Reutilizable entre features con logica de negocio. | `siaf-custom-filter`, `siaf-table-controls`, `siaf-pagination` |
+| `shared/components/` | Reutilizable entre modulos con logica de negocio. | `siaf-custom-filter`, `siaf-table-controls`, `siaf-pagination` |
 | `layout/` | Exclusivo del shell. | `siaf-navbar`, `siaf-sidebar`, `siaf-create-document` |
-| `features/[feature]/components/` | Especifico de un proceso. | Componentes internos de `chart-accounts` |
-| `features/[feature]/pages/[page]/` | Pantallas del proceso. | `request`, `documents`, `form` |
+| `modules/[modulo]/[proceso]/components/` | Especifico de un proceso. | Componentes internos de `plan-cuentas` |
+| `modules/[modulo]/[proceso]/pages/[page]/` | Pantallas del proceso. | `request`, `documents`, `form`, `bulk-request` |
+| `features/` | Paginas publicas sin dominio de negocio. | `login`, `otp-verification`, `showcase` |
 
 Reglas:
 
-- Los features no se importan entre si.
-- Si algo se necesita en dos features, subir a `shared/components/`.
-- `shared/ui/` nunca importa de `shared/components/`, `layout/` ni `features/`.
+- Los modulos no se importan entre si.
+- Si algo se necesita en dos modulos, subir a `shared/components/`.
+- `shared/ui/` nunca importa de `shared/components/`, `layout/`, `modules/` ni `features/`.
 
 ## Tokens y estilos
 
@@ -41,7 +42,9 @@ Reglas:
 - No usar hexadecimales hardcodeados en `src/app/`.
 - No usar `box-shadow` hardcodeado en componentes.
 - Usar tokens semanticos `--sys-color-*` para colores.
-- Usar tokens de efectos `--sys-effects-*` o clases `shadow-siaf-*` para elevaciones.
+- Usar tokens `--sys-shadow-*` o clases `shadow-siaf-*` para elevaciones.
+- La cascada global debe mantenerse en este orden: `base.css`, `figma.css`, `tailwind.tokens.css`, `themes/index.css`.
+- `figma.css` contiene tokens exportados; `base.css` contiene aliases estables; `light.css` y `dark.css` solo deben pisar diferencias de tema.
 - Required `*` debe salir de la propiedad `[required]="true"` del componente, no escribirse manualmente.
 - El color del `*` debe usar `--sys-color-text-feedback-danger`.
 
@@ -50,7 +53,7 @@ Ejemplo:
 ```css
 /* Correcto */
 color: var(--sys-color-text-feedback-danger);
-box-shadow: var(--sys-effects-elevation-e0) var(--sys-effects-elevation-e1) var(--sys-effects-blur-b3) 0 rgba(0, 0, 0, 0.14);
+box-shadow: var(--sys-shadow-elevation-1);
 
 /* Evitar */
 color: #821C1E;
@@ -71,7 +74,7 @@ box-shadow: 0 8px 10px rgba(0, 0, 0, 0.14);
 | `siaf-modal` | Confirmaciones bloqueantes. |
 | `siaf-snackbar` | Confirmaciones no bloqueantes. |
 | `siaf-flow-status-tag` | Estado visual de documentos y registros. |
-| `siaf-upload-side-panel` | Carga de documentos. |
+| `siaf-upload-side-nav` | Carga de documentos. |
 | `siaf-uploaded-file-card` | Archivo cargado. |
 
 ### Componentes transversales
