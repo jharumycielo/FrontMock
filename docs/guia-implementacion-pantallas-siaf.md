@@ -86,6 +86,7 @@ box-shadow: 0 8px 10px rgba(0, 0, 0, 0.14);
 | `siaf-table-controls` | Checkbox maestro, acciones y paginacion de tablas. |
 | `siaf-pagination` | Paginacion superior/inferior. |
 | `siaf-data-table` | Tabla configurable. |
+| `siaf-form-table-search` | Buscador para tablas dentro de formularios. |
 | `siaf-solicitude-page-layout` | Layout de solicitudes. |
 | `siaf-solicitude-form-card` | Card de formulario. |
 | `siaf-solicitude-info-card` | Datos generales de solicitud. |
@@ -166,6 +167,41 @@ Reglas:
 - Debe aplicarse en Documentos y registros, Bandeja y cualquier tabla que requiera filtros dinamicos.
 
 ## Tablas
+
+### Base visual de tablas
+
+Las tablas HTML pueden usar la misma forma visual del sistema sin perder flexibilidad para acciones, tags, inputs o celdas sticky. Para ello deben usar las clases base globales definidas en `src/styles.css`.
+
+```html
+<div class="siaf-table-shell">
+  <table class="siaf-table min-w-[900px]">
+    <thead>
+      <tr class="siaf-table-head-row">
+        <th class="siaf-table-th">Codigo</th>
+        <th class="siaf-table-th">Nombre</th>
+        <th class="siaf-table-th">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="siaf-table-row">
+        <td class="siaf-table-td">001</td>
+        <td class="siaf-table-td">Registro de ejemplo</td>
+        <td class="siaf-table-td">
+          <siaf-flow-status-tag status="Aprobado" />
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+Reglas:
+
+- Usar `siaf-data-table` solo para tablas simples de datos planos.
+- Usar tabla HTML con clases `siaf-table-*` cuando existan acciones, badges, inputs, checkboxes, columnas sticky o celdas con plantillas.
+- Usar `siaf-form-table-search` para buscadores de tablas dentro de formularios.
+- Usar `siaf-pagination` arriba y abajo cuando el flujo lo requiera, como en Proceso de registro de asiento de ajuste.
+- No estilizar cada tabla desde cero con colores, bordes o paddings propios.
 
 ### Controles de tabla
 

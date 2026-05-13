@@ -4,6 +4,43 @@ Registro cronológico de todas las reestructuraciones y mejoras aplicadas al pro
 
 ---
 
+## [2026-05-13] Arquitectura escalable de procesos y documentos
+
+### Problema
+El sistema solo tenía `TipoDocumento` con un campo `modulo` libre. No había jerarquía de catálogos, clasificadores y procesos. No había mecanismo para generación automática de documentos entre módulos.
+
+### Solución aplicada
+
+**Nueva tabla `ProcesoSistema`:**
+```
+módulo → categoría (catalogo | clasificador | proceso) → proceso específico
+└── Cada proceso tiene sus propios TipoDocumento
+└── Cada TipoDocumento tiene sus TipoDocumentoAccion
+```
+
+**Nueva tabla `ReglaGeneracionAutomatica`:**
+- Define qué documentos se crean automáticamente al aprobar otro
+- Soporta generación entre módulos distintos (ej. Tesorería → Contabilidad)
+- Administrada solo por OGTI
+
+**Campos nuevos en `Solicitud`:**
+- `catId` — clasificador/catálogo relacionado (pendiente definición)
+- `estadoContabilizacion` — estado del proceso de contabilización automática
+- `fechaContabilizacion` — fecha en que se contabilizó
+- `esGeneradaAutomaticamente` — flag si fue creada por una regla automática
+- `solicitudOrigenId` — referencia al documento que la originó
+
+**Enums nuevos:**
+- `CategoriaProcesoSistema` = catalogo | clasificador | proceso
+- `EstadoContabilizacion` = no_aplica | pendiente | en_proceso | contabilizado | error
+
+### Seed actualizado
+- 3 procesos del sistema contable: plan-cuentas-contables, eventos-contables, registro-asiento-ajuste
+- TipoDocumento ahora tiene `procesoId` conectado a `ProcesoSistema`
+- Nuevo tipo de documento: SRAA (Solicitud de Registro de Asiento de Ajuste)
+
+---
+
 ## [2026-05-12] OTP por WhatsApp con Baileys
 
 ### Implementado

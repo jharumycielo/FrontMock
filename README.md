@@ -139,6 +139,7 @@ new-siaf-rp/
 | `/admin/usuarios/nuevo` | `AdminUsuariosFormComponent` |
 | `/admin/entidades` | `AdminEntidadesComponent` |
 | `/admin/entidades/nueva` | `AdminEntidadesFormComponent` |
+| `/admin/unidades` | `AdminUnidadesComponent` |
 | `/admin/auditoria` | `AdminAuditoriaComponent` |
 
 ---
@@ -207,6 +208,7 @@ El único punto de entrada global es `src/styles.css`. La cascada de tokens debe
 Reglas:
 - No usar hexadecimales, `rgb()` ni sombras hardcodeadas dentro de `src/app/`.
 - En componentes usar tokens `--sys-*` o clases Tailwind conectadas a tokens.
+- Las tablas HTML que deban verse como tabla SIAF deben usar las clases base globales `siaf-table-shell`, `siaf-table`, `siaf-table-head-row`, `siaf-table-th`, `siaf-table-row` y `siaf-table-td`.
 - `light.css` solo debe contener overrides puntuales del modo claro.
 - `dark.css` concentra los overrides de modo oscuro y debe respetar contraste WCAG.
 - No reintroducir un archivo generado que redefina `--sys-*` fuera de esta cascada.

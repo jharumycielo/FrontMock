@@ -11,20 +11,20 @@ export type DataTableRow = Record<string, string | number>;
   selector: 'siaf-data-table',
   standalone: true,
   template: `
-    <div class="overflow-hidden rounded-siaf-lg border border-border bg-surface">
-      <table class="w-full border-collapse text-left text-sm">
-        <thead class="bg-surface-muted text-xs font-semibold uppercase text-text-muted">
-          <tr>
+    <div class="siaf-table-shell">
+      <table class="siaf-table">
+        <thead>
+          <tr class="siaf-table-head-row">
             @for (column of columns; track column.key) {
-              <th class="border-b border-border px-4 py-3">{{ column.label }}</th>
+              <th class="siaf-table-th">{{ column.label }}</th>
             }
           </tr>
         </thead>
-        <tbody class="divide-y divide-border">
+        <tbody>
           @for (row of rows; track row[idKey]) {
-            <tr class="hover:bg-surface-muted/70">
+            <tr class="siaf-table-row">
               @for (column of columns; track column.key) {
-                <td class="px-4 py-3 text-text">{{ row[column.key] }}</td>
+                <td class="siaf-table-td">{{ row[column.key] }}</td>
               }
             </tr>
           }

@@ -186,6 +186,60 @@ input[type="checkbox"]:disabled:checked {
   background-color: var(--sys-color-icon-states-disabled);
 }
 
+@layer components {
+  .siaf-table-shell {
+    overflow-x: auto;
+    border-radius: var(--sys-radius-md);
+    background-color: var(--sys-color-bg-surfaces-surface);
+  }
+
+  .siaf-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: var(--sys-typography-size-body-2);
+  }
+
+  .siaf-table-head-row {
+    background-color: var(--sys-color-bg-surfaces-surface-high);
+    color: var(--sys-color-text-neutral-high);
+  }
+
+  .siaf-table-th {
+    height: 2.5rem;
+    padding: var(--sys-padding-base-sm) var(--sys-padding-base-md);
+    font-size: var(--sys-typography-size-caption-1);
+    font-weight: var(--sys-typography-weight-bold);
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .siaf-table-row {
+    border-bottom: var(--sys-border-linear-thin) solid var(--sys-color-divider-default);
+    background-color: var(--sys-color-bg-surfaces-surface);
+    transition: background-color 120ms ease;
+  }
+
+  .siaf-table-row:hover {
+    background-color: var(--sys-color-bg-states-light-hover);
+  }
+
+  .siaf-table-td {
+    min-height: 3rem;
+    padding: var(--sys-padding-base-sm) var(--sys-padding-base-md);
+    color: var(--sys-color-text-neutral-high);
+    font-size: var(--sys-typography-size-body-2);
+    line-height: normal;
+  }
+
+  .siaf-table-sticky-cell {
+    position: sticky;
+    right: 0;
+    border-left: var(--sys-border-linear-thin) solid var(--sys-color-divider-strong);
+    background-color: inherit;
+  }
+}
+
 .material-icons {
   direction: ltr;
   display: inline-block;

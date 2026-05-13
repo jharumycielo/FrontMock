@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { Router } from '@angular/router';
 
 import { BreadcrumbComponent, BreadcrumbItem } from '../../../../../shared/components/breadcrumb/breadcrumb.component';
+import { FormTableSearchComponent } from '../../../../../shared/components/form-table-search/form-table-search.component';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { IconComponent } from '../../../../../shared/ui/icon/icon.component';
 import { RecordStatus, RecordStatusTagComponent } from '../../../../../shared/ui/record-status-tag/record-status-tag.component';
 import {
@@ -20,7 +22,7 @@ const ESTADO_TO_RECORD_STATUS: Record<EstadoUsuario, RecordStatus> = {
 @Component({
   selector: 'siaf-admin-usuarios',
   standalone: true,
-  imports: [BreadcrumbComponent, IconComponent, RecordStatusTagComponent],
+  imports: [BreadcrumbComponent, FormTableSearchComponent, IconComponent, PaginationComponent, RecordStatusTagComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="min-w-0">
@@ -41,46 +43,56 @@ const ESTADO_TO_RECORD_STATUS: Record<EstadoUsuario, RecordStatus> = {
 
       <section class="min-h-[calc(100vh-112px)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] p-siaf-md">
 
-        <!-- Search bar -->
-        <div class="mb-siaf-md flex items-center gap-siaf-md rounded-siaf-md bg-surface px-siaf-md py-siaf-sm">
-          <siaf-icon name="search" [size]="20" />
-          <input
-            type="text"
+        <div class="mb-siaf-md">
+          <siaf-form-table-search
             placeholder="Buscar por DNI, nombre o email..."
-            class="flex-1 border-none bg-transparent text-sm outline-none placeholder:text-[var(--sys-color-text-neutral-low)]"
+            ariaLabel="Buscar usuarios"
             [value]="searchTerm()"
-            (input)="searchTerm.set($any($event.target).value)"
+            (valueChange)="onSearchChange($event)"
+          />
+        </div>
+
+        <div class="mb-siaf-sm px-siaf-sm">
+          <siaf-pagination
+            navigation="Activate"
+            position="Top"
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [totalItems]="filteredUsuarios().length"
+            [totalPages]="totalPages()"
+            (previous)="previousPage()"
+            (next)="nextPage()"
           />
         </div>
 
         <!-- Table -->
-        <div class="overflow-x-auto rounded-siaf-md bg-surface">
-          <table class="w-full border-collapse text-left text-sm min-w-[900px]">
+        <div class="siaf-table-shell">
+          <table class="siaf-table min-w-[900px]">
             <thead>
-              <tr class="bg-surface-high text-[10px] font-bold uppercase text-text">
-                <th class="w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm">#</th>
-                <th class="px-siaf-md py-siaf-sm">DNI</th>
-                <th class="px-siaf-md py-siaf-sm">Nombre completo</th>
-                <th class="px-siaf-md py-siaf-sm">Email</th>
-                <th class="px-siaf-md py-siaf-sm">Estado</th>
-                <th class="px-siaf-md py-siaf-sm">Rol principal</th>
-                <th class="px-siaf-md py-siaf-sm">Entidad</th>
-                <th class="sticky right-0 w-20 rounded-r-siaf-sm border-l border-[var(--sys-color-divider-strong)] bg-surface-high px-siaf-sm py-siaf-sm">Acciones</th>
+              <tr class="siaf-table-head-row">
+                <th class="siaf-table-th w-10 rounded-l-siaf-sm px-siaf-sm">#</th>
+                <th class="siaf-table-th">DNI</th>
+                <th class="siaf-table-th">Nombre completo</th>
+                <th class="siaf-table-th">Email</th>
+                <th class="siaf-table-th">Estado</th>
+                <th class="siaf-table-th">Rol principal</th>
+                <th class="siaf-table-th">Entidad</th>
+                <th class="siaf-table-th siaf-table-sticky-cell w-20 rounded-r-siaf-sm px-siaf-sm">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              @for (usuario of filteredUsuarios(); track usuario.id; let i = $index) {
-                <tr class="border-b border-[var(--sys-color-divider-default)] bg-surface hover:bg-[var(--sys-color-bg-states-light-hover)]">
-                  <td class="h-[58px] px-siaf-sm py-siaf-xs text-[var(--sys-color-text-neutral-medium)]">{{ i + 1 }}</td>
-                  <td class="px-siaf-md py-siaf-sm font-mono">{{ usuario.dni }}</td>
-                  <td class="px-siaf-md py-siaf-sm font-medium">{{ usuario.apellidos }}, {{ usuario.nombres }}</td>
-                  <td class="px-siaf-md py-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ usuario.email }}</td>
-                  <td class="px-siaf-md py-siaf-sm">
+              @for (usuario of paginatedUsuarios(); track usuario.id; let i = $index) {
+                <tr class="siaf-table-row">
+                  <td class="siaf-table-td px-siaf-sm text-[var(--sys-color-text-neutral-medium)]">{{ rowNumber(i) }}</td>
+                  <td class="siaf-table-td font-mono">{{ usuario.dni }}</td>
+                  <td class="siaf-table-td font-medium">{{ usuario.apellidos }}, {{ usuario.nombres }}</td>
+                  <td class="siaf-table-td text-[var(--sys-color-text-neutral-medium)]">{{ usuario.email }}</td>
+                  <td class="siaf-table-td">
                     <siaf-record-status-tag [status]="getRecordStatus(usuario.estado)" size="small" />
                   </td>
-                  <td class="px-siaf-md py-siaf-sm">{{ rolPrincipal(usuario) }}</td>
-                  <td class="px-siaf-md py-siaf-sm">{{ entidadPrincipal(usuario) }}</td>
-                  <td class="sticky right-0 border-l border-[var(--sys-color-divider-strong)] bg-surface px-siaf-sm py-siaf-xs">
+                  <td class="siaf-table-td">{{ rolPrincipal(usuario) }}</td>
+                  <td class="siaf-table-td">{{ entidadPrincipal(usuario) }}</td>
+                  <td class="siaf-table-td siaf-table-sticky-cell px-siaf-sm py-siaf-xs">
                     <div class="flex items-center gap-1">
                       <button
                         type="button"
@@ -113,11 +125,20 @@ const ESTADO_TO_RECORD_STATUS: Record<EstadoUsuario, RecordStatus> = {
           </table>
         </div>
 
-        <!-- Footer count -->
         <div class="mt-siaf-sm px-siaf-sm">
-          <span class="text-xs text-[var(--sys-color-text-neutral-low)]">
-            Total: {{ filteredUsuarios().length }} usuario{{ filteredUsuarios().length !== 1 ? 's' : '' }}
-          </span>
+          <siaf-pagination
+            navigation="Activate"
+            position="Bottom"
+            [rowPage]="true"
+            [page]="page()"
+            [pageSize]="pageSize()"
+            [rowsPerPage]="pageSize()"
+            [totalItems]="filteredUsuarios().length"
+            [totalPages]="totalPages()"
+            (previous)="previousPage()"
+            (next)="nextPage()"
+            (rowsPerPageChange)="setPageSize($event)"
+          />
         </div>
 
       </section>
@@ -134,6 +155,8 @@ export class AdminUsuariosComponent {
   ];
 
   readonly searchTerm = signal('');
+  readonly page = signal(1);
+  readonly pageSize = signal(10);
 
   readonly filteredUsuarios = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
@@ -146,6 +169,35 @@ export class AdminUsuariosComponent {
         u.email.toLowerCase().includes(term),
     );
   });
+
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredUsuarios().length / this.pageSize())));
+
+  readonly paginatedUsuarios = computed(() => {
+    const start = (this.page() - 1) * this.pageSize();
+    return this.filteredUsuarios().slice(start, start + this.pageSize());
+  });
+
+  onSearchChange(value: string): void {
+    this.searchTerm.set(value);
+    this.page.set(1);
+  }
+
+  previousPage(): void {
+    this.page.update((page) => Math.max(1, page - 1));
+  }
+
+  nextPage(): void {
+    this.page.update((page) => Math.min(this.totalPages(), page + 1));
+  }
+
+  setPageSize(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.page.set(1);
+  }
+
+  rowNumber(index: number): number {
+    return (this.page() - 1) * this.pageSize() + index + 1;
+  }
 
   getRecordStatus(estado: EstadoUsuario): RecordStatus {
     return ESTADO_TO_RECORD_STATUS[estado];

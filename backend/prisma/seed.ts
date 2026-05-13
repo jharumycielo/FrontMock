@@ -270,22 +270,74 @@ async function main() {
   console.log('   ⚠️  Debe cambiar el password en el primer login');
 
   // ─────────────────────────────────────────────
+  // PROCESOS DEL SISTEMA — módulo contabilidad
+  // ─────────────────────────────────────────────
+  const procesosContabilidad = [
+    {
+      codigo: 'plan-cuentas-contables',
+      modulo: 'contabilidad',
+      categoria: 'clasificador' as const,
+      nombre: 'Plan de Cuentas Contables',
+      orden: 1,
+    },
+    {
+      codigo: 'eventos-contables',
+      modulo: 'contabilidad',
+      categoria: 'catalogo' as const,
+      nombre: 'Eventos Contables',
+      orden: 2,
+    },
+    {
+      codigo: 'registro-asiento-ajuste',
+      modulo: 'contabilidad',
+      categoria: 'proceso' as const,
+      nombre: 'Proceso de Registro de Asiento de Ajuste',
+      orden: 3,
+    },
+  ];
+
+  for (const proc of procesosContabilidad) {
+    await prisma.procesoSistema.upsert({
+      where: { codigo: proc.codigo },
+      update: {},
+      create: proc,
+    });
+  }
+
+  console.log(`✅ ${procesosContabilidad.length} procesos del sistema creados`);
+
+  // ─────────────────────────────────────────────
   // TIPOS DE DOCUMENTO BASE (módulo contabilidad)
   // ─────────────────────────────────────────────
   const rolAprobador = await prisma.rol.findUnique({ where: { codigo: 'APROBADOR' } });
+  const procesoPlanCuentas = await prisma.procesoSistema.findUnique({
+    where: { codigo: 'plan-cuentas-contables' },
+  });
+  const procesoAsientoAjuste = await prisma.procesoSistema.findUnique({
+    where: { codigo: 'registro-asiento-ajuste' },
+  });
 
   const tiposDocumento = [
     {
       codigo: 'SCC',
       nombre: 'Solicitud de Cuentas Contables',
       modulo: 'contabilidad',
+      procesoId: procesoPlanCuentas!.id,
       acciones: ['creacion', 'modificacion'],
     },
     {
       codigo: 'SCMPC',
       nombre: 'Solicitud de Carga Masiva de Plan de Cuentas Contables',
       modulo: 'contabilidad',
+      procesoId: procesoPlanCuentas!.id,
       acciones: ['creacion'],
+    },
+    {
+      codigo: 'SRAA',
+      nombre: 'Solicitud de Registro de Asiento de Ajuste',
+      modulo: 'contabilidad',
+      procesoId: procesoAsientoAjuste!.id,
+      acciones: ['creacion', 'reversion'],
     },
   ];
 
@@ -297,6 +349,7 @@ async function main() {
           codigo: td.codigo,
           nombre: td.nombre,
           modulo: td.modulo,
+          procesoId: td.procesoId,
           entidadDestinoId: mef.id,
           unidadDestinoId: dgcp.id,
           rolDestinoId: rolAprobador!.id,
@@ -308,10 +361,16 @@ async function main() {
           data: { tipoDocumentoId: created.id, tipoAccion: accion },
         });
       }
+    } else {
+      // Actualizar procesoId si ya existe
+      await prisma.tipoDocumento.update({
+        where: { codigo: td.codigo },
+        data: { procesoId: td.procesoId },
+      });
     }
   }
 
-  console.log(`✅ ${tiposDocumento.length} tipos de documento creados`);
+  console.log(`✅ ${tiposDocumento.length} tipos de documento creados/actualizados`);
   console.log('\n🎉 Seed completado exitosamente');
 }
 

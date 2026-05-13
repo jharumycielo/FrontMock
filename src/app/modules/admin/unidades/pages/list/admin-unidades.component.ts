@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 
 import { BreadcrumbComponent, BreadcrumbItem } from '../../../../../shared/components/breadcrumb/breadcrumb.component';
+import { FormTableSearchComponent } from '../../../../../shared/components/form-table-search/form-table-search.component';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { ButtonComponent } from '../../../../../shared/ui/button/button.component';
 import { IconComponent } from '../../../../../shared/ui/icon/icon.component';
 
@@ -57,7 +59,7 @@ const UNIDADES_MOCK: UnidadMock[] = [
 @Component({
   selector: 'siaf-admin-unidades',
   standalone: true,
-  imports: [BreadcrumbComponent, ButtonComponent, IconComponent],
+  imports: [BreadcrumbComponent, ButtonComponent, FormTableSearchComponent, IconComponent, PaginationComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <!-- Page header -->
@@ -73,16 +75,12 @@ const UNIDADES_MOCK: UnidadMock[] = [
 
       <!-- Action bar -->
       <div class="flex items-center justify-between gap-siaf-md">
-        <div class="relative flex-1 max-w-sm">
-          <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--sys-color-text-brand-secondary)]">
-            <siaf-icon name="search" [size]="18" />
-          </span>
-          <input
-            type="text"
+        <div class="min-w-0 flex-1">
+          <siaf-form-table-search
             placeholder="Buscar por código o nombre..."
-            class="w-full rounded-md border border-[var(--sys-color-divider-default)] bg-surface py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--sys-color-text-brand-accent)]"
+            ariaLabel="Buscar unidades"
             [value]="searchTerm()"
-            (input)="searchTerm.set($any($event.target).value)"
+            (valueChange)="onSearchChange($event)"
           />
         </div>
         <siaf-button variant="accent" icon="add" (click)="navigateToCreate()">
@@ -90,33 +88,46 @@ const UNIDADES_MOCK: UnidadMock[] = [
         </siaf-button>
       </div>
 
+      <div class="px-siaf-sm">
+        <siaf-pagination
+          navigation="Activate"
+          position="Top"
+          [page]="page()"
+          [pageSize]="pageSize()"
+          [totalItems]="filteredUnidades().length"
+          [totalPages]="totalPages()"
+          (previous)="previousPage()"
+          (next)="nextPage()"
+        />
+      </div>
+
       <!-- Table card -->
       <div class="bg-surface rounded-siaf-md overflow-hidden border border-[var(--sys-color-divider-default)]">
-        <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead class="bg-[var(--sys-color-bg-surfaces-surface-lowest)]">
-              <tr>
-                <th class="text-left text-xs font-semibold uppercase text-[var(--sys-color-text-brand-secondary)] px-4 py-3">Código</th>
-                <th class="text-left text-xs font-semibold uppercase text-[var(--sys-color-text-brand-secondary)] px-4 py-3">Nombre</th>
-                <th class="text-left text-xs font-semibold uppercase text-[var(--sys-color-text-brand-secondary)] px-4 py-3">Tipo de unidad</th>
-                <th class="text-left text-xs font-semibold uppercase text-[var(--sys-color-text-brand-secondary)] px-4 py-3">Estado</th>
-                <th class="text-left text-xs font-semibold uppercase text-[var(--sys-color-text-brand-secondary)] px-4 py-3">Usuarios</th>
-                <th class="text-left text-xs font-semibold uppercase text-[var(--sys-color-text-brand-secondary)] px-4 py-3">Acciones</th>
+        <div class="siaf-table-shell rounded-none">
+          <table class="siaf-table">
+            <thead>
+              <tr class="siaf-table-head-row">
+                <th class="siaf-table-th">Código</th>
+                <th class="siaf-table-th">Nombre</th>
+                <th class="siaf-table-th">Tipo de unidad</th>
+                <th class="siaf-table-th">Estado</th>
+                <th class="siaf-table-th">Usuarios</th>
+                <th class="siaf-table-th">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              @for (unidad of filteredUnidades(); track unidad.id) {
-                <tr class="transition hover:bg-[var(--sys-color-bg-surfaces-surface-lowest)]">
-                  <td class="px-4 py-3 text-sm border-b border-[var(--sys-color-divider-default)] font-mono font-medium">
+              @for (unidad of paginatedUnidades(); track unidad.id) {
+                <tr class="siaf-table-row">
+                  <td class="siaf-table-td font-mono font-medium">
                     {{ unidad.codigo }}
                   </td>
-                  <td class="px-4 py-3 text-sm border-b border-[var(--sys-color-divider-default)]">
+                  <td class="siaf-table-td">
                     {{ unidad.nombre }}
                   </td>
-                  <td class="px-4 py-3 text-sm border-b border-[var(--sys-color-divider-default)] text-[var(--sys-color-text-brand-secondary)]">
+                  <td class="siaf-table-td text-[var(--sys-color-text-brand-secondary)]">
                     {{ unidad.tipoUnidad }}
                   </td>
-                  <td class="px-4 py-3 text-sm border-b border-[var(--sys-color-divider-default)]">
+                  <td class="siaf-table-td">
                     <span
                       class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
                       [class]="estadoColor(unidad.estadoUnidad)"
@@ -124,10 +135,10 @@ const UNIDADES_MOCK: UnidadMock[] = [
                       {{ estadoLabel(unidad.estadoUnidad) }}
                     </span>
                   </td>
-                  <td class="px-4 py-3 text-sm border-b border-[var(--sys-color-divider-default)] text-center">
+                  <td class="siaf-table-td text-center">
                     {{ unidad.totalUsuarios }}
                   </td>
-                  <td class="px-4 py-3 text-sm border-b border-[var(--sys-color-divider-default)]">
+                  <td class="siaf-table-td">
                     <div class="flex items-center gap-1">
                       <button
                         type="button"
@@ -168,11 +179,8 @@ const UNIDADES_MOCK: UnidadMock[] = [
           </table>
         </div>
 
-        <!-- Footer count -->
         <div class="flex items-center justify-between border-t border-[var(--sys-color-divider-default)] px-4 py-2">
-          <span class="text-xs text-[var(--sys-color-text-brand-secondary)]">
-            Total: {{ filteredUnidades().length }} unidad{{ filteredUnidades().length !== 1 ? 'es' : '' }}
-          </span>
+          <siaf-pagination navigation="Activate" position="Bottom" [rowPage]="true" [page]="page()" [pageSize]="pageSize()" [rowsPerPage]="pageSize()" [totalItems]="filteredUnidades().length" [totalPages]="totalPages()" (previous)="previousPage()" (next)="nextPage()" (rowsPerPageChange)="setPageSize($event)" />
         </div>
       </div>
     </div>
@@ -186,6 +194,8 @@ export class AdminUnidadesComponent {
   ];
 
   readonly searchTerm = signal('');
+  readonly page = signal(1);
+  readonly pageSize = signal(10);
 
   readonly filteredUnidades = computed(() => {
     const term = this.searchTerm().toLowerCase().trim();
@@ -197,6 +207,31 @@ export class AdminUnidadesComponent {
         u.tipoUnidad.toLowerCase().includes(term),
     );
   });
+
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredUnidades().length / this.pageSize())));
+
+  readonly paginatedUnidades = computed(() => {
+    const start = (this.page() - 1) * this.pageSize();
+    return this.filteredUnidades().slice(start, start + this.pageSize());
+  });
+
+  onSearchChange(value: string): void {
+    this.searchTerm.set(value);
+    this.page.set(1);
+  }
+
+  previousPage(): void {
+    this.page.update((page) => Math.max(1, page - 1));
+  }
+
+  nextPage(): void {
+    this.page.update((page) => Math.min(this.totalPages(), page + 1));
+  }
+
+  setPageSize(pageSize: number): void {
+    this.pageSize.set(pageSize);
+    this.page.set(1);
+  }
 
   estadoColor(estado: EstadoUnidad): string {
     return ESTADO_UNIDAD_COLOR[estado];

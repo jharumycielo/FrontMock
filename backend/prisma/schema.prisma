@@ -69,6 +69,22 @@ enum TipoPlanContable {
   sistema_financiero    // solo lectura y consulta
 }
 
+// Categoría de proceso dentro de un sistema nacional
+enum CategoriaProcesoSistema {
+  catalogo       // Eventos contables, bienes, servicios, etc.
+  clasificador   // Plan de cuentas, clasificadores presupuestales, etc.
+  proceso        // Procesos y procedimientos operativos
+}
+
+// Estado de contabilización automática de un documento
+enum EstadoContabilizacion {
+  no_aplica      // el documento no genera contabilidad
+  pendiente      // aún no se ha contabilizado
+  en_proceso     // el asiento fue creado pero aún no aprobado
+  contabilizado  // el asiento fue aprobado — proceso completo
+  error          // falló la generación automática
+}
+
 // ─────────────────────────────────────────────
 // USUARIOS Y SEGURIDAD
 // ─────────────────────────────────────────────
@@ -304,38 +320,108 @@ model UsuarioInvitacion {
 }
 
 // ─────────────────────────────────────────────
-// CATÁLOGO DE TIPOS DE DOCUMENTO
+// PROCESOS DEL SISTEMA — jerarquía de catálogos,
+// clasificadores y procesos por módulo
 // Solo OGTI (ADMIN_SISTEMA) puede administrarlo
-// Define el destino fijo y acciones permitidas por proceso
+// ─────────────────────────────────────────────
+
+model ProcesoSistema {
+  id        String                  @id @default(uuid())
+  modulo    String                  @db.VarChar(50)
+  // contabilidad | tesoreria | presupuesto | abastecimiento | etc.
+
+  categoria CategoriaProcesoSistema
+  // catalogo | clasificador | proceso
+
+  codigo    String                  @unique @db.VarChar(100)
+  // coincide con el id del nodo en ProcessMenuTree
+  // ej: plan-cuentas-contables, eventos-contables
+
+  nombre    String                  @db.VarChar(250)
+  orden     Int                     @default(0)
+  esActivo  Boolean                 @default(true) @map("es_activo")
+
+  tiposDocumento TipoDocumento[]
+
+  @@index([modulo, categoria])
+  @@map("proceso_sistema")
+}
+
+// ─────────────────────────────────────────────
+// CATÁLOGO DE TIPOS DE DOCUMENTO
+// Administrado por OGTI — define nombre, destino y acciones
 // ─────────────────────────────────────────────
 
 model TipoDocumento {
   id               String  @id @default(uuid())
   codigo           String  @unique @db.VarChar(50)
   nombre           String  @db.VarChar(250)
-  modulo           String  @db.VarChar(50) // contabilidad, tesoreria, presupuesto, etc.
+  // El módulo se hereda del proceso, se mantiene por conveniencia
+  modulo           String  @db.VarChar(50)
+
+  // Proceso al que pertenece este tipo de documento
+  procesoId        String? @map("proceso_id")
+
   entidadDestinoId String  @map("entidad_destino_id")
   unidadDestinoId  String  @map("unidad_destino_id")
   rolDestinoId     String  @map("rol_destino_id")
   esActivo         Boolean @default(true) @map("es_activo")
 
+  proceso            ProcesoSistema?       @relation(fields: [procesoId], references: [id])
   entidadDestino     EntidadPublica        @relation("TipoDocDestinoEntidad", fields: [entidadDestinoId], references: [id])
   unidadDestino      UnidadOrganica        @relation("TipoDocDestinoUnidad", fields: [unidadDestinoId], references: [id])
   rolDestino         Rol                   @relation(fields: [rolDestinoId], references: [id])
   accionesPermitidas TipoDocumentoAccion[]
   solicitudes        Solicitud[]
+  reglasOrigen       ReglaGeneracionAutomatica[] @relation("ReglasOrigen")
+  reglasDestino      ReglaGeneracionAutomatica[] @relation("ReglasDestino")
 
   @@map("tipo_documento")
 }
 
 model TipoDocumentoAccion {
   tipoDocumentoId String @map("tipo_documento_id")
-  tipoAccion      String @map("tipo_accion") @db.VarChar(50) // creacion, modificacion, reversion
+  tipoAccion      String @map("tipo_accion") @db.VarChar(50)
+  // creacion | modificacion | reversion | anulacion | etc.
 
   tipoDocumento TipoDocumento @relation(fields: [tipoDocumentoId], references: [id])
 
   @@id([tipoDocumentoId, tipoAccion])
   @@map("tipo_documento_accion")
+}
+
+// ─────────────────────────────────────────────
+// REGLAS DE GENERACIÓN AUTOMÁTICA
+// Define qué documentos se crean automáticamente
+// cuando otro documento cambia de estado
+// Administrado por OGTI
+// ─────────────────────────────────────────────
+
+model ReglaGeneracionAutomatica {
+  id String @id @default(uuid())
+
+  // Origen — cuándo se dispara
+  tipoDocumentoOrigenId  String          @map("tipo_documento_origen_id")
+  estadoDisparo          EstadoSolicitud @map("estado_disparo")
+  // normalmente APROBADO, pero puede ser otro estado
+
+  // Destino — qué se genera
+  tipoDocumentoDestinoId String          @map("tipo_documento_destino_id")
+  estadoInicialDestino   EstadoSolicitud @map("estado_inicial_destino")
+  // el estado con que nace el documento generado (definido por el negocio)
+
+  // Contexto
+  moduloOrigen  String  @map("modulo_origen")  @db.VarChar(50)
+  moduloDestino String  @map("modulo_destino") @db.VarChar(50)
+  // pueden ser el mismo módulo o distintos
+
+  descripcion String?
+  esActivo    Boolean @default(true) @map("es_activo")
+
+  tipoDocumentoOrigen  TipoDocumento @relation("ReglasOrigen", fields: [tipoDocumentoOrigenId], references: [id])
+  tipoDocumentoDestino TipoDocumento @relation("ReglasDestino", fields: [tipoDocumentoDestinoId], references: [id])
+
+  @@map("regla_generacion_automatica")
 }
 
 // ─────────────────────────────────────────────
@@ -476,6 +562,19 @@ model Solicitud {
   justificacion          String
   provieneEntidadExterna Boolean         @default(false) @map("proviene_entidad_externa")
   entidadExternaId       String?         @map("entidad_externa_id")
+
+  // Campo pendiente de definición — clasificador/catálogo relacionado
+  catId                  String?         @map("cat_id") @db.VarChar(80)
+
+  // Contabilización — aplica cuando el documento tiene impacto contable
+  estadoContabilizacion  EstadoContabilizacion @default(no_aplica) @map("estado_contabilizacion")
+  fechaContabilizacion   DateTime?             @map("fecha_contabilizacion")
+
+  // Generación automática — trazabilidad entre documentos
+  esGeneradaAutomaticamente Boolean  @default(false) @map("es_generada_automaticamente")
+  solicitudOrigenId         String?  @map("solicitud_origen_id")
+  // ↑ si fue generada automáticamente, apunta al documento que la originó
+
   createdAt              DateTime        @default(now()) @map("created_at")
   updatedAt              DateTime        @updatedAt @map("updated_at")
   createdBy              String          @map("created_by")
@@ -490,6 +589,10 @@ model Solicitud {
   rolDestino      Rol?              @relation(fields: [rolDestinoId], references: [id])
   entidadExterna  EntidadPublica?   @relation("SolicitudExterna", fields: [entidadExternaId], references: [id])
   creador         Usuario           @relation("SolicitudCreador", fields: [createdBy], references: [id])
+
+  solicitudOrigen   Solicitud?  @relation("GeneracionAutomatica", fields: [solicitudOrigenId], references: [id])
+  solicitudesHijas  Solicitud[] @relation("GeneracionAutomatica")
+  // ↑ documentos generados automáticamente por esta solicitud
 
   cuentas          SolicitudCuentaContable[]
   sustentos        SolicitudSustento[]

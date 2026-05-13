@@ -517,7 +517,7 @@ MAIL_FROM="SIAF-RP <tu_correo@gmail.com>"
 
 ## 11. Pendientes y Trabajo Futuro
 
-### Estado actual del backend (2026-05-12)
+### Estado actual del backend (2026-05-13)
 
 | Módulo | Estado | Notas |
 |---|---|---|
@@ -532,7 +532,7 @@ MAIL_FROM="SIAF-RP <tu_correo@gmail.com>"
 | Auditoría (consulta) | ⬜ Pendiente | Módulo de consulta y exportación |
 | Carga masiva | ⬜ Pendiente | CSV/XLSX con validación fila por fila |
 
-### Estado actual del frontend (2026-05-12)
+### Estado actual del frontend (2026-05-13)
 
 | Módulo | Estado | Notas |
 |---|---|---|
@@ -566,7 +566,7 @@ MAIL_FROM="SIAF-RP <tu_correo@gmail.com>"
 
 | Campo / Tabla | Estado | Notas |
 |---|---|---|
-| `TipoDocumento` | ✅ | Catálogo administrado por OGTI |
+| `TipoDocumento` | ✅ | Catálogo administrado por OGTI — ahora con `procesoId` |
 | `Notificacion` | ✅ | Con email y preparado para Socket.IO |
 | `OtpVerificacion` | ✅ | Para recuperación de password |
 | `EstadoEntidad` enum | ✅ | activa, suspendida, migrada, archivada |
@@ -577,8 +577,85 @@ MAIL_FROM="SIAF-RP <tu_correo@gmail.com>"
 | `numeroSolicitud` nullable | ✅ | Se genera al pasar a ELABORADO |
 | `ELIMINADO` en EstadoSolicitud | ✅ | Reemplaza ANULADO |
 | Índices de rendimiento | ✅ | Solicitud, UsuarioEntidadRol, Historial, Auditoria, Notificacion |
+| `telefono` en Usuario | ✅ | Formato +51XXXXXXXXX — para OTP por WhatsApp |
+| `ProcesoSistema` | ✅ | Jerarquía catalogo/clasificador/proceso por módulo |
+| `ReglaGeneracionAutomatica` | ✅ | Reglas de generación automática entre documentos |
+| `CategoriaProcesoSistema` enum | ✅ | catalogo, clasificador, proceso |
+| `EstadoContabilizacion` enum | ✅ | no_aplica, pendiente, en_proceso, contabilizado, error |
+| `catId` en Solicitud | ✅ | Pendiente definición — nullable |
+| `estadoContabilizacion` en Solicitud | ✅ | Estado de contabilización automática |
+| `fechaContabilizacion` en Solicitud | ✅ | Fecha en que se contabilizó |
+| `esGeneradaAutomaticamente` en Solicitud | ✅ | Flag de generación automática |
+| `solicitudOrigenId` en Solicitud | ✅ | Trazabilidad hacia el documento que la originó |
 
 ---
 
-*Última actualización: 2026-05-12*
+## 12. Arquitectura escalable por módulo
+
+### Jerarquía de procesos
+
+```
+Sistema Nacional (módulo)
+└── Gestión Contable / Tesorería / Presupuesto / Abastecimiento
+    │
+    ├── Catálogos        → Eventos contables, bienes, etc.
+    ├── Clasificadores   → Plan de Cuentas, clasificadores presupuestales
+    └── Procesos         → Pedidos de contabilización, pagos, etc.
+        └── TipoDocumento → nombre del documento (solicitud, expediente, asiento)
+            └── TipoDocumentoAccion → creacion, modificacion, reversion, etc.
+```
+
+### Campos comunes a todos los documentos (Solicitud)
+
+| Campo visual | Campo en BD |
+|---|---|
+| Número | `numeroSolicitud` |
+| Tipo de Operación | `tipoAccion` |
+| Estado | `estado` |
+| Sistemas Nacionales | derivado de `tipoDocumento.modulo` |
+| Fecha de registro | `createdAt` |
+| Creador | `createdBy` → usuario |
+| Asunto/Motivo | `justificacion` |
+| Código Entidad | `entidadCreadora.codigo` |
+| Área Solicitante | `organoLinea` |
+| Entidad | `entidadCreadora.nombre` |
+| Expediente | `numeroSolicitud` (el nombre cambia según TipoDocumento) |
+| Fecha evaluación | historial donde `estadoNuevo = VERIFICADO` |
+| Usuario evaluación | idem |
+| Fecha aprobación | historial donde `estadoNuevo = APROBADO` |
+| Usuario aprobación | idem |
+| Cantidad Subdocumentos | COUNT de registros de detalle |
+| Estado Contabilización | `estadoContabilizacion` |
+| Fecha Contabilización | `fechaContabilizacion` |
+| ID CAT CLAS Y CAT | `catId` (pendiente definición) |
+
+### Generación automática entre sistemas
+
+```
+ReglaGeneracionAutomatica define:
+├── Documento origen + estado que dispara (ej. APROBADO)
+├── Documento destino + estado inicial del generado
+├── Módulo origen y módulo destino (pueden ser distintos)
+└── Solo OGTI puede administrar estas reglas
+
+Trazabilidad en Solicitud:
+├── esGeneradaAutomaticamente = true
+├── solicitudOrigenId → documento que la originó
+└── estadoContabilizacion → estado del proceso de contabilización
+```
+
+### Para agregar un nuevo módulo (ej. Tesorería)
+
+```
+1. OGTI crea ProcesoSistema con modulo = 'tesoreria'
+2. OGTI crea TipoDocumento con procesoId
+3. OGTI define ReglaGeneracionAutomatica si aplica
+4. Se crea módulo Angular en modules/tesoreria/
+5. Se crea tabla de detalle específica (SolicitudMovimientoTesoro)
+6. El flujo NUEVO→ELABORADO→VERIFICADO→APROBADO es el mismo
+```
+
+---
+
+*Última actualización: 2026-05-13*
 *Actualizar este documento cada vez que se acuerden nuevas reglas o cambios de diseño.*
