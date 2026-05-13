@@ -76,13 +76,13 @@ enum CategoriaProcesoSistema {
   proceso        // Procesos y procedimientos operativos
 }
 
-// Estado de contabilización automática de un documento
+// Estado de contabilización automática — estándar Motor MEF
 enum EstadoContabilizacion {
-  no_aplica      // el documento no genera contabilidad
-  pendiente      // aún no se ha contabilizado
-  en_proceso     // el asiento fue creado pero aún no aprobado
-  contabilizado  // el asiento fue aprobado — proceso completo
-  error          // falló la generación automática
+  no_aplica   // documento sin impacto contable
+  registrado  // JSON generado exitosamente, insertado en tabla documentos aprobados
+  en_proceso  // enviado al Motor, en cola de validación y creación de asientos
+  procesado   // Motor respondió OK — asiento contable creado exitosamente
+  fallido     // Motor no pudo contabilizar — disponible para reprocesar
 }
 
 // ─────────────────────────────────────────────
@@ -566,9 +566,23 @@ model Solicitud {
   // Campo pendiente de definición — clasificador/catálogo relacionado
   catId                  String?         @map("cat_id") @db.VarChar(80)
 
-  // Contabilización — aplica cuando el documento tiene impacto contable
+  // Contabilización — estándar Motor MEF
   estadoContabilizacion  EstadoContabilizacion @default(no_aplica) @map("estado_contabilizacion")
-  fechaContabilizacion   DateTime?             @map("fecha_contabilizacion")
+
+  // Fechas por fase del Motor (actor siempre es SIAF-RP automático)
+  fechaRegistroCont      DateTime? @map("fecha_registro_cont")
+  // ↑ cuando JSON fue generado exitosamente
+
+  fechaEnProceso         DateTime? @map("fecha_en_proceso")
+  // ↑ cuando entró a la cola del Motor
+
+  fechaProceso           DateTime? @map("fecha_proceso")
+  // ↑ cuando Motor respondió (procesado o fallido)
+
+  // Número del asiento contable generado por el Motor
+  // Formato: unidad_ejecutora + año_fiscal + correlativo
+  // Se llena cuando estadoContabilizacion = procesado
+  numeroAsientoContable  String?   @map("numero_asiento_contable") @db.VarChar(50)
 
   // Generación automática — trazabilidad entre documentos
   esGeneradaAutomaticamente Boolean  @default(false) @map("es_generada_automaticamente")

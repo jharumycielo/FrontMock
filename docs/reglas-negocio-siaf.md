@@ -581,10 +581,13 @@ MAIL_FROM="SIAF-RP <tu_correo@gmail.com>"
 | `ProcesoSistema` | ✅ | Jerarquía catalogo/clasificador/proceso por módulo |
 | `ReglaGeneracionAutomatica` | ✅ | Reglas de generación automática entre documentos |
 | `CategoriaProcesoSistema` enum | ✅ | catalogo, clasificador, proceso |
-| `EstadoContabilizacion` enum | ✅ | no_aplica, pendiente, en_proceso, contabilizado, error |
+| `EstadoContabilizacion` enum | ✅ | **Estándar Motor MEF**: no_aplica, registrado, en_proceso, procesado, fallido |
 | `catId` en Solicitud | ✅ | Pendiente definición — nullable |
-| `estadoContabilizacion` en Solicitud | ✅ | Estado de contabilización automática |
-| `fechaContabilizacion` en Solicitud | ✅ | Fecha en que se contabilizó |
+| `estadoContabilizacion` en Solicitud | ✅ | Estado de contabilización automática (Motor MEF) |
+| `fechaRegistroCont` en Solicitud | ✅ | Cuando JSON fue generado exitosamente |
+| `fechaEnProceso` en Solicitud | ✅ | Cuando entró a la cola del Motor |
+| `fechaProceso` en Solicitud | ✅ | Cuando Motor respondió (procesado o fallido) |
+| `numeroAsientoContable` en Solicitud | ✅ | unidad_ejecutora + año_fiscal + correlativo |
 | `esGeneradaAutomaticamente` en Solicitud | ✅ | Flag de generación automática |
 | `solicitudOrigenId` en Solicitud | ✅ | Trazabilidad hacia el documento que la originó |
 
@@ -626,8 +629,66 @@ Sistema Nacional (módulo)
 | Usuario aprobación | idem |
 | Cantidad Subdocumentos | COUNT de registros de detalle |
 | Estado Contabilización | `estadoContabilizacion` |
-| Fecha Contabilización | `fechaContabilizacion` |
+| Fecha Contabilización | `fechaProceso` |
 | ID CAT CLAS Y CAT | `catId` (pendiente definición) |
+| Número Asiento Contable | `numeroAsientoContable` |
+
+### Motor de Contabilización MEF (Referencia: MFD CEL-007.01.01 v5.3)
+
+```
+Estados del Motor — estándar oficial MEF:
+┌─────────────────────────────────────────────────────────┐
+│ no_aplica  → documento sin impacto contable             │
+│ registrado → JSON generado exitosamente                 │
+│              insertado en tabla documentos aprobados    │
+│ en_proceso → enviado al Motor, en cola de validación   │
+│              Motor creando asientos contables           │
+│ procesado  → Motor respondió OK                         │
+│              asiento contable creado                    │
+│              numeroAsientoContable se llena             │
+│ fallido    → Motor no pudo contabilizar                 │
+│              disponible para reprocesar                 │
+│              (via GeneraAsientoContable service)        │
+└─────────────────────────────────────────────────────────┘
+
+Flujo post-aprobación:
+Solicitud APROBADA
+    │
+    ├── 1. Verificar período contable (GET VerificarPeriodoContable)
+    │   └── Si 403 → NO aprobar, notificar al usuario
+    │
+    ├── 2. Construir JSON estándar MEF
+    │   └── Éxito → estadoContabilizacion = registrado
+    │              fechaRegistroCont = ahora
+    │
+    ├── 3. POST InsertarDocumentoAprobado
+    │
+    ├── 4. POST InsertarDocContabilizar
+    │   └── estadoContabilizacion = en_proceso
+    │       fechaEnProceso = ahora
+    │
+    └── 5. Motor procesa y notifica
+        ├── OK      → estadoContabilizacion = procesado
+        │             fechaProceso = ahora
+        │             numeroAsientoContable = unidad+año+correlativo
+        └── Fallido → estadoContabilizacion = fallido
+                      fechaProceso = ahora
+
+Trazabilidad:
+├── Todos los estados son ejecutados por SIAF-RP automáticamente
+├── No se guarda "quién" porque siempre es el sistema
+├── Solo se guardan las fechas por fase
+└── El flujo documental (quién elaboró, verificó, aprobó)
+    se consulta vía SolicitudEstadoHistorial (dinámico, multi-módulo)
+
+Web Services del Motor (a implementar):
+├── GET  VerificarPeriodoContable  → antes de aprobar
+├── POST InsertarDocumentoAprobado → al aprobar
+├── POST InsertarDocContabilizar   → encolar para contabilizar
+├── POST GeneraAsientoContable     → reprocesar fallidos
+├── GET  ObtenerRegistroContable   → obtener asiento PDF
+└── GET  ObtenerCorrelativo        → número asiento contable
+```
 
 ### Generación automática entre sistemas
 
