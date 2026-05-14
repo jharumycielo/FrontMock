@@ -188,9 +188,41 @@ input[type="checkbox"]:disabled:checked {
 
 @layer components {
   .siaf-table-shell {
-    overflow-x: auto;
+    max-width: 100%;
+    max-height: 480px;
+    overflow: auto;
     border-radius: var(--sys-radius-md);
     background-color: var(--sys-color-bg-surfaces-surface);
+  }
+
+  .siaf-table-scroll {
+    max-width: 100%;
+    max-height: 480px;
+    overflow: auto;
+  }
+
+  .siaf-table-shell thead,
+  .siaf-table-scroll thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: var(--sys-border-linear-thin) solid var(--sys-color-divider-strong);
+    background-image: linear-gradient(90deg, var(--sys-color-bg-surfaces-surface-high) 0%, var(--sys-color-bg-surfaces-surface-high) 100%), linear-gradient(90deg, var(--sys-color-bg-surfaces-surface) 0%, var(--sys-color-bg-surfaces-surface) 100%);
+  }
+
+  .siaf-table-shell th,
+  .siaf-table-scroll th {
+    border-bottom: var(--sys-border-linear-thin) solid var(--sys-color-divider-strong);
+    background-image: linear-gradient(90deg, var(--sys-color-bg-surfaces-surface-high) 0%, var(--sys-color-bg-surfaces-surface-high) 100%), linear-gradient(90deg, var(--sys-color-bg-surfaces-surface) 0%, var(--sys-color-bg-surfaces-surface) 100%);
+  }
+
+  @media (max-width: 767px) {
+    .siaf-table-shell,
+    .siaf-table-scroll {
+      max-width: 100%;
+      max-height: 320px;
+      overflow: auto;
+    }
   }
 
   .siaf-table {
@@ -201,7 +233,8 @@ input[type="checkbox"]:disabled:checked {
   }
 
   .siaf-table-head-row {
-    background-color: var(--sys-color-bg-surfaces-surface-high);
+    border-bottom: var(--sys-border-linear-thin) solid var(--sys-color-divider-strong);
+    background-image: linear-gradient(90deg, var(--sys-color-bg-surfaces-surface-high) 0%, var(--sys-color-bg-surfaces-surface-high) 100%), linear-gradient(90deg, var(--sys-color-bg-surfaces-surface) 0%, var(--sys-color-bg-surfaces-surface) 100%);
     color: var(--sys-color-text-neutral-high);
   }
 

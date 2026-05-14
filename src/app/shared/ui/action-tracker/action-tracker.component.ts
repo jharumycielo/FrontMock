@@ -83,7 +83,7 @@ const DETAIL_LABELS: Record<ActionTrackerDetailType, string> = {
                 </h3>
               </div>
 
-              <div class="w-full overflow-x-auto px-siaf-xl py-siaf-md max-sm:px-siaf-md">
+              <div class="siaf-table-scroll w-full px-siaf-xl py-siaf-md max-sm:px-siaf-md">
                 <table class="min-w-[1040px] border-collapse text-left text-sm text-[var(--sys-color-text-neutral-medium)]">
                   <thead>
                     <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">

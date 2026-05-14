@@ -31,10 +31,7 @@ type ReadonlyField = {
   template: `
     @if (open) {
       <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="document-history-title" (click)="closed.emit()">
-        <aside
-          class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md"
-          (click)="$event.stopPropagation()"
-        >
+        <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
           <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong)] px-siaf-md">
             <h2 id="document-history-title" class="m-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Historial del documento</h2>
             <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" aria-label="Cerrar historial del documento" (click)="closed.emit()">
@@ -77,7 +74,7 @@ type ReadonlyField = {
                 }
               </section>
 
-              <section class="min-w-0 overflow-x-auto">
+              <section class="siaf-table-scroll min-w-0">
                 <table class="w-full min-w-[760px] border-collapse text-left">
                   <thead>
                     <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)]">

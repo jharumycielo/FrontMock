@@ -183,7 +183,7 @@ type BulkExcelData = {
                   (next)="onAccountsNextPage()"
                 />
 
-                <div class="min-w-0 overflow-x-auto">
+                <div class="siaf-table-scroll min-w-0">
                   <table class="w-full min-w-[1880px] border-collapse text-left text-sm">
                     <thead>
                       <tr class="h-10 bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">

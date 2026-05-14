@@ -63,7 +63,7 @@ export class TableControlsComponent {
   @Input() selectedCount = 0;
   @Input() disabled = false;
   @Input() page = 1;
-  @Input() pageSize = 25;
+  @Input() pageSize = 10;
   @Input() totalItems = 0;
   @Input() totalPages = 1;
   @Input() showEditAction = false;

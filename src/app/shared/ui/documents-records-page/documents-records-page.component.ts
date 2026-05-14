@@ -6,6 +6,7 @@ import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../
 import { PaginationComponent } from '../../components/pagination/pagination.component';
 import { TableControlsComponent } from '../../components/table-controls/table-controls.component';
 import type { DocumentsRecordsColumn, DocumentsRecordsConfig, DocumentsRecordsRow, DocumentsRecordsTab } from '../../types/documents-records.types';
+import { AccountHistoryPanelComponent } from '../account-history-panel/account-history-panel.component';
 import { ButtonComponent } from '../button/button.component';
 import { ColumnVisibilityPanelComponent } from '../column-visibility-panel/column-visibility-panel.component';
 import { CreateDocumentAccepted, CreateDocumentComponent, CreateDocumentField, CreateDocumentSelection } from '../../../layout/create-document/create-document.component';
@@ -26,9 +27,15 @@ type AppliedCustomFilter = {
 @Component({
   selector: 'siaf-documents-records-page',
   standalone: true,
-  imports: [BreadcrumbComponent, ButtonComponent, ColumnVisibilityPanelComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, DocumentsRecordsTableComponent, IconComponent, ModalComponent, PaginationComponent, SnackbarComponent, TableControlsComponent],
+  imports: [AccountHistoryPanelComponent, BreadcrumbComponent, ButtonComponent, ColumnVisibilityPanelComponent, CreateDocumentComponent, CustomFilterComponent, DocumentHistoryPanelComponent, DocumentsRecordsTableComponent, IconComponent, ModalComponent, PaginationComponent, SnackbarComponent, TableControlsComponent],
   template: `
     <div class="min-h-[calc(100vh-56px)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] text-text">
+      <siaf-account-history-panel
+        [open]="accountHistoryOpen"
+        [record]="selectedAccountHistoryRecord"
+        (closed)="closeAccountHistory()"
+      />
+
       <siaf-document-history-panel
         [open]="documentHistoryOpen"
         [summary]="selectedHistorySummary"
@@ -232,25 +239,38 @@ type AppliedCustomFilter = {
                 </div>
               </div>
 
-              <siaf-table-controls
-                selectAllLabel="Seleccionar documentos o registros"
-                [hideTopPaginationOnMobile]="true"
-                [checked]="allVisibleElaboradoDocumentsSelected"
-                [indeterminate]="someVisibleElaboradoDocumentsSelected"
-                [disabled]="visibleSelectableElaboradoDocuments.length === 0"
-                [page]="page"
-                [pageSize]="rowsPerPage"
-                [totalItems]="activeTab === 'documents' ? filteredRows.length : recordRows.length"
-                [totalPages]="totalPages"
-                (selectionChange)="toggleVisibleElaboradoDocuments($event)"
-                (previous)="onPreviousPage()"
-                (next)="onNextPage()"
-              />
+              @if (activeTab === 'documents') {
+                <siaf-table-controls
+                  selectAllLabel="Seleccionar documentos o registros"
+                  [hideTopPaginationOnMobile]="true"
+                  [checked]="allVisibleElaboradoDocumentsSelected"
+                  [indeterminate]="someVisibleElaboradoDocumentsSelected"
+                  [disabled]="visibleSelectableElaboradoDocuments.length === 0"
+                  [page]="page"
+                  [pageSize]="rowsPerPage"
+                  [totalItems]="filteredRows.length"
+                  [totalPages]="totalPages"
+                  (selectionChange)="toggleVisibleElaboradoDocuments($event)"
+                  (previous)="onPreviousPage()"
+                  (next)="onNextPage()"
+                />
+              } @else {
+                <siaf-pagination
+                  navigation="Activate"
+                  position="Top"
+                  [page]="page"
+                  [pageSize]="rowsPerPage"
+                  [totalItems]="visibleRows.length"
+                  [totalPages]="totalPages"
+                  (previous)="onPreviousPage()"
+                  (next)="onNextPage()"
+                />
+              }
 
               <siaf-documents-records-table
                 [activeTab]="activeTab"
                 [columns]="visibleColumns"
-                [rows]="visibleRows"
+                [rows]="paginatedRows"
                 [minWidthClass]="activeTab === 'documents' ? config.documentTableMinWidthClass : config.recordTableMinWidthClass"
                 [recordTrackKey]="config.recordTrackKey"
                 [documentRoute]="documentRoute"
@@ -265,7 +285,7 @@ type AppliedCustomFilter = {
                 [rowPage]="true"
                 [page]="page"
                 [pageSize]="rowsPerPage"
-                [totalItems]="activeTab === 'documents' ? filteredRows.length : recordRows.length"
+                [totalItems]="visibleRows.length"
                 [totalPages]="totalPages"
                 [rowsPerPage]="rowsPerPage"
                 [rowsPerPageOptions]="rowsPerPageOptions"
@@ -329,6 +349,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   appliedCustomFilters: AppliedCustomFilter[] = [];
   customFilterInitialRows: FilterRow[] = [];
   editingCustomFilterId = '';
+  accountHistoryOpen = false;
   documentHistoryOpen = false;
   verifyModalOpen = false;
   approvalSnackbarOpen = false;
@@ -340,6 +361,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   hiddenDocumentColumns = new Set<string>();
   hiddenRecordColumns = new Set<string>();
   draftHiddenColumns = new Set<string>();
+  selectedAccountHistoryRecord: DocumentsRecordsRow | null = null;
   selectedHistorySummary: DocumentHistorySummary = { document: '', number: '', actionType: '' };
   readonly rowsPerPageOptions = [10, 25, 50, 100];
   readonly filterCondicionOptions = [
@@ -351,7 +373,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     { label: 'Termina con', value: 'ends_with' }
   ];
   private customFilterSequence = 0;
-  rowsPerPage = 25;
+  rowsPerPage = 10;
   page = 1;
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -394,6 +416,11 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     return Math.max(1, Math.ceil(this.visibleRows.length / this.rowsPerPage));
   }
 
+  get paginatedRows(): DocumentsRecordsRow[] {
+    const start = (this.page - 1) * this.rowsPerPage;
+    return this.visibleRows.slice(start, start + this.rowsPerPage);
+  }
+
   get canVerifySelectedDocuments(): boolean {
     return this.documentRows.some((row) => row.selected && row['status'] === 'Elaborado');
   }
@@ -403,7 +430,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
       return [];
     }
 
-    return this.visibleRows.filter((row) => row['status'] === 'Elaborado');
+    return this.paginatedRows.filter((row) => row['status'] === 'Elaborado');
   }
 
   get allVisibleElaboradoDocumentsSelected(): boolean {
@@ -514,7 +541,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   toggleVisibleElaboradoDocuments(selected: boolean): void {
-    this.visibleRows.forEach((row) => {
+    this.paginatedRows.forEach((row) => {
       if (row['status'] === 'Elaborado') {
         row.selected = selected;
         return;
@@ -785,12 +812,23 @@ export class DocumentsRecordsPageComponent implements OnChanges {
 
   openHistory(row: DocumentsRecordsRow): void {
     this.closeToolbarMenus();
+
+    if (this.activeTab === 'records') {
+      this.selectedAccountHistoryRecord = row;
+      this.accountHistoryOpen = true;
+      return;
+    }
+
     this.selectedHistorySummary = {
-      document: this.activeTab === 'documents' ? String(row['document'] ?? '') : this.config.recordHistoryDocumentLabel,
-      number: String(row[this.activeTab === 'documents' ? 'number' : this.config.recordTrackKey] ?? ''),
+      document: String(row['document'] ?? ''),
+      number: String(row['number'] ?? ''),
       actionType: String(row['actionType'] ?? 'Creación')
     };
     this.documentHistoryOpen = true;
+  }
+
+  closeAccountHistory(): void {
+    this.accountHistoryOpen = false;
   }
 
   closeDocumentHistory(): void {

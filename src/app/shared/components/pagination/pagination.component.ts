@@ -74,13 +74,13 @@ export type PaginationPosition = 'Top' | 'Bottom';
 export class PaginationComponent {
   @Input() page = 1;
   @Input() totalPages = 1;
-  @Input() pageSize = 25;
+  @Input() pageSize = 10;
   @Input() totalItems = 800;
   @Input() counterPage = '';
   @Input() navigation: PaginationNavigation = 'Inactive';
   @Input() position: PaginationPosition = 'Top';
   @Input() rowPage = false;
-  @Input() rowsPerPage = 25;
+  @Input() rowsPerPage = 10;
   @Input() rowsPerPageOptions: number[] = [10, 25, 50, 100];
 
   @Output() previous = new EventEmitter<void>();

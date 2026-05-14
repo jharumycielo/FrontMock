@@ -351,7 +351,7 @@ type PeriodoGroup = {
                         [totalItems]="cuentasTotalItems" [totalPages]="cuentasTotalPages" />
 
                       <!-- Tabla -->
-                      <div class="min-w-0 overflow-x-auto">
+                      <div class="siaf-table-scroll min-w-0">
                         <table class="w-full min-w-[700px] border-collapse text-left text-sm">
                           <thead>
                             <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)]">
@@ -490,7 +490,7 @@ type PeriodoGroup = {
                   [totalItems]="detalleAjusteTotalItems" [totalPages]="detalleAjusteTotalPages"
                   (previous)="onDetalleAjustePreviousPage()" (next)="onDetalleAjusteNextPage()" />
 
-                <section class="min-w-0 overflow-x-auto">
+                <section class="siaf-table-scroll min-w-0">
                   <table class="w-full border-collapse text-left">
                     <thead>
                       <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)]">
@@ -566,7 +566,7 @@ type PeriodoGroup = {
                   [totalItems]="claseAjusteTotalItems" [totalPages]="claseAjusteTotalPages"
                   (previous)="onClaseAjustePreviousPage()" (next)="onClaseAjusteNextPage()" />
 
-                <section class="min-w-0 overflow-x-auto">
+                <section class="siaf-table-scroll min-w-0">
                   <table class="w-full border-collapse text-left">
                     <thead>
                       <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)]">
@@ -653,7 +653,7 @@ type PeriodoGroup = {
                 />
 
                 <!-- Tabla -->
-                <section class="min-w-0 overflow-x-auto">
+                <section class="siaf-table-scroll min-w-0">
                   <table class="w-full min-w-[760px] border-collapse text-left">
                     <thead>
                       <tr class="bg-[var(--sys-color-bg-surfaces-surface-high)]">

@@ -206,7 +206,7 @@ type AppliedCustomFilter = {
               (next)="onNextPage()"
             />
 
-            <div class="min-w-0 overflow-x-auto">
+            <div class="siaf-table-scroll min-w-0">
               <table class="w-full min-w-[1216px] border-collapse text-left text-sm">
                 <thead>
                   <tr class="h-10 bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
@@ -223,7 +223,7 @@ type AppliedCustomFilter = {
                   </tr>
                 </thead>
                 <tbody>
-                  @for (row of filteredRows; track row.document + row.number) {
+                  @for (row of paginatedRows; track row.document + row.number) {
                     <tr class="h-[58px] border-b border-[var(--sys-color-divider-default)] bg-surface text-[var(--sys-color-text-neutral-medium)] hover:bg-[var(--sys-color-bg-states-light-hover)]">
                       <td class="px-siaf-sm py-siaf-sm"><input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" /></td>
                       <td class="px-siaf-md py-siaf-sm" [class.font-bold]="$index === 0">{{ row.document }}</td>
@@ -301,7 +301,7 @@ export class TrayDocumentsViewComponent {
   private customFilterSequence = 0;
 
   readonly rowsPerPageOptions = [10, 25, 50, 100];
-  rowsPerPage = 25;
+  rowsPerPage = 10;
   page = 1;
 
   readonly filterCampoOptions = [
@@ -373,6 +373,11 @@ export class TrayDocumentsViewComponent {
 
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.filteredRows.length / this.rowsPerPage));
+  }
+
+  get paginatedRows(): TrayDocumentRow[] {
+    const start = (this.page - 1) * this.rowsPerPage;
+    return this.filteredRows.slice(start, start + this.rowsPerPage);
   }
 
   get rowsForCurrentTray(): TrayDocumentRow[] {

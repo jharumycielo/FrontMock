@@ -168,7 +168,7 @@ type AccountingRow = {
                       />
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <div class="siaf-table-scroll">
                       <table class="min-w-[760px] w-full border-collapse text-sm">
                         <thead class="bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
                           <tr>

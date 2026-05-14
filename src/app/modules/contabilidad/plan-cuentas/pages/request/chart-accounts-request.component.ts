@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { BreadcrumbItem } from '../../../../../shared/components/breadcrumb/breadcrumb.component';
 import { FormTableSearchComponent } from '../../../../../shared/components/form-table-search/form-table-search.component';
@@ -27,10 +27,42 @@ type TipoPlanContable = {
   nombre: string;
 };
 
+type PlanCuentasContables = {
+  id: string;
+  codigo: string;
+  nombre: string;
+  tipo: string;
+  vigencia: string;
+};
+
 const TIPOS_PLAN_CONTABLE: TipoPlanContable[] = [
   { id: '1', nombre: 'Plan Contable Gubernamental Único' },
   { id: '2', nombre: 'Plan Contable General Empresarial' },
   { id: '3', nombre: 'Manual de Contabilidad para las Empresas del Sistema Financiero' }
+];
+
+const PLANES_CUENTAS_CONTABLES: PlanCuentasContables[] = [
+  {
+    id: 'pcgu-2025',
+    codigo: 'PCGU-2025',
+    nombre: 'Plan Contable Gubernamental Unico 2025',
+    tipo: 'Plan Contable Gubernamental Unico',
+    vigencia: 'Vigente',
+  },
+  {
+    id: 'pcge-2025',
+    codigo: 'PCGE-2025',
+    nombre: 'Plan Contable General Empresarial 2025',
+    tipo: 'Plan Contable General Empresarial',
+    vigencia: 'Vigente',
+  },
+  {
+    id: 'mcesf-2025',
+    codigo: 'MCESF-2025',
+    nombre: 'Manual de Contabilidad para Empresas del Sistema Financiero 2025',
+    tipo: 'Manual de Contabilidad para las Empresas del Sistema Financiero',
+    vigencia: 'Vigente',
+  },
 ];
 
 const CHART_ACCOUNTS_PROCESS_ID = 'plan-cuentas-contables';
@@ -137,7 +169,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
           role="creator"
           [state]="solicitudeHeaderState"
           heading="Solicitud de Cuentas Contables"
-          secondaryText="Creación"
+          [secondaryText]="requestActionLabel"
           [showReturn]="true"
           [saveDisabled]="!chartAccountsRequestValid"
           [verifyDisabled]="!isReadOnly"
@@ -446,6 +478,77 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
               </div>
             </section>
           } @else {
+          @if (isModificationRequest) {
+          <siaf-solicitude-form-card title="Tipo de modificación">
+            @if (isReadOnly) {
+              <readonly-field caption="Tipo de modificación" [required]="true" [value]="optionLabel(modificationTypeOptions, modificationType())" />
+            } @else {
+              <div class="max-w-[360px]">
+                <siaf-input
+                  label="Tipo de modificación"
+                  type="select"
+                  [required]="true"
+                  [options]="modificationTypeOptions"
+                  [value]="modificationType()"
+                  [disabled]="isReadOnly"
+                  (valueChange)="modificationType.set(textFieldValue($event))"
+                />
+              </div>
+            }
+          </siaf-solicitude-form-card>
+
+          <siaf-solicitude-form-card title="Buscar plan de cuentas contables">
+            <ng-container card-actions>
+              @if (!isReadOnly) {
+                <siaf-button variant="accent" size="md" icon="search" [iconOnly]="true" ariaLabel="Buscar plan de cuentas contables" (click)="openChartAccountPlanPanel()" />
+              }
+            </ng-container>
+
+            @if (selectedChartAccountPlan()) {
+              <div class="relative flex items-center gap-siaf-md rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface p-siaf-md">
+                <span class="absolute left-[-1px] top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-br-siaf-sm rounded-tr-siaf-sm bg-[var(--sys-color-icon-states-active)]"></span>
+                <div class="grid min-w-0 flex-1 gap-siaf-md md:grid-cols-[150px_minmax(0,1fr)_260px_120px]">
+                  <div class="flex min-w-0 flex-col gap-siaf-xxs">
+                    <span class="truncate text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-[var(--sys-color-text-neutral-low)]">Código</span>
+                    <span class="truncate text-sm font-bold leading-6 tracking-[-0.02px] text-text">{{ selectedChartAccountPlan()!.codigo }}</span>
+                  </div>
+                  <div class="flex min-w-0 flex-col gap-siaf-xxs">
+                    <span class="truncate text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-[var(--sys-color-text-neutral-low)]">Nombre del plan</span>
+                    <span class="truncate text-sm font-bold leading-6 tracking-[-0.02px] text-text">{{ selectedChartAccountPlan()!.nombre }}</span>
+                  </div>
+                  <div class="flex min-w-0 flex-col gap-siaf-xxs">
+                    <span class="truncate text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-[var(--sys-color-text-neutral-low)]">Tipo de plan contable</span>
+                    <span class="truncate text-sm font-bold leading-6 tracking-[-0.02px] text-text">{{ selectedChartAccountPlan()!.tipo }}</span>
+                  </div>
+                  <div class="flex min-w-0 flex-col gap-siaf-xxs">
+                    <span class="truncate text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-[var(--sys-color-text-neutral-low)]">Estado</span>
+                    <span class="truncate text-sm font-bold leading-6 tracking-[-0.02px] text-text">{{ selectedChartAccountPlan()!.vigencia }}</span>
+                  </div>
+                </div>
+                @if (!isReadOnly) {
+                  <button class="inline-flex size-6 shrink-0 items-center justify-center rounded-siaf-sm text-text transition hover:bg-surface-muted" type="button" aria-label="Quitar plan de cuentas contables" (click)="clearChartAccountPlanSelection()">
+                    <siaf-icon name="close" [size]="24" />
+                  </button>
+                }
+              </div>
+            } @else {
+              <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+                <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">Por favor, haga clic en el botón de búsqueda para agregar una cuenta contable.</p>
+              </div>
+            }
+          </siaf-solicitude-form-card>
+
+          <siaf-solicitude-form-card title="Lista de cuentas contables">
+            <ng-container card-actions>
+              @if (!isReadOnly) {
+                <siaf-button variant="accent" size="md" icon="search" [iconOnly]="true" ariaLabel="Buscar cuentas contables" [disabled]="!selectedChartAccountPlan()" />
+              }
+            </ng-container>
+            <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
+              <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">Por favor, haga clic en el botón de búsqueda para agregar una cuenta contable.</p>
+            </div>
+          </siaf-solicitude-form-card>
+          } @else {
           <siaf-solicitude-form-card title="Lista de cuentas contables">
             <ng-container card-actions>
               @if (!isReadOnly) {
@@ -478,7 +581,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
               } @else {
                 <siaf-pagination navigation="Activate" position="Top" [page]="createdAccountsPage()" [pageSize]="createdAccountsRowsPerPage()" [totalItems]="createdAccountingAccounts().length" [totalPages]="createdAccountsTotalPages()" (previous)="onCreatedAccountsPreviousPage()" (next)="onCreatedAccountsNextPage()" />
               }
-              <div class="min-w-0 overflow-x-auto">
+              <div class="siaf-table-scroll min-w-0">
                 <table class="w-full min-w-[1880px] border-collapse text-left text-sm">
                   <thead>
                     <tr class="h-10 bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
@@ -533,6 +636,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
               </div>
             }
           </siaf-solicitude-form-card>
+          }
 
           <siaf-solicitude-form-card title="Solicitud proveniente de entidad externa">
             <section class="grid gap-siaf-md">
@@ -659,7 +763,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 
               <siaf-pagination navigation="Activate" position="Top" [page]="externalEntityPage" [pageSize]="externalEntityRowsPerPage" [totalItems]="externalEntityTotalItems" [totalPages]="externalEntityTotalPages" (previous)="onExternalEntityPreviousPage()" (next)="onExternalEntityNextPage()" />
 
-              <div class="min-h-0 flex-1 overflow-auto">
+              <div class="siaf-table-scroll min-h-0 flex-1">
                 <table class="w-full min-w-[520px] border-collapse text-left">
                   <thead class="sticky top-0 z-[1] bg-[var(--sys-color-bg-surfaces-surface-high)]">
                     <tr class="h-10 border-b border-[var(--sys-color-divider-strong)] text-xs font-bold uppercase text-text">
@@ -704,6 +808,72 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
         </section>
       }
 
+      @if (chartAccountPlanPanelOpen()) {
+        <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="chart-account-plan-panel-title" (click)="closeChartAccountPlanPanel()">
+          <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
+            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong)] px-siaf-md">
+              <h2 id="chart-account-plan-panel-title" class="m-0 min-w-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Seleccionar plan de cuentas contables</h2>
+              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" aria-label="Cerrar selección de plan de cuentas contables" (click)="closeChartAccountPlanPanel()">
+                <siaf-icon name="close" [size]="24" />
+              </button>
+            </header>
+
+            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
+              <div class="flex flex-col gap-siaf-lg">
+                <siaf-form-table-search
+                  [value]="chartAccountPlanSearch()"
+                  ariaLabel="Buscar plan de cuentas contables"
+                  (valueChange)="chartAccountPlanSearch.set($event)"
+                />
+
+                <div class="siaf-table-scroll min-h-0 flex-1">
+                  <table class="siaf-table min-w-[900px]">
+                    <thead class="sticky top-0 z-[1]">
+                      <tr class="siaf-table-head-row">
+                        <th class="siaf-table-th w-12 px-siaf-sm"></th>
+                        <th class="siaf-table-th w-[150px]">Código</th>
+                        <th class="siaf-table-th">Nombre del plan</th>
+                        <th class="siaf-table-th w-[300px]">Tipo de plan contable</th>
+                        <th class="siaf-table-th w-[130px]">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (plan of filteredChartAccountPlans(); track plan.id) {
+                        <tr class="siaf-table-row cursor-pointer" (click)="tempSelectedChartAccountPlan.set(plan)">
+                          <td class="siaf-table-td px-siaf-sm">
+                            <input
+                              class="size-5 accent-brand-primary"
+                              type="radio"
+                              name="chart-account-plan"
+                              [checked]="tempSelectedChartAccountPlan()?.id === plan.id"
+                              [attr.aria-label]="'Seleccionar ' + plan.nombre"
+                              (change)="tempSelectedChartAccountPlan.set(plan)"
+                            />
+                          </td>
+                          <td class="siaf-table-td font-mono">{{ plan.codigo }}</td>
+                          <td class="siaf-table-td">{{ plan.nombre }}</td>
+                          <td class="siaf-table-td">{{ plan.tipo }}</td>
+                          <td class="siaf-table-td">{{ plan.vigencia }}</td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td class="siaf-table-td text-text-muted" colspan="5">No se encontraron planes.</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <footer class="flex shrink-0 items-center justify-end gap-siaf-xs px-siaf-md py-siaf-sm">
+              <siaf-button variant="secondary" (click)="closeChartAccountPlanPanel()">Cancelar</siaf-button>
+              <siaf-button variant="primary" [disabled]="!tempSelectedChartAccountPlan()" (click)="confirmChartAccountPlanSelection()">Aceptar</siaf-button>
+            </footer>
+          </aside>
+        </section>
+      }
+
       @if (tipoPlanPanelOpen()) {
         <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="tipo-plan-panel-title" (click)="closeTipoPlanPanel()">
           <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
@@ -722,7 +892,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
                   (valueChange)="tipoPlanSearch.set($event)"
                 />
 
-                <div class="min-h-0 flex-1 overflow-auto">
+                <div class="siaf-table-scroll min-h-0 flex-1">
                   <table class="w-full border-collapse text-left">
                     <thead class="sticky top-0 z-[1] bg-[var(--sys-color-bg-surfaces-surface-high)]">
                       <tr class="h-10 border-b border-[var(--sys-color-divider-strong)] text-xs font-bold uppercase text-text">
@@ -801,11 +971,15 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 })
 export class ChartAccountsRequestComponent {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   // Códigos existentes (mock — reemplazar con llamada real a API)
   private readonly EXISTING_ACCOUNT_CODES = new Set(['1.1.01', '1.1.02', '1.1.03', '1.2.01', '2.1.01']);
 
   readonly externalOrigin = signal<'si' | 'no' | ''>('');
+  readonly requestAction = this.normalize(this.route.snapshot.queryParamMap.get('actionType') ?? 'Creación');
+  readonly isModificationRequest = this.requestAction === 'modificacion';
+  readonly requestActionLabel = this.isModificationRequest ? 'Modificación' : 'Creación';
   isReadOnly = false;
   isElaborated = false;
   isVerified = false;
@@ -818,11 +992,29 @@ export class ChartAccountsRequestComponent {
   readonly selectedTipoPlan = signal<TipoPlanContable | null>(null);
   readonly tempSelectedTipoPlan = signal<TipoPlanContable | null>(null);
   readonly tipoPlanSearch = signal('');
+  readonly chartAccountPlanPanelOpen = signal(false);
+  readonly selectedChartAccountPlan = signal<PlanCuentasContables | null>(null);
+  readonly tempSelectedChartAccountPlan = signal<PlanCuentasContables | null>(null);
+  readonly chartAccountPlanSearch = signal('');
+  readonly modificationType = signal('');
+
+  readonly modificationTypeOptions: TextFieldOption[] = [
+    { label: 'Atributos', value: 'atributos' },
+    { label: 'Vigencia', value: 'vigencia' },
+  ];
 
   readonly filteredTiposPlan = computed(() => {
     const search = this.normalize(this.tipoPlanSearch());
     if (!search) return TIPOS_PLAN_CONTABLE;
     return TIPOS_PLAN_CONTABLE.filter(p => this.normalize(p.nombre).includes(search));
+  });
+
+  readonly filteredChartAccountPlans = computed(() => {
+    const search = this.normalize(this.chartAccountPlanSearch());
+    if (!search) return PLANES_CUENTAS_CONTABLES;
+    return PLANES_CUENTAS_CONTABLES.filter((plan) =>
+      this.normalize(`${plan.codigo} ${plan.nombre} ${plan.tipo} ${plan.vigencia}`).includes(search),
+    );
   });
 
   readonly justification = signal('');
@@ -1027,6 +1219,18 @@ export class ChartAccountsRequestComponent {
   }
 
   get chartAccountsRequestValid(): boolean {
+    if (this.isModificationRequest) {
+      return !!(
+        !this.isReadOnly &&
+        this.modificationType() &&
+        this.selectedChartAccountPlan() &&
+        this.justification().trim().length > 0 &&
+        this.uploadedFile() &&
+        this.externalOrigin() &&
+        (this.externalOrigin() === 'no' || this.acceptedExternalEntity())
+      );
+    }
+
     return !!(
       !this.isReadOnly &&
       this.createdAccountingAccounts().length > 0 &&
@@ -1100,10 +1304,11 @@ export class ChartAccountsRequestComponent {
   closeFloatingPanels(): void {
     this.externalEntityPanelOpen.set(false);
     this.tipoPlanPanelOpen.set(false);
+    this.chartAccountPlanPanelOpen.set(false);
   }
 
   get hasFloatingPanel(): boolean {
-    return this.externalEntityPanelOpen();
+    return this.externalEntityPanelOpen() || this.tipoPlanPanelOpen() || this.chartAccountPlanPanelOpen();
   }
 
   inputValue(event: Event): string {
@@ -1173,6 +1378,36 @@ export class ChartAccountsRequestComponent {
     if (!selected) return;
     this.selectedTipoPlan.set(selected);
     this.tipoPlanPanelOpen.set(false);
+  }
+
+  openChartAccountPlanPanel(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
+    this.chartAccountPlanSearch.set('');
+    this.tempSelectedChartAccountPlan.set(this.selectedChartAccountPlan());
+    this.chartAccountPlanPanelOpen.set(true);
+  }
+
+  closeChartAccountPlanPanel(): void {
+    this.chartAccountPlanPanelOpen.set(false);
+  }
+
+  confirmChartAccountPlanSelection(): void {
+    const selected = this.tempSelectedChartAccountPlan();
+    if (!selected) return;
+    this.selectedChartAccountPlan.set(selected);
+    this.chartAccountPlanPanelOpen.set(false);
+  }
+
+  clearChartAccountPlanSelection(): void {
+    if (this.isReadOnly) {
+      return;
+    }
+
+    this.selectedChartAccountPlan.set(null);
+    this.tempSelectedChartAccountPlan.set(null);
   }
 
   onNewAccountCodeChange(value: string | number | string[]): void {

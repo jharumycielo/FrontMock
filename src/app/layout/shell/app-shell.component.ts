@@ -203,7 +203,9 @@ export class AppShellComponent {
     this.closeFloatingPanels();
 
     if (selection.route) {
-      void this.router.navigate([selection.route]);
+      void this.router.navigate([selection.route], {
+        queryParams: selection.actionType ? { actionType: selection.actionType } : undefined,
+      });
     }
   }
 

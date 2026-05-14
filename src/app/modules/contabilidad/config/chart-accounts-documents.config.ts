@@ -1,5 +1,6 @@
 import { findProcessPathById } from '../../../layout/process-menu-tree/process-menu-tree.component';
 import type { DocumentsRecordsBreadcrumbItem, DocumentsRecordsConfig, DocumentsRecordsColumn, DocumentsRecordsCreateProcessOption, DocumentsRecordsRow } from '../../../shared/types/documents-records.types';
+import { CHART_ACCOUNTS_RECORD_ROWS } from './chart-accounts-records.mock';
 import { BASE_DOCUMENT_COLUMNS, BASE_FILTER_VALUES, DOCUMENTS_RECORDS_FIELD_MENU_OPTIONS, DOCUMENTS_RECORDS_FILTER_CAMPO_OPTIONS } from './common-documents-records.config';
 
 const PROCESS_ID = 'plan-cuentas-contables';
@@ -30,11 +31,19 @@ const breadcrumbs: DocumentsRecordsBreadcrumbItem[] = [
 ];
 
 const recordColumns: DocumentsRecordsColumn[] = [
-  { key: 'status', label: 'Estado', visibility: 'visible', group: 'default', widthClass: 'w-[150px]', kind: 'record-status' },
-  { key: 'accountCode', label: 'Código de cuenta', visibility: 'visible', group: 'default', widthClass: 'w-[220px]' },
-  { key: 'accountName', label: 'Nombre de cuenta', visibility: 'visible', group: 'default', widthClass: 'w-[420px]' },
-  { key: 'level', label: 'Nivel', visibility: 'visible', group: 'default', widthClass: 'w-[150px]' },
-  { key: 'nature', label: 'Naturaleza', visibility: 'visible', group: 'default', widthClass: 'w-[210px]' }
+  { key: 'status', label: 'Estado', visibility: 'visible', group: 'default', widthClass: 'w-[112px]', kind: 'record-status' },
+  { key: 'element', label: 'Elemento', visibility: 'visible', group: 'default', widthClass: 'w-[116px]' },
+  { key: 'group', label: 'Grupo', visibility: 'visible', group: 'default', widthClass: 'w-[116px]' },
+  { key: 'account', label: 'Cuenta', visibility: 'visible', group: 'default', widthClass: 'w-[116px]' },
+  { key: 'subAccount1', label: 'Sub cuenta 1', visibility: 'visible', group: 'default', widthClass: 'w-[155px]' },
+  { key: 'subAccount2', label: 'Sub cuenta 2', visibility: 'visible', group: 'default', widthClass: 'w-[155px]' },
+  { key: 'subAccount3', label: 'Sub cuenta 3', visibility: 'visible', group: 'default', widthClass: 'w-[155px]' },
+  { key: 'accountName', label: 'Nombre de la cuenta contable', visibility: 'visible', group: 'default', widthClass: 'w-[490px]' },
+  { key: 'imputable', label: '¿Imputable?', visibility: 'visible', group: 'default', widthClass: 'w-[116px]' },
+  { key: 'previousCode', label: 'Código anterior', visibility: 'visible', group: 'default', widthClass: 'w-[146px]' },
+  { key: 'institutionalScopes', label: 'Ámbitos institucionales', visibility: 'visible', group: 'default', widthClass: 'w-[201px]' },
+  { key: 'aep', label: 'AEP', visibility: 'visible', group: 'default', widthClass: 'w-[116px]' },
+  { key: 'reciprocal', label: '¿Recíproca?', visibility: 'visible', group: 'default', widthClass: 'w-[116px]' }
 ];
 
 const documentRows: DocumentsRecordsRow[] = [
@@ -44,13 +53,7 @@ const documentRows: DocumentsRecordsRow[] = [
   { document: REQUEST_LABEL, number: '0001', actionType: 'Creación', status: 'Elaborado', system: 'Sistema Nacional de Contabilidad', date: '20/11/2023', entity: '009 - Ministerio de Economía y Finanzas', creator: 'Maria Doe', subject: 'Apertura de cuenta', catId: 'CAT-004', entityCode: '009', requesterArea: 'DGCP', fileNumber: 'EXP-0001', evaluationDate: '21/11/2023', evaluationUser: 'Evaluador 2', approvalDate: '22/11/2023', approvalUser: 'Aprobador 2', subdocumentCount: '2', accountingStatus: 'Pendiente', accountingDate: '23/11/2023' }
 ];
 
-const recordRows: DocumentsRecordsRow[] = [
-  { status: 'Activo', accountCode: '1101', accountName: 'Caja y bancos', level: '2', nature: 'Deudora' },
-  { status: 'Activo', accountCode: '110101', accountName: 'Caja', level: '3', nature: 'Deudora' },
-  { status: 'Activo', accountCode: '110102', accountName: 'Bancos', level: '3', nature: 'Deudora' },
-  { status: 'Activo', accountCode: '2101', accountName: 'Cuentas por pagar', level: '2', nature: 'Acreedora' },
-  { status: 'Activo', accountCode: '3101', accountName: 'Patrimonio institucional', level: '2', nature: 'Acreedora' }
-];
+const recordRows: DocumentsRecordsRow[] = CHART_ACCOUNTS_RECORD_ROWS;
 
 export const CHART_ACCOUNTS_DOCUMENTS_CONFIG: DocumentsRecordsConfig = {
   title: 'Plan de Cuentas Contables',
@@ -63,8 +66,8 @@ export const CHART_ACCOUNTS_DOCUMENTS_CONFIG: DocumentsRecordsConfig = {
   documentColumns: BASE_DOCUMENT_COLUMNS,
   recordColumns,
   documentTableMinWidthClass: 'min-w-[2360px]',
-  recordTableMinWidthClass: 'min-w-[1240px]',
-  recordTrackKey: 'accountCode',
+  recordTableMinWidthClass: 'min-w-[2320px]',
+  recordTrackKey: 'recordId',
   recordHistoryDocumentLabel: REQUEST_LABEL,
   statusFilterOptions: ['Elaborado', 'Verificado'],
   actionTypeFilterOptions: ['Creación', 'Modificación'],
