@@ -14,7 +14,7 @@
 *.env.local
 /backend/.env
 /backend/.env.local
-
+/backend/
 # WhatsApp session — credenciales de cuenta personal
 /backend/whatsapp_session/
 whatsapp_session/
