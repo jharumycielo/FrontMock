@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -21,6 +22,8 @@ import { AlertComponent } from '../../../../../shared/ui/alert/alert.component';
 import { TextFieldComponent, TextFieldOption } from '../../../../../shared/ui/text-field/text-field.component';
 import { UploadedFileCardComponent } from '../../../../../shared/ui/uploaded-file-card/uploaded-file-card.component';
 import { UploadSideNavComponent } from '../../../../../shared/ui/upload-side-nav/upload-side-nav.component';
+import { CHART_ACCOUNTS_RECORD_ROWS } from '../../../config/chart-accounts-records.mock';
+import type { DocumentsRecordsRow } from '../../../../../shared/types/documents-records.types';
 
 type TipoPlanContable = {
   id: string;
@@ -64,6 +67,8 @@ const PLANES_CUENTAS_CONTABLES: PlanCuentasContables[] = [
     vigencia: 'Vigente',
   },
 ];
+
+const RECORD_STATUS_OPTIONS = ['Activo', 'Inactivo', 'Anulado', 'En Proceso', 'Validado', 'Eliminado'];
 
 const CHART_ACCOUNTS_PROCESS_ID = 'plan-cuentas-contables';
 const CHART_ACCOUNTS_PROCESS_ROUTE = '/procesos/plan-cuentas-contables';
@@ -150,6 +155,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
     FormTableSearchComponent,
     IconComponent,
     ModalComponent,
+    NgTemplateOutlet,
     ReadonlyFieldComponent,
     PaginationComponent,
     TableControlsComponent,
@@ -541,12 +547,46 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
           <siaf-solicitude-form-card title="Lista de cuentas contables">
             <ng-container card-actions>
               @if (!isReadOnly) {
-                <siaf-button variant="accent" size="md" icon="search" [iconOnly]="true" ariaLabel="Buscar cuentas contables" [disabled]="!selectedChartAccountPlan()" />
+                <siaf-button variant="accent" size="md" icon="search" [iconOnly]="true" ariaLabel="Buscar cuentas contables" [disabled]="!selectedChartAccountPlan()" (click)="openExistingAccountsPanel()" />
               }
             </ng-container>
+            @if (createdAccountingAccounts().length > 0) {
+              <div class="flex items-start gap-siaf-md">
+                <siaf-form-table-search
+                  class="min-w-0 flex-1"
+                  [value]="createdAccountsSearch()"
+                  ariaLabel="Buscar cuentas contables seleccionadas"
+                  (valueChange)="onCreatedAccountsSearchChange($event)"
+                />
+              </div>
+              <siaf-table-controls
+                selectAllLabel="Seleccionar cuentas contables"
+                editLabel="Editar cuenta contable seleccionada"
+                deleteLabel="Eliminar cuentas contables seleccionadas"
+                [checked]="allCreatedAccountsSelected()"
+                [indeterminate]="someCreatedAccountsSelected()"
+                [selectedCount]="selectedCreatedAccountCodes().length"
+                [showEditAction]="true"
+                [showDeleteAction]="true"
+                [showMenuAction]="true"
+                [editDisabled]="selectedCreatedAccountCodes().length !== 1"
+                [page]="createdAccountsPage()"
+                [pageSize]="createdAccountsRowsPerPage()"
+                [totalItems]="filteredCreatedAccountingAccounts().length"
+                [totalPages]="createdAccountsTotalPages()"
+                (selectionChange)="toggleAllCreatedAccounts($event)"
+                (edit)="editSelectedCreatedAccount()"
+                (delete)="deleteSelectedCreatedAccounts()"
+                (previous)="onCreatedAccountsPreviousPage()"
+                (next)="onCreatedAccountsNextPage()"
+              />
+              <ng-container [ngTemplateOutlet]="accountsTable" />
+              <siaf-pagination navigation="Activate" position="Bottom" [rowPage]="true" [page]="createdAccountsPage()" [pageSize]="createdAccountsRowsPerPage()" [totalItems]="filteredCreatedAccountingAccounts().length" [totalPages]="createdAccountsTotalPages()" [rowsPerPage]="createdAccountsRowsPerPage()" [rowsPerPageOptions]="createdAccountsRowsPerPageOptions" (previous)="onCreatedAccountsPreviousPage()" (next)="onCreatedAccountsNextPage()" (rowsPerPageChange)="onCreatedAccountsRowsPerPageChange($event)" />
+            } @else {
             <div class="flex min-h-[49px] items-center rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-low)] px-siaf-md py-siaf-sm">
               <p class="m-0 text-sm leading-normal tracking-[0.0249px] text-[var(--sys-color-text-neutral-medium)]">Por favor, haga clic en el botón de búsqueda para agregar una cuenta contable.</p>
             </div>
+            }
           </siaf-solicitude-form-card>
           } @else {
           <siaf-solicitude-form-card title="Lista de cuentas contables">
@@ -738,6 +778,57 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
         (confirmed)="onUploadConfirmed($event)"
       />
 
+      <ng-template #accountsTable>
+        <div class="siaf-table-scroll min-w-0">
+          <table class="w-full min-w-[1880px] border-collapse text-left text-sm">
+            <thead>
+              <tr class="h-10 bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
+                @if (!isReadOnly) {
+                  <th class="w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
+                }
+                <th class="w-[110px] px-siaf-md py-siaf-sm">Elemento</th>
+                <th class="w-[110px] px-siaf-md py-siaf-sm">Grupo</th>
+                <th class="w-[110px] px-siaf-md py-siaf-sm">Cuenta</th>
+                <th class="w-[140px] px-siaf-md py-siaf-sm">Sub cuenta</th>
+                <th class="w-[140px] px-siaf-md py-siaf-sm">Sub cuenta 1</th>
+                <th class="w-[140px] px-siaf-md py-siaf-sm">Sub cuenta 2</th>
+                <th class="w-[140px] px-siaf-md py-siaf-sm">Sub cuenta 3</th>
+                <th class="w-[320px] px-siaf-md py-siaf-sm">Nombre de la cuenta contable</th>
+                <th class="w-[120px] px-siaf-md py-siaf-sm">¿Imputable?</th>
+                <th class="w-[150px] px-siaf-md py-siaf-sm">Código anterior</th>
+                <th class="w-[220px] px-siaf-md py-siaf-sm">Ámbitos institucionales</th>
+                <th class="w-[90px] px-siaf-md py-siaf-sm">AEP</th>
+                <th class="w-[120px] rounded-r-siaf-sm px-siaf-md py-siaf-sm">¿Recíproca?</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (account of pagedCreatedAccountingAccounts(); track account.code) {
+                <tr class="h-12 border-b border-[var(--sys-color-divider-default)] bg-surface text-[var(--sys-color-text-neutral-medium)]" [class.cursor-pointer]="isReadOnly" [class.hover:bg-[var(--sys-color-bg-states-light-hover)]]="isReadOnly" (click)="openCreatedAccountReadonly(account)">
+                  @if (!isReadOnly) {
+                    <td class="px-siaf-sm py-siaf-sm">
+                      <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" [checked]="isCreatedAccountSelected(account.code)" [attr.aria-label]="'Seleccionar ' + account.name" (click)="$event.stopPropagation()" (change)="toggleCreatedAccount(account.code, checkedValue($event))" />
+                    </td>
+                  }
+                  <td class="px-siaf-md py-siaf-sm">{{ account.element }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.group }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.account }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.subAccount }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.subAccount1 }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.subAccount2 }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.subAccount3 }}</td>
+                  <td class="px-siaf-md py-siaf-sm text-text">{{ account.name }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.imputable }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.previousCode }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.institutionalScopes }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.appliesExtraBudgetary }}</td>
+                  <td class="px-siaf-md py-siaf-sm">{{ account.reciprocal }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </ng-template>
+
       @if (externalEntityPanelOpen()) {
         <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="external-entity-panel-title" (click)="closeExternalEntityPanel()">
           <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
@@ -754,7 +845,7 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
             </header>
 
             <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
-              <div class="flex flex-col gap-siaf-lg">
+              <div class="flex w-full min-w-0 flex-col gap-siaf-lg">
               <siaf-form-table-search
                 [value]="externalEntitySearch()"
                 ariaLabel="Buscar entidad proveniente"
@@ -763,8 +854,8 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 
               <siaf-pagination navigation="Activate" position="Top" [page]="externalEntityPage" [pageSize]="externalEntityRowsPerPage" [totalItems]="externalEntityTotalItems" [totalPages]="externalEntityTotalPages" (previous)="onExternalEntityPreviousPage()" (next)="onExternalEntityNextPage()" />
 
-              <div class="siaf-table-scroll min-h-0 flex-1">
-                <table class="w-full min-w-[520px] border-collapse text-left">
+              <div class="siaf-sidepanel-table-scroll min-h-0 flex-1">
+                <table class="w-full min-w-full border-collapse text-left">
                   <thead class="sticky top-0 z-[1] bg-[var(--sys-color-bg-surfaces-surface-high)]">
                     <tr class="h-10 border-b border-[var(--sys-color-divider-strong)] text-xs font-bold uppercase text-text">
                       <th class="w-12 px-siaf-sm"></th>
@@ -819,15 +910,15 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
             </header>
 
             <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
-              <div class="flex flex-col gap-siaf-lg">
+              <div class="flex w-full min-w-0 flex-col gap-siaf-lg">
                 <siaf-form-table-search
                   [value]="chartAccountPlanSearch()"
                   ariaLabel="Buscar plan de cuentas contables"
                   (valueChange)="chartAccountPlanSearch.set($event)"
                 />
 
-                <div class="siaf-table-scroll min-h-0 flex-1">
-                  <table class="siaf-table min-w-[900px]">
+                <div class="siaf-sidepanel-table-scroll min-h-0 flex-1">
+                  <table class="siaf-table min-w-full">
                     <thead class="sticky top-0 z-[1]">
                       <tr class="siaf-table-head-row">
                         <th class="siaf-table-th w-12 px-siaf-sm"></th>
@@ -874,6 +965,115 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
         </section>
       }
 
+      @if (existingAccountsPanelOpen()) {
+        <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="existing-accounts-panel-title" (click)="closeExistingAccountsPanel()">
+          <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
+            <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong)] px-siaf-md">
+              <h2 id="existing-accounts-panel-title" class="m-0 min-w-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Seleccionar cuentas contables</h2>
+              <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" aria-label="Cerrar selección de cuentas contables" (click)="closeExistingAccountsPanel()">
+                <siaf-icon name="close" [size]="24" />
+              </button>
+            </header>
+
+            <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
+              <div class="flex w-full min-w-0 flex-col gap-siaf-lg">
+                <siaf-form-table-search
+                  [value]="existingAccountsSearch()"
+                  ariaLabel="Buscar cuentas contables"
+                  (valueChange)="onExistingAccountsSearchChange($event)"
+                />
+
+                <siaf-table-controls
+                  selectAllLabel="Seleccionar cuentas contables"
+                  [checked]="allFilteredExistingAccountsSelected()"
+                  [indeterminate]="someFilteredExistingAccountsSelected()"
+                  [selectedCount]="tempSelectedExistingAccountIds().length"
+                  [showEditAction]="false"
+                  [showDeleteAction]="false"
+                  [showMenuAction]="false"
+                  [page]="existingAccountsPage()"
+                  [pageSize]="existingAccountsRowsPerPage()"
+                  [totalItems]="filteredExistingAccounts().length"
+                  [totalPages]="existingAccountsTotalPages()"
+                  (selectionChange)="toggleAllFilteredExistingAccounts($event)"
+                  (previous)="onExistingAccountsPreviousPage()"
+                  (next)="onExistingAccountsNextPage()"
+                />
+
+                <div class="siaf-sidepanel-table-scroll min-h-0 flex-1">
+                  <table class="w-full min-w-[1880px] border-collapse text-left text-sm">
+                    <thead class="sticky top-0 z-[1]">
+                      <tr class="h-10 bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
+                        <th class="w-10 rounded-l-siaf-sm px-siaf-sm py-siaf-sm"></th>
+                        <th class="w-[110px] px-siaf-md py-siaf-sm">Estado</th>
+                        <th class="w-[110px] px-siaf-md py-siaf-sm">Elemento</th>
+                        <th class="w-[110px] px-siaf-md py-siaf-sm">Grupo</th>
+                        <th class="w-[110px] px-siaf-md py-siaf-sm">Cuenta</th>
+                        <th class="w-[140px] px-siaf-md py-siaf-sm">Sub cuenta 1</th>
+                        <th class="w-[140px] px-siaf-md py-siaf-sm">Sub cuenta 2</th>
+                        <th class="w-[140px] px-siaf-md py-siaf-sm">Sub cuenta 3</th>
+                        <th class="w-[320px] px-siaf-md py-siaf-sm">Nombre de la cuenta contable</th>
+                        <th class="w-[120px] px-siaf-md py-siaf-sm">¿Imputable?</th>
+                        <th class="w-[150px] px-siaf-md py-siaf-sm">Código anterior</th>
+                        <th class="w-[220px] px-siaf-md py-siaf-sm">Ámbitos institucionales</th>
+                        <th class="w-[90px] px-siaf-md py-siaf-sm">AEP</th>
+                        <th class="w-[120px] rounded-r-siaf-sm px-siaf-md py-siaf-sm">¿Recíproca?</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of pagedExistingAccounts(); track existingAccountId(row)) {
+                        <tr class="h-12 cursor-pointer border-b border-[var(--sys-color-divider-default)] bg-surface text-[var(--sys-color-text-neutral-medium)] hover:bg-[var(--sys-color-bg-states-light-hover)]" (click)="toggleExistingAccount(row, !isExistingAccountTempSelected(row))">
+                          <td class="px-siaf-sm py-siaf-sm">
+                            <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" [checked]="isExistingAccountTempSelected(row)" [attr.aria-label]="'Seleccionar ' + textValue(row, 'accountName')" (click)="$event.stopPropagation()" (change)="toggleExistingAccount(row, checkedValue($event))" />
+                          </td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'status') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'element') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'group') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'account') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'subAccount1') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'subAccount2') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'subAccount3') }}</td>
+                          <td class="px-siaf-md py-siaf-sm text-text">{{ textValue(row, 'accountName') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'imputable') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'previousCode') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'institutionalScopes') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'aep') }}</td>
+                          <td class="px-siaf-md py-siaf-sm">{{ textValue(row, 'reciprocal') }}</td>
+                        </tr>
+                      } @empty {
+                        <tr>
+                          <td class="px-siaf-md py-siaf-lg text-sm text-text-muted" colspan="14">No se encontraron cuentas contables.</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <siaf-pagination
+                  navigation="Activate"
+                  position="Bottom"
+                  [rowPage]="true"
+                  [page]="existingAccountsPage()"
+                  [pageSize]="existingAccountsRowsPerPage()"
+                  [totalItems]="filteredExistingAccounts().length"
+                  [totalPages]="existingAccountsTotalPages()"
+                  [rowsPerPage]="existingAccountsRowsPerPage()"
+                  [rowsPerPageOptions]="existingAccountsRowsPerPageOptions"
+                  (previous)="onExistingAccountsPreviousPage()"
+                  (next)="onExistingAccountsNextPage()"
+                  (rowsPerPageChange)="onExistingAccountsRowsPerPageChange($event)"
+                />
+              </div>
+            </div>
+
+            <footer class="flex shrink-0 items-center justify-end gap-siaf-xs px-siaf-md py-siaf-sm">
+              <siaf-button variant="secondary" (click)="closeExistingAccountsPanel()">Cancelar</siaf-button>
+              <siaf-button variant="primary" [disabled]="tempSelectedExistingAccountIds().length === 0" (click)="confirmExistingAccountsSelection()">Aceptar</siaf-button>
+            </footer>
+          </aside>
+        </section>
+      }
+
       @if (tipoPlanPanelOpen()) {
         <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="tipo-plan-panel-title" (click)="closeTipoPlanPanel()">
           <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
@@ -885,15 +1085,15 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
             </header>
 
             <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-md sm:px-siaf-xl">
-              <div class="flex flex-col gap-siaf-lg">
+              <div class="flex w-full min-w-0 flex-col gap-siaf-lg">
                 <siaf-form-table-search
                   [value]="tipoPlanSearch()"
                   ariaLabel="Buscar tipo plan de cuentas contable"
                   (valueChange)="tipoPlanSearch.set($event)"
                 />
 
-                <div class="siaf-table-scroll min-h-0 flex-1">
-                  <table class="w-full border-collapse text-left">
+                <div class="siaf-sidepanel-table-scroll min-h-0 flex-1">
+                  <table class="w-full min-w-full border-collapse text-left">
                     <thead class="sticky top-0 z-[1] bg-[var(--sys-color-bg-surfaces-surface-high)]">
                       <tr class="h-10 border-b border-[var(--sys-color-divider-strong)] text-xs font-bold uppercase text-text">
                         <th class="w-12 px-siaf-sm"></th>
@@ -996,6 +1196,12 @@ export class ChartAccountsRequestComponent {
   readonly selectedChartAccountPlan = signal<PlanCuentasContables | null>(null);
   readonly tempSelectedChartAccountPlan = signal<PlanCuentasContables | null>(null);
   readonly chartAccountPlanSearch = signal('');
+  readonly existingAccountsPanelOpen = signal(false);
+  readonly existingAccountsSearch = signal('');
+  readonly tempSelectedExistingAccountIds = signal<string[]>([]);
+  readonly existingAccountsPage = signal(1);
+  readonly existingAccountsRowsPerPage = signal(10);
+  readonly existingAccountsRowsPerPageOptions = [10, 25, 50, 100];
   readonly modificationType = signal('');
 
   readonly modificationTypeOptions: TextFieldOption[] = [
@@ -1017,11 +1223,43 @@ export class ChartAccountsRequestComponent {
     );
   });
 
+  readonly filteredExistingAccounts = computed(() => {
+    const search = this.normalize(this.existingAccountsSearch());
+    const selectedCodes = new Set(this.createdAccountingAccounts().map((account) => account.code));
+    const rows = CHART_ACCOUNTS_RECORD_ROWS.filter((row) => !selectedCodes.has(this.accountCodeFromRecord(row)));
+
+    if (!search) {
+      return rows;
+    }
+
+    return rows.filter((row) => this.normalize(Object.values(row).join(' ')).includes(search));
+  });
+
+  readonly allFilteredExistingAccountsSelected = computed(() => {
+    const rows = this.pagedExistingAccounts();
+    return rows.length > 0 && rows.every((row) => this.tempSelectedExistingAccountIds().includes(this.existingAccountId(row)));
+  });
+
+  readonly someFilteredExistingAccountsSelected = computed(() => {
+    const rows = this.pagedExistingAccounts();
+    return rows.some((row) => this.tempSelectedExistingAccountIds().includes(this.existingAccountId(row))) && !this.allFilteredExistingAccountsSelected();
+  });
+
+  readonly existingAccountsTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredExistingAccounts().length / this.existingAccountsRowsPerPage()))
+  );
+
+  readonly pagedExistingAccounts = computed(() => {
+    const start = (this.existingAccountsPage() - 1) * this.existingAccountsRowsPerPage();
+    return this.filteredExistingAccounts().slice(start, start + this.existingAccountsRowsPerPage());
+  });
+
   readonly justification = signal('');
   readonly createdAccountingAccounts = signal<CreatedAccountingAccount[]>([]);
+  readonly createdAccountsSearch = signal('');
   readonly selectedCreatedAccountCodes = signal<string[]>([]);
   readonly createdAccountsRowsPerPageOptions = [10, 25, 50, 100];
-  readonly createdAccountsRowsPerPage = signal(25);
+  readonly createdAccountsRowsPerPage = signal(10);
   readonly createdAccountsPage = signal(1);
   readonly uploadPanelOpen = signal(false);
   readonly uploadedFile = signal<File | null>(null);
@@ -1079,7 +1317,7 @@ export class ChartAccountsRequestComponent {
   readonly selectedExternalEntityCode = signal('');
   readonly acceptedExternalEntity = signal<ExternalEntityOption | null>(null);
   externalEntityPage = 1;
-  externalEntityRowsPerPage = 25;
+  externalEntityRowsPerPage = 10;
   readonly externalEntityRowsPerPageOptions = [10, 25, 50, 100];
   readonly externalEntityTotalItems = 800;
 
@@ -1122,13 +1360,24 @@ export class ChartAccountsRequestComponent {
     return this.hasAccountingDynamics() === 'no';
   });
 
+  readonly filteredCreatedAccountingAccounts = computed(() => {
+    const search = this.normalize(this.createdAccountsSearch());
+    if (!search) {
+      return this.createdAccountingAccounts();
+    }
+
+    return this.createdAccountingAccounts().filter((account) =>
+      this.normalize(Object.values(account).filter((value) => typeof value === 'string').join(' ')).includes(search)
+    );
+  });
+
   readonly createdAccountsTotalPages = computed(() =>
-    Math.max(1, Math.ceil(this.createdAccountingAccounts().length / this.createdAccountsRowsPerPage()))
+    Math.max(1, Math.ceil(this.filteredCreatedAccountingAccounts().length / this.createdAccountsRowsPerPage()))
   );
 
   readonly pagedCreatedAccountingAccounts = computed(() => {
     const start = (this.createdAccountsPage() - 1) * this.createdAccountsRowsPerPage();
-    return this.createdAccountingAccounts().slice(start, start + this.createdAccountsRowsPerPage());
+    return this.filteredCreatedAccountingAccounts().slice(start, start + this.createdAccountsRowsPerPage());
   });
 
   readonly allCreatedAccountsSelected = computed(() => {
@@ -1305,10 +1554,11 @@ export class ChartAccountsRequestComponent {
     this.externalEntityPanelOpen.set(false);
     this.tipoPlanPanelOpen.set(false);
     this.chartAccountPlanPanelOpen.set(false);
+    this.existingAccountsPanelOpen.set(false);
   }
 
   get hasFloatingPanel(): boolean {
-    return this.externalEntityPanelOpen() || this.tipoPlanPanelOpen() || this.chartAccountPlanPanelOpen();
+    return this.externalEntityPanelOpen() || this.tipoPlanPanelOpen() || this.chartAccountPlanPanelOpen() || this.existingAccountsPanelOpen();
   }
 
   inputValue(event: Event): string {
@@ -1408,6 +1658,83 @@ export class ChartAccountsRequestComponent {
 
     this.selectedChartAccountPlan.set(null);
     this.tempSelectedChartAccountPlan.set(null);
+    this.createdAccountingAccounts.set([]);
+    this.selectedCreatedAccountCodes.set([]);
+    this.createdAccountsPage.set(1);
+  }
+
+  openExistingAccountsPanel(): void {
+    if (this.isReadOnly || !this.selectedChartAccountPlan()) {
+      return;
+    }
+
+    this.existingAccountsSearch.set('');
+    this.tempSelectedExistingAccountIds.set([]);
+    this.existingAccountsPage.set(1);
+    this.existingAccountsPanelOpen.set(true);
+  }
+
+  closeExistingAccountsPanel(): void {
+    this.existingAccountsPanelOpen.set(false);
+  }
+
+  isExistingAccountTempSelected(row: DocumentsRecordsRow): boolean {
+    return this.tempSelectedExistingAccountIds().includes(this.existingAccountId(row));
+  }
+
+  toggleExistingAccount(row: DocumentsRecordsRow, selected: boolean): void {
+    const id = this.existingAccountId(row);
+    this.tempSelectedExistingAccountIds.update((ids) => {
+      if (selected) {
+        return ids.includes(id) ? ids : [...ids, id];
+      }
+
+      return ids.filter((selectedId) => selectedId !== id);
+    });
+  }
+
+  toggleAllFilteredExistingAccounts(selected: boolean): void {
+    const visibleIds = this.pagedExistingAccounts().map((row) => this.existingAccountId(row));
+    this.tempSelectedExistingAccountIds.update((ids) => {
+      if (selected) {
+        return Array.from(new Set([...ids, ...visibleIds]));
+      }
+
+      return ids.filter((id) => !visibleIds.includes(id));
+    });
+  }
+
+  confirmExistingAccountsSelection(): void {
+    const selectedIds = new Set(this.tempSelectedExistingAccountIds());
+    const nextAccounts = CHART_ACCOUNTS_RECORD_ROWS
+      .filter((row) => selectedIds.has(this.existingAccountId(row)))
+      .map((row) => this.buildCreatedAccountingAccountFromRecord(row));
+
+    this.createdAccountingAccounts.update((accounts) => {
+      const existingCodes = new Set(accounts.map((account) => account.code));
+      return [...accounts, ...nextAccounts.filter((account) => !existingCodes.has(account.code))];
+    });
+    this.selectedCreatedAccountCodes.set([]);
+    this.createdAccountsPage.set(this.createdAccountsTotalPages());
+    this.closeExistingAccountsPanel();
+  }
+
+  onExistingAccountsSearchChange(value: string): void {
+    this.existingAccountsSearch.set(value);
+    this.existingAccountsPage.set(1);
+  }
+
+  onExistingAccountsPreviousPage(): void {
+    this.existingAccountsPage.update((page) => Math.max(1, page - 1));
+  }
+
+  onExistingAccountsNextPage(): void {
+    this.existingAccountsPage.update((page) => Math.min(this.existingAccountsTotalPages(), page + 1));
+  }
+
+  onExistingAccountsRowsPerPageChange(value: number): void {
+    this.existingAccountsRowsPerPage.set(value);
+    this.existingAccountsPage.set(1);
   }
 
   onNewAccountCodeChange(value: string | number | string[]): void {
@@ -1561,6 +1888,19 @@ export class ChartAccountsRequestComponent {
     this.createdAccountsPage.set(1);
   }
 
+  onCreatedAccountsSearchChange(value: string): void {
+    this.createdAccountsSearch.set(value);
+    this.createdAccountsPage.set(1);
+  }
+
+  existingAccountId(row: DocumentsRecordsRow): string {
+    return String(row['recordId'] ?? this.accountCodeFromRecord(row));
+  }
+
+  textValue(row: DocumentsRecordsRow, key: string): string {
+    return String(row[key] ?? '--');
+  }
+
   private buildCreatedAccountingAccount(): CreatedAccountingAccount {
     const segments = this.newAccountCode()
       .split('.')
@@ -1583,6 +1923,50 @@ export class ChartAccountsRequestComponent {
       institutionalScopes: this.institutionalScopeLabels(),
       appliesExtraBudgetary: this.yesNoLabel(this.appliesExtraBudgetary() ? 'si' : 'no'),
       reciprocal: this.yesNoLabel(this.reciprocalAccount() ? 'si' : 'no'),
+      form,
+    };
+  }
+
+  private buildCreatedAccountingAccountFromRecord(row: DocumentsRecordsRow): CreatedAccountingAccount {
+    const code = this.accountCodeFromRecord(row);
+    const form: CreatedAccountingAccountForm = {
+      code,
+      name: this.textValue(row, 'accountName'),
+      imputable: this.siNoValue(row, 'imputable'),
+      previousAccountCode: this.textValue(row, 'previousCode') === '--' ? '' : this.textValue(row, 'previousCode'),
+      accountNature: '',
+      elementType: this.textValue(row, 'element') === '1' ? 'activo' : '',
+      monetaryAccount: '',
+      institutionalScope: this.textValue(row, 'institutionalScopes') === '--' ? [] : this.textValue(row, 'institutionalScopes').split(',').map((scope) => scope.trim()).filter(Boolean),
+      appliesExtraBudgetary: this.textValue(row, 'aep') === 'Si',
+      reciprocalAccount: this.textValue(row, 'reciprocal') === 'Si',
+      activeCurrent: '',
+      passiveCurrent: '',
+      activeNonCurrent: '',
+      passiveNonCurrent: '',
+      hasAccountingDynamics: 'no',
+      debitDescription: '',
+      creditDescription: '',
+      objectDescription: '',
+      balanceDescription: '',
+      accountForStateEntity: 'si',
+    };
+
+    return {
+      code,
+      element: this.textValue(row, 'element'),
+      group: this.textValue(row, 'group'),
+      account: this.textValue(row, 'account'),
+      subAccount: this.textValue(row, 'subAccount1'),
+      subAccount1: this.textValue(row, 'subAccount1'),
+      subAccount2: this.textValue(row, 'subAccount2'),
+      subAccount3: this.textValue(row, 'subAccount3'),
+      name: this.textValue(row, 'accountName'),
+      imputable: this.textValue(row, 'imputable'),
+      previousCode: this.textValue(row, 'previousCode'),
+      institutionalScopes: this.textValue(row, 'institutionalScopes'),
+      appliesExtraBudgetary: this.textValue(row, 'aep'),
+      reciprocal: this.textValue(row, 'reciprocal'),
       form,
     };
   }
@@ -1735,6 +2119,21 @@ export class ChartAccountsRequestComponent {
     this.creditDescription.set('');
     this.objectDescription.set('');
     this.balanceDescription.set('');
+  }
+
+  private accountCodeFromRecord(row: DocumentsRecordsRow): string {
+    const parts = ['element', 'group', 'account', 'subAccount1', 'subAccount2', 'subAccount3']
+      .map((key) => this.textValue(row, key))
+      .filter((value) => value && value !== '-');
+
+    return parts.join('.') || String(row['recordId'] ?? '--');
+  }
+
+  private siNoValue(row: DocumentsRecordsRow, key: string): 'si' | 'no' | '' {
+    const value = this.normalize(this.textValue(row, key));
+    if (value === 'si') return 'si';
+    if (value === 'no') return 'no';
+    return '';
   }
 
   onUploadConfirmed(file: File): void {

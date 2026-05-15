@@ -6,12 +6,11 @@ import { PaginationComponent } from '../../components/pagination/pagination.comp
 import type { DocumentsRecordsRow } from '../../types/documents-records.types';
 import { ActionTrackerComponent, ActionTrackerSummary } from '../action-tracker/action-tracker.component';
 import { IconComponent } from '../icon/icon.component';
+import { RecordStatus, RecordStatusTagComponent } from '../record-status-tag/record-status-tag.component';
 
-type ClassifierRow = {
-  classifier: string;
-  description: string;
-  account: string;
-  status: string;
+type EntityRow = {
+  code: string;
+  name: string;
 };
 
 type HistoryField = {
@@ -19,27 +18,52 @@ type HistoryField = {
   value: string;
 };
 
+type SupportDocument = {
+  name: string;
+  size: string;
+};
+
+const DEMO_RECORD_DOCUMENT = 'Solicitud de Cuentas Contables';
+const DEMO_RECORD_NUMBER = '0001';
+const DEMO_ACTION_TYPE = 'Creacion';
+const DEMO_RECORD_DATE = '19/08/25     08:00:59';
+const DEMO_VALIDITY_START = '20/12/2024';
+const DEMO_PLAN_NAME = 'Plan Contable Gubernamental Unico';
+const DEMO_SUPPORT_DOCUMENT: SupportDocument = {
+  name: 'DocEntregable001.pdf',
+  size: '500kb'
+};
+const DEMO_ENTITIES: EntityRow[] = [
+  { code: '3.5.4', name: 'Gobierno regional B' },
+  { code: '3.5.5', name: 'Ministerios de C' },
+  { code: '3.5.6', name: 'Municipalidad D' },
+  { code: '3.5.7', name: 'Municipalidad E' },
+  { code: '3.5.8', name: 'Municipalidad F' },
+  { code: '3.5.9', name: 'Municipalidad G' },
+  { code: '3.5.10', name: 'Municipalidad H' }
+];
+
 @Component({
   selector: 'siaf-account-history-panel',
   standalone: true,
-  imports: [ActionTrackerComponent, FormTableSearchComponent, IconComponent, NgTemplateOutlet, PaginationComponent],
+  imports: [ActionTrackerComponent, FormTableSearchComponent, IconComponent, NgTemplateOutlet, PaginationComponent, RecordStatusTagComponent],
   template: `
     @if (open) {
       <section class="fixed inset-y-0 left-0 right-0 z-50 bg-black/55 pl-0 lg:pl-[65px]" aria-modal="true" role="dialog" aria-labelledby="account-history-title" (click)="closed.emit()">
         <aside class="flex h-screen w-full flex-col overflow-hidden bg-surface text-text shadow-siaf-lg lg:rounded-l-siaf-md" (click)="$event.stopPropagation()">
           <header class="flex h-14 shrink-0 items-center gap-siaf-xs border-b border-[var(--sys-color-divider-strong)] px-siaf-md">
-            <h2 id="account-history-title" class="m-0 min-w-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Historial de cuenta contable</h2>
+            <h2 id="account-history-title" class="m-0 min-w-0 flex-1 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Historial del registro</h2>
             <button class="inline-flex size-10 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted active:bg-[var(--sys-color-bg-states-light-pressed)]" type="button" aria-label="Cerrar historial de cuenta contable" (click)="closed.emit()">
               <siaf-icon name="close" [size]="24" />
             </button>
           </header>
 
           <div class="min-h-0 flex-1 overflow-y-auto border-b border-[var(--sys-color-divider-strong)] bg-surface">
-            <div class="grid min-h-full grid-cols-1 gap-siaf-xl px-siaf-md py-siaf-md sm:px-siaf-xl lg:grid-cols-[258px_minmax(0,941px)]">
+            <div class="mx-auto grid min-h-full w-full max-w-[1160px] grid-cols-1 gap-[64px] px-siaf-md py-siaf-md sm:px-siaf-xl lg:grid-cols-[210px_minmax(0,890px)] lg:px-0">
               <aside class="hidden lg:block">
-                <div class="sticky top-siaf-md flex items-start gap-siaf-lg">
-                  <section class="relative w-[210px] shrink-0 overflow-hidden rounded-siaf-md bg-surface py-siaf-md shadow-siaf-elevation-2">
-                    <span class="absolute left-0 top-[19px] h-[86px] w-[3px] rounded-r-siaf-sm bg-brand-primary" aria-hidden="true"></span>
+                <div class="sticky top-siaf-md flex items-start gap-[22px]">
+                  <section class="relative min-h-[186px] w-[200px] shrink-0 overflow-hidden rounded-siaf-md border border-[var(--sys-color-divider-default)] bg-surface py-siaf-md shadow-siaf-elevation-2">
+                    <span class="absolute left-0 top-5 h-[80px] w-[3px] rounded-r-siaf-sm bg-brand-primary" aria-hidden="true"></span>
                     <div class="flex flex-col gap-siaf-md px-siaf-xl">
                       @for (item of stepperSummary; track item.label) {
                         <div class="flex flex-col gap-siaf-xxs">
@@ -50,156 +74,165 @@ type HistoryField = {
                     </div>
                   </section>
 
-                  <div class="flex min-h-[228px] w-6 shrink-0 flex-col items-center" aria-hidden="true">
-                    <span class="h-[72px] w-px"></span>
+                  <div class="flex min-h-[186px] w-6 shrink-0 flex-col items-center" aria-hidden="true">
+                    <span class="h-[64px] w-px"></span>
                     <span class="size-6 rounded-full bg-brand-primary"></span>
-                    <span class="min-h-[132px] w-px bg-[var(--sys-color-divider-default)]"></span>
                   </div>
                 </div>
               </aside>
 
-              <section class="flex min-w-0 flex-col gap-siaf-md">
-                <section class="rounded-siaf-md bg-surface px-siaf-md py-siaf-md">
-                  <div class="grid gap-y-siaf-lg">
-                    <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: summaryFields[0] }" />
-                    <div class="grid gap-siaf-md md:grid-cols-3">
-                      @for (field of summaryFields.slice(1); track field.label) {
-                        <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: field }" />
-                      }
+              <section class="flex min-w-0 flex-col gap-siaf-sm">
+                <section class="rounded-siaf-md border border-[var(--sys-color-divider-strong)] bg-surface px-siaf-lg py-siaf-md">
+                  <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: documentSummaryField }" />
+                  <div class="mt-siaf-lg grid gap-siaf-md md:grid-cols-3">
+                    <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: numberSummaryField }" />
+                    <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: actionSummaryField }" />
+                    <div class="flex min-w-0 flex-col gap-siaf-xxs">
+                      <span class="truncate text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-text-muted">Estado del registro</span>
+                      <siaf-record-status-tag [status]="recordStatus" size="small" />
                     </div>
                   </div>
                 </section>
 
-                <section class="rounded-siaf-md bg-surface">
-                  <header class="flex min-h-14 items-center border-b border-[var(--sys-color-divider-default)] px-siaf-lg">
-                    <h2 class="m-0 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Informacion de la solicitud</h2>
+                <section class="rounded-siaf-md border border-[var(--sys-color-divider-strong)] bg-surface px-siaf-xl py-siaf-xl">
+                  <header class="mb-siaf-xl">
+                    <h2 class="m-0 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Registro de cuenta contable</h2>
                   </header>
-                  <div class="flex flex-col gap-siaf-xl px-siaf-xl py-siaf-md">
+
+                  <div class="flex flex-col gap-siaf-xl">
                     <section class="flex flex-col gap-siaf-md">
-                      <h3 class="m-0 text-sm font-bold uppercase leading-normal tracking-[0.02px] text-text">Datos generales</h3>
-                      <ng-container [ngTemplateOutlet]="infoCard" [ngTemplateOutletContext]="{ fields: generalFields }" />
-                      <ng-container [ngTemplateOutlet]="infoCard" [ngTemplateOutletContext]="{ fields: planFields }" />
+                      <ng-container [ngTemplateOutlet]="sectionTitle" [ngTemplateOutletContext]="{ title: 'Plan de cuentas contable' }" />
+                      <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: generalFields[0] }" />
                     </section>
 
                     <section class="flex flex-col gap-siaf-md">
-                      <h3 class="m-0 text-sm font-bold uppercase leading-normal tracking-[0.02px] text-text">Tipo de modificacion</h3>
-                      <ng-container [ngTemplateOutlet]="infoCard" [ngTemplateOutletContext]="{ fields: modificationFields }" />
-                      <div class="grid gap-siaf-md md:grid-cols-[250px_1fr]">
-                        @for (field of selectedAccountFields; track field.label) {
-                          <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: field }" />
-                        }
+                      <ng-container [ngTemplateOutlet]="sectionTitle" [ngTemplateOutletContext]="{ title: 'Cuenta contable' }" />
+                      <section class="relative rounded-siaf-md border border-[var(--sys-color-divider-strong)] px-siaf-md py-siaf-sm">
+                        <span class="absolute left-0 top-5 h-6 w-[3px] rounded-r bg-brand-primary" aria-hidden="true"></span>
+                        <div class="grid gap-siaf-md md:grid-cols-2">
+                          <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: accountHeaderFields[0] }" />
+                          <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: accountHeaderFields[2] }" />
+                        </div>
+                      </section>
+                      <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: imputableField }" />
+                    </section>
+
+                    <section class="flex flex-col gap-siaf-md">
+                      <ng-container [ngTemplateOutlet]="sectionTitle" [ngTemplateOutletContext]="{ title: 'Codigo asociado de cuenta contable anterior' }" />
+                      <div class="grid gap-siaf-xl md:grid-cols-2">
+                        <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: previousCodeField }" />
+                        <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: previousNameField }" />
                       </div>
                     </section>
 
                     <section class="flex flex-col gap-siaf-md">
-                      <h3 class="m-0 text-sm font-bold uppercase leading-normal tracking-[0.02px] text-text">Cuenta contable</h3>
-                      <div class="grid gap-siaf-md md:grid-cols-[248px_133px_1fr]">
-                        @for (field of accountHeaderFields; track field.label) {
-                          <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: field }" />
-                        }
-                      </div>
-                      @for (field of accountWideFields; track field.label) {
-                        <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: field }" />
-                      }
-                      <div class="grid gap-siaf-md md:grid-cols-4">
-                        @for (field of accountPartFields; track field.label) {
-                          <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: field }" />
-                        }
-                      </div>
-                    </section>
-
-                    <section class="flex flex-col gap-siaf-md">
-                      <h3 class="m-0 text-sm font-bold uppercase leading-normal tracking-[0.02px] text-text">Atributos de la cuenta contable</h3>
-                      <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: scopeField }" />
-                      <div class="grid gap-siaf-md md:grid-cols-2">
+                      <ng-container [ngTemplateOutlet]="sectionTitle" [ngTemplateOutletContext]="{ title: 'Atributos de la cuenta contable' }" />
+                      <div class="grid gap-x-siaf-xl gap-y-siaf-md md:grid-cols-3">
                         @for (field of attributeFields; track field.label) {
-                          <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: field }" />
+                          <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: field }" />
                         }
                       </div>
                     </section>
 
                     <section class="flex flex-col gap-siaf-md">
-                      <h3 class="m-0 text-sm font-bold uppercase leading-normal tracking-[0.02px] text-text">Clasificador institucional asociado</h3>
-                      <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: classifierEnabledField }" />
-                      <h4 class="m-0 text-sm font-bold uppercase leading-normal tracking-[0.02px] text-text">Selector clasificador institucional</h4>
-                      <siaf-form-table-search placeholder="Buscar clasificador institucional" ariaLabel="Buscar clasificador institucional" />
-                      <siaf-pagination navigation="Activate" position="Top" [page]="1" [pageSize]="10" [totalItems]="classifierRows.length" [totalPages]="1" />
-                      <div class="siaf-table-scroll min-w-0">
-                      <table class="w-full min-w-[860px] border-collapse text-left text-sm">
-                        <thead>
-                          <tr class="text-xs font-bold uppercase text-text">
-                            <th class="px-siaf-md py-siaf-sm">Clasificador</th>
-                            <th class="px-siaf-md py-siaf-sm">Descripcion</th>
-                            <th class="px-siaf-md py-siaf-sm">Cuenta contable</th>
-                            <th class="px-siaf-md py-siaf-sm">Estado</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          @for (row of classifierRows; track row.classifier) {
-                            <tr class="h-12 border-b border-[var(--sys-color-divider-default)] bg-surface text-[var(--sys-color-text-neutral-medium)]">
-                              <td class="px-siaf-md py-siaf-sm">{{ row.classifier }}</td>
-                              <td class="px-siaf-md py-siaf-sm">{{ row.description }}</td>
-                              <td class="px-siaf-md py-siaf-sm">{{ row.account }}</td>
-                              <td class="px-siaf-md py-siaf-sm">{{ row.status }}</td>
-                            </tr>
-                          }
-                        </tbody>
-                      </table>
+                      <ng-container [ngTemplateOutlet]="sectionTitle" [ngTemplateOutletContext]="{ title: 'Dinamica contable' }" />
+                      <div class="grid gap-x-siaf-xl gap-y-siaf-md md:grid-cols-2">
+                        @for (field of dynamicFields; track field.label) {
+                          <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: field }" />
+                        }
                       </div>
-                      <siaf-pagination navigation="Activate" position="Bottom" [rowPage]="true" [page]="1" [pageSize]="10" [totalItems]="classifierRows.length" [totalPages]="1" [rowsPerPage]="10" />
+                    </section>
+
+                    <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: classifierEnabledField }" />
+
+                    <section class="flex flex-col gap-siaf-md">
+                      <ng-container [ngTemplateOutlet]="sectionTitle" [ngTemplateOutletContext]="{ title: 'Entidades del estado' }" />
+                      <div class="flex items-center gap-siaf-sm">
+                        <siaf-form-table-search class="min-w-0 flex-1" placeholder="Buscar" ariaLabel="Buscar entidades del estado" />
+                      </div>
+                      <siaf-pagination navigation="Activate" position="Top" [page]="1" [pageSize]="10" [totalItems]="800" [totalPages]="80" />
+                      <div class="siaf-table-scroll min-w-0">
+                        <table class="w-full min-w-[720px] border-collapse text-left text-sm">
+                          <thead>
+                            <tr class="h-10 bg-[var(--sys-color-bg-surfaces-surface-high)] text-xs font-bold uppercase text-text">
+                              <th class="w-[120px] px-siaf-md py-siaf-sm">Codigo</th>
+                              <th class="px-siaf-md py-siaf-sm">Nombre de la entidad</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (row of entityRows; track row.code) {
+                              <tr class="h-12 border-b border-[var(--sys-color-divider-default)] bg-surface text-[var(--sys-color-text-neutral-medium)]">
+                                <td class="px-siaf-md py-siaf-sm">{{ row.code }}</td>
+                                <td class="px-siaf-md py-siaf-sm">{{ row.name }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                      <siaf-pagination navigation="Activate" position="Bottom" [rowPage]="true" [page]="1" [pageSize]="10" [totalItems]="800" [totalPages]="80" [rowsPerPage]="10" />
                     </section>
 
                     <section class="flex flex-col gap-siaf-md">
-                      <h3 class="m-0 text-sm font-bold uppercase leading-normal tracking-[0.02px] text-text">Vigencia</h3>
-                      <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: validityReasonField }" />
+                      <ng-container [ngTemplateOutlet]="sectionTitle" [ngTemplateOutletContext]="{ title: 'Inicio de vigencia' }" />
+                      <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: validityStartField }" />
                       <label class="flex min-h-10 items-center gap-siaf-sm text-sm font-medium text-[var(--sys-color-text-neutral-medium)]">
                         <input class="size-4 accent-[var(--sys-color-icon-states-enabled)]" type="checkbox" checked disabled />
-                        Esta visible
+                        ¿Está visible?
                       </label>
                     </section>
                   </div>
                 </section>
 
-                <section class="rounded-siaf-md bg-surface">
-                  <header class="flex min-h-14 items-center border-b border-[var(--sys-color-divider-default)] px-siaf-lg">
-                    <h2 class="m-0 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Justificacion y documentos de sustento</h2>
+                <section class="rounded-siaf-md border border-[var(--sys-color-divider-strong)] bg-surface px-siaf-xl py-siaf-lg">
+                  <header class="mb-siaf-md">
+                    <h2 class="m-0 text-base font-bold uppercase leading-normal tracking-[0.02px] text-text">Justificación del sustento</h2>
                   </header>
-                  <div class="flex flex-col gap-siaf-md px-siaf-xl py-siaf-md">
-                    <section class="rounded-siaf-md border border-[var(--sys-color-divider-default)] bg-surface px-siaf-md py-siaf-sm">
-                      <span class="text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-text-muted">{{ justificationField.label }}</span>
-                      <p class="m-0 pt-siaf-xs text-sm font-medium leading-normal text-text">{{ justificationField.value }}</p>
-                    </section>
+                  <div class="flex flex-col gap-siaf-xl">
+                    <ng-container [ngTemplateOutlet]="plainField" [ngTemplateOutletContext]="{ field: justificationField, multiline: true }" />
                     <section class="flex flex-col gap-siaf-md">
-                      <h3 class="m-0 text-sm font-bold uppercase leading-normal tracking-[0.02px] text-text">Documento de sustento</h3>
-                    <div class="flex min-h-16 items-center gap-siaf-md rounded-siaf-md border border-[var(--sys-color-divider-default)] bg-surface px-siaf-md">
-                      <siaf-icon name="description" [size]="24" />
-                      <span class="min-w-0 text-sm text-text">Informe tecnico de modificacion de cuenta contable.pdf</span>
-                    </div>
+                      <ng-container [ngTemplateOutlet]="sectionTitle" [ngTemplateOutletContext]="{ title: 'Documento de sustento' }" />
+                      <div class="flex min-h-16 items-center gap-siaf-md rounded-siaf-md border border-[var(--sys-color-divider-strong)] bg-surface px-siaf-md">
+                        <siaf-icon name="description" [size]="24" />
+                        <div class="min-w-0 flex-1">
+                          <strong class="block truncate text-sm font-bold text-text">{{ supportDocument.name }}</strong>
+                          <span class="block text-xs text-text-muted">{{ supportDocument.size }}</span>
+                        </div>
+                        <siaf-icon name="download" [size]="24" />
+                      </div>
                     </section>
                   </div>
                 </section>
 
-                <siaf-action-tracker [summaryItems]="actionSummary" />
+                <section class="rounded-siaf-md border border-[var(--sys-color-divider-strong)] bg-surface">
+                  <siaf-action-tracker [summaryItems]="actionSummary" />
+                </section>
               </section>
             </div>
           </div>
 
           <ng-template #readonlyCard let-field="field">
-            <div class="flex min-h-11 min-w-0 flex-col gap-siaf-xxs rounded-siaf-md border border-[var(--sys-color-divider-default)] bg-surface px-siaf-md py-siaf-xs">
+            <div class="relative flex min-h-[72px] min-w-0 flex-col justify-center gap-siaf-xxs rounded-siaf-md border border-[var(--sys-color-divider-strong)] bg-surface px-siaf-md py-siaf-xs">
+              <span class="absolute left-0 top-5 h-6 w-[3px] rounded-r bg-brand-primary" aria-hidden="true"></span>
               <span class="truncate text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-text-muted">{{ field.label }}</span>
-              <span class="truncate text-sm font-medium leading-normal text-text">{{ field.value }}</span>
+              <span class="truncate text-sm font-bold leading-normal text-text">{{ field.value }}</span>
             </div>
           </ng-template>
 
-          <ng-template #infoCard let-fields="fields">
-            <section class="relative rounded-siaf-md bg-surface p-siaf-md shadow-siaf-elevation-2">
-              <span class="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r bg-brand-primary" aria-hidden="true"></span>
-              <div class="grid gap-siaf-md md:grid-cols-2">
-                @for (field of fields; track field.label) {
-                  <ng-container [ngTemplateOutlet]="readonlyCard" [ngTemplateOutletContext]="{ field: field }" />
-                }
-              </div>
-            </section>
+          <ng-template #plainField let-field="field" let-multiline="multiline">
+            <div class="min-w-0">
+              <span class="block text-[11px] font-medium uppercase leading-none tracking-[0.66px] text-text-muted">{{ field.label }}</span>
+              @if (multiline) {
+                <p class="m-0 mt-siaf-xs text-sm font-normal leading-normal text-text">{{ field.value }}</p>
+              } @else {
+                <strong class="mt-siaf-xs block truncate text-sm font-bold leading-normal text-text">{{ field.value }}</strong>
+              }
+            </div>
+          </ng-template>
+
+          <ng-template #sectionTitle let-title="title">
+            <div class="flex min-h-10 items-center">
+              <h3 class="m-0 text-sm font-bold uppercase leading-normal tracking-[0.02px] text-text">{{ title }}</h3>
+            </div>
           </ng-template>
         </aside>
       </section>
@@ -214,72 +247,39 @@ export class AccountHistoryPanelComponent {
   @Output() closed = new EventEmitter<void>();
 
   readonly stepperSummary: HistoryField[] = [
-    { label: 'Nro Documento', value: '00001' },
-    { label: 'Tipo de accion', value: 'Creacion' },
-    { label: 'Fecha', value: '19/08/25     08:00:59' }
-  ];
-
-  readonly summaryFields: HistoryField[] = [
-    { label: 'Documento', value: 'Solicitud de plan de cuentas contables' },
-    { label: 'Nro documento', value: '0001' },
-    { label: 'Tipo de accion', value: 'Modificacion' },
-    { label: 'Estado', value: 'Activo' }
+    { label: 'Nro Documento', value: DEMO_RECORD_NUMBER.padStart(5, '0') },
+    { label: 'Tipo de accion', value: DEMO_ACTION_TYPE },
+    { label: 'Fecha', value: DEMO_RECORD_DATE }
   ];
 
   readonly generalFields: HistoryField[] = [
-    { label: 'Nombre del plan de cuentas contables', value: 'Plan Contable Gubernamental Unico 2026' }
+    { label: 'Nombre del plan de cuentas contable', value: DEMO_PLAN_NAME }
   ];
 
-  readonly planFields: HistoryField[] = [
-    { label: 'Tipo de plan contable', value: 'Plan Contable Gubernamental Unico' },
-    { label: 'Plan contable actual por reemplazar', value: 'PCGU 2025' }
-  ];
-
-  readonly selectedAccountFields: HistoryField[] = [
-    { label: 'Tipo de modificacion', value: 'Atributos' },
-    { label: 'Cuenta contable seleccionada', value: '1.1.1 - Activos financieros' }
-  ];
-
-  readonly scopeField: HistoryField = {
-    label: 'Ambito institucional de aplicacion',
-    value: 'Gobierno nacional, gobiernos regionales y gobiernos locales'
-  };
-
-  readonly classifierEnabledField: HistoryField = {
-    label: 'Cuenta contable para una entidad del estado',
-    value: 'Si'
-  };
-
-  readonly validityReasonField: HistoryField = {
-    label: 'Motivo de vigencia',
-    value: 'Actualizacion de la vigencia por adecuacion normativa.'
-  };
-
-  readonly justificationField: HistoryField = {
-    label: 'Justificacion del requerimiento solicitado',
-    value: 'Actualizacion de atributos de la cuenta contable por adecuacion normativa.'
-  };
-
-  readonly classifierRows: ClassifierRow[] = [
-    { classifier: '1.1.1', description: 'Activos financieros', account: '1.1.1', status: 'Activo' },
-    { classifier: '1.1.2', description: 'Cuentas por cobrar', account: '1.1.2', status: 'Activo' },
-    { classifier: '1.1.3', description: 'Inventarios', account: '1.1.3', status: 'Activo' },
-    { classifier: '1.2.1', description: 'Propiedad, planta y equipo', account: '1.2.1', status: 'Activo' },
-    { classifier: '1.2.2', description: 'Activos intangibles', account: '1.2.2', status: 'Activo' },
-    { classifier: '2.1.1', description: 'Cuentas por pagar', account: '2.1.1', status: 'Activo' },
-    { classifier: '3.1.1', description: 'Patrimonio institucional', account: '3.1.1', status: 'Activo' }
-  ];
+  readonly entityRows: EntityRow[] = DEMO_ENTITIES;
+  readonly supportDocument = DEMO_SUPPORT_DOCUMENT;
 
   readonly actionSummary: ActionTrackerSummary[] = [
     { label: 'Elaborado por', actionBy: 'Ricardo John Doe Bustamante', date: '19/08/2025\n08:00:59' },
-    { label: 'Verificado por', actionBy: 'Karim Lucano Lara', date: '20/08/2025\n09:14:22' },
-    { label: 'Aprobado por', actionBy: '', date: '' }
+    { label: 'Verificado por', actionBy: 'Ricardo John Doe Bustamante', date: '19/08/2025\n08:00:59' },
+    { label: 'Aprobado por', actionBy: 'Ricardo John Doe Bustamante', date: '19/08/2025\n08:00:59' }
   ];
 
-  get modificationFields(): HistoryField[] {
-    return [
-      { label: 'Tipo de modificacion', value: 'Atributos' }
-    ];
+  get documentSummaryField(): HistoryField {
+    return { label: 'Documento', value: DEMO_RECORD_DOCUMENT };
+  }
+
+  get numberSummaryField(): HistoryField {
+    return { label: 'Nro de documento', value: DEMO_RECORD_NUMBER };
+  }
+
+  get actionSummaryField(): HistoryField {
+    return { label: 'Tipo de accion', value: DEMO_ACTION_TYPE };
+  }
+
+  get recordStatus(): RecordStatus {
+    const status = this.value('status');
+    return this.isRecordStatus(status) ? status : 'Activo';
   }
 
   get accountHeaderFields(): HistoryField[] {
@@ -290,29 +290,60 @@ export class AccountHistoryPanelComponent {
     ];
   }
 
-  get accountWideFields(): HistoryField[] {
-    return [
-      { label: 'Descripcion de la cuenta contable', value: this.value('accountName') },
-      { label: 'Descripcion modificada', value: 'Cuenta contable actualizada para el registro de activos financieros.' }
-    ];
+  get imputableField(): HistoryField {
+    return { label: '¿Es una cuenta imputable?', value: this.value('imputable').toUpperCase() };
   }
 
-  get accountPartFields(): HistoryField[] {
-    return [
-      { label: 'Grupo', value: this.value('group') },
-      { label: 'Cuenta', value: this.value('account') },
-      { label: 'Sub cuenta 1', value: this.value('subAccount1') },
-      { label: 'Sub cuenta 2', value: this.value('subAccount2') }
-    ];
+  get previousCodeField(): HistoryField {
+    return { label: 'Codigo de la cuenta contable', value: this.value('previousCode') };
+  }
+
+  get previousNameField(): HistoryField {
+    return { label: 'Nombre de la cuenta contable', value: '--' };
   }
 
   get attributeFields(): HistoryField[] {
     return [
-      { label: 'Es una cuenta imputable', value: this.value('imputable') },
-      { label: 'Codigo anterior', value: this.value('previousCode') },
-      { label: 'Aplica Extra Presupuestaria (AEP)', value: this.value('aep') },
-      { label: 'Es Reciproca (RECI)', value: this.value('reciprocal') }
+      { label: 'Naturaleza', value: 'Deudora' },
+      { label: 'Tipo de elemento', value: this.elementType },
+      { label: '¿Es monetaria?', value: 'Si' },
+      { label: 'Ambito institucional de aplicacion', value: this.value('institutionalScopes') },
+      { label: '¿Aplica Extra Presupuestaria? (AEP)', value: this.value('aep') },
+      { label: '¿Es Reciproca ? (RECI)', value: this.value('reciprocal') },
+      { label: 'AC Activo', value: 'Si' },
+      { label: 'PC Pasivo', value: 'Si' },
+      { label: 'ANC Activo', value: 'Si' },
+      { label: 'PNC Pasivo', value: 'Si' }
     ];
+  }
+
+  get dynamicFields(): HistoryField[] {
+    return [
+      { label: '¿Tiene dinamica contable?', value: 'No' },
+      { label: 'Se debita por', value: '--' },
+      { label: 'Se acredita por', value: '--' },
+      { label: 'Objeto', value: '--' },
+      { label: 'Saldos', value: '--' }
+    ];
+  }
+
+  get validityStartField(): HistoryField {
+    return { label: 'Fecha inicio desde', value: DEMO_VALIDITY_START };
+  }
+
+  get classifierEnabledField(): HistoryField {
+    return { label: 'Cuenta contable para una entidad del estado', value: 'Si' };
+  }
+
+  get justificationField(): HistoryField {
+    return {
+      label: 'Justificacion del requerimiento solicitado',
+      value: 'Solicito la creacion de este evento, con afectacion presupuestal o sin afectacion presupuestal, segun corresponda, por tratarse de una operacion vinculada a la gestion financiera de la entidad, necesaria para el cumplimiento de las disposiciones contables, presupuestales y fiscales aplicables.'
+    };
+  }
+
+  get elementType(): string {
+    return this.value('element') === '1' ? 'Activo' : '--';
   }
 
   get accountCode(): string {
@@ -325,5 +356,9 @@ export class AccountHistoryPanelComponent {
 
   value(key: string): string {
     return String(this.record?.[key] ?? '--');
+  }
+
+  private isRecordStatus(value: string): value is RecordStatus {
+    return ['Activo', 'Inactivo', 'Anulado', 'En Proceso', 'Validado', 'Eliminado'].includes(value);
   }
 }

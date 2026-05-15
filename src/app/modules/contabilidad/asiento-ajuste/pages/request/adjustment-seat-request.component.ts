@@ -878,7 +878,7 @@ export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
   readonly periodoSearch = signal('');
   tempSelectedPeriodo: PeriodoRow | null = null;
   periodoPage = 1;
-  periodoRowsPerPage = 25;
+  periodoRowsPerPage = 10;
   readonly periodoRowsPerPageOptions = [10, 25, 50, 100];
   readonly periodoTotalItems = 100;
 
@@ -887,7 +887,7 @@ export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
   readonly claseAjusteSearch = signal('');
   tempSelectedClaseAjuste: ClaseAjusteRow | null = null;
   claseAjustePage = 1;
-  claseAjusteRowsPerPage = 25;
+  claseAjusteRowsPerPage = 10;
   readonly claseAjusteRowsPerPageOptions = [10, 25, 50, 100];
   readonly claseAjusteTotalItems = 100;
 
@@ -914,7 +914,7 @@ export class AdjustmentSeatRequestComponent implements OnInit, OnDestroy {
   readonly detalleAjusteSearch = signal('');
   tempSelectedDetalleAjuste: DetalleAjusteRow | null = null;
   detalleAjustePage = 1;
-  detalleAjusteRowsPerPage = 25;
+  detalleAjusteRowsPerPage = 10;
   readonly detalleAjusteRowsPerPageOptions = [10, 25, 50, 100];
   readonly detalleAjusteTotalItems = 100;
 
