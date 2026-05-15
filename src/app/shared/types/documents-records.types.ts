@@ -68,4 +68,8 @@ export type DocumentsRecordsConfig = {
   filterCampoOptions: DocumentsRecordsFilterOption[];
   filterValorOptions: DocumentsRecordsFilterOption[];
   fieldsMenuOptions: DocumentsRecordsMenuOption[];
+  // Controla el botón de acción principal en la sección de documentos
+  // 'verificar' = rol CREADOR (selecciona Elaborados y verifica)
+  // 'aprobar'   = rol APROBADOR (selecciona Verificados y aprueba)
+  accionPrincipal?: 'verificar' | 'aprobar';
 };

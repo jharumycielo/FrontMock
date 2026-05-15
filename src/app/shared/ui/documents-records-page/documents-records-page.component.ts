@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Router } from '@angular/router';
+import { PermissionService } from '../../../core/auth/permission.service';
 
 import { BreadcrumbComponent } from '../../components/breadcrumb/breadcrumb.component';
 import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../components/custom-filter/custom-filter.component';
@@ -24,6 +25,9 @@ type AppliedCustomFilter = {
   valor: string;
 };
 
+// Estados visibles para el APROBADOR (filtra Elaborado y Eliminado)
+const ESTADOS_APROBADOR = ['Verificado', 'Aprobado', 'Observado', 'Rechazado'];
+
 @Component({
   selector: 'siaf-documents-records-page',
   standalone: true,
@@ -45,7 +49,7 @@ type AppliedCustomFilter = {
       <siaf-modal
         [open]="verifyModalOpen"
         variant="custom"
-        title="¿Deseas aprobar múltiples solicitudes?"
+        title="¿Deseas verificar múltiples solicitudes?"
         [description]="verifyModalDescription"
         illustrationSrc="assets/figma/modals/approve-multiple.svg"
         confirmVariant="primary"
@@ -54,6 +58,20 @@ type AppliedCustomFilter = {
         (canceled)="closeVerifyModal()"
         (closed)="closeVerifyModal()"
         (confirmed)="confirmVerifyModal()"
+      />
+
+      <siaf-modal
+        [open]="approveModalOpen"
+        variant="custom"
+        title="¿Deseas aprobar múltiples solicitudes?"
+        [description]="approveModalDescription"
+        illustrationSrc="assets/figma/modals/approve-multiple.svg"
+        confirmVariant="primary"
+        confirmLabel="Aceptar"
+        [showIllustration]="true"
+        (canceled)="closeApproveModal()"
+        (closed)="closeApproveModal()"
+        (confirmed)="confirmApproveModal()"
       />
 
       <div class="fixed bottom-siaf-lg left-1/2 z-50 w-[min(430px,calc(100vw-32px))] -translate-x-1/2">
@@ -68,15 +86,16 @@ type AppliedCustomFilter = {
 
         <section class="min-w-0">
           <section class="bg-surface">
-            <siaf-breadcrumb class="block" [items]="config.breadcrumbs" />
+            <siaf-breadcrumb class="block" [items]="effectiveConfig.breadcrumbs" />
 
             <header class="flex min-h-[72px] flex-col gap-siaf-sm px-siaf-md pb-siaf-xs pt-siaf-sm md:flex-row md:items-start md:justify-between">
               <div class="min-w-0">
-                <h1 class="m-0 text-sm font-bold uppercase leading-normal text-text">{{ config.title }}</h1>
+                <h1 class="m-0 text-sm font-bold uppercase leading-normal text-text">{{ effectiveConfig.title }}</h1>
                 <p class="m-0 text-[10px] font-medium uppercase leading-normal tracking-[0.66px] text-text-muted">Documentos y registros</p>
               </div>
 
               <div class="relative shrink-0">
+                @if (effectiveConfig.createDocumentOptions.length) {
                 <siaf-button variant="accent" icon="add" (click)="toggleCreateDocumentPopover()">Crear documento</siaf-button>
 
                 @if (createDocumentPopoverOpen) {
@@ -84,7 +103,7 @@ type AppliedCustomFilter = {
                   <div class="absolute right-0 top-12 z-30 w-[min(360px,calc(100vw-32px))] rounded-siaf-md shadow-siaf-elevation-1" (click)="$event.stopPropagation()">
                     <siaf-create-document
                       variant="dropdown"
-                      [processOptions]="config.createDocumentOptions"
+                      [processOptions]="effectiveConfig.createDocumentOptions"
                       [fields]="createDocumentFields"
                       [acceptDisabled]="createDocumentAcceptDisabled"
                       (fieldValueChange)="onCreateDocumentFieldChange($event)"
@@ -92,6 +111,7 @@ type AppliedCustomFilter = {
                       (accepted)="onCreateDocumentAccepted($event)"
                     />
                   </div>
+                }
                 }
               </div>
             </header>
@@ -115,7 +135,13 @@ type AppliedCustomFilter = {
                   {{ activeTab === 'documents' ? 'Documentos existentes' : 'Registros existentes' }}
                 </h2>
                 @if (activeTab === 'documents') {
-                  <siaf-button variant="primary" icon="task_alt" [disabled]="!canVerifySelectedDocuments" (click)="openVerifyModal()">Verificar</siaf-button>
+                  @if (effectiveConfig.accionPrincipal === 'aprobar') {
+                    <siaf-button variant="primary" icon="check_circle" [disabled]="!canApproveSelectedDocuments" (click)="openApproveModal()">
+                      Aprobar
+                    </siaf-button>
+                  } @else {
+                    <siaf-button variant="primary" icon="task_alt" [disabled]="!canVerifySelectedDocuments" (click)="openVerifyModal()">Verificar</siaf-button>
+                  }
                 }
               </header>
 
@@ -134,7 +160,7 @@ type AppliedCustomFilter = {
                       @if (fieldsMenuOpen) {
                         <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar campos" (click)="closeFieldsMenu()"></button>
                         <div class="absolute right-0 top-12 z-30 w-[248px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-siaf-elevation-1" (click)="$event.stopPropagation()">
-                          @for (option of config.fieldsMenuOptions; track option.label) {
+                          @for (option of effectiveConfig.fieldsMenuOptions; track option.label) {
                             <button class="flex min-h-8 w-full items-center gap-siaf-md px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" (click)="selectFieldsMenuOption(option.label)">
                               <span class="min-w-0 flex-1">{{ option.label }}</span>
                               @if (option.hasChildren) { <siaf-icon name="chevron_right" [size]="24" /> }
@@ -191,7 +217,7 @@ type AppliedCustomFilter = {
                     @if (statusFilterMenuOpen) {
                       <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar estados" (click)="closeStatusFilterMenu()"></button>
                       <div class="absolute left-0 top-10 z-30 w-[220px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-siaf-elevation-1" (click)="$event.stopPropagation()">
-                        @for (option of config.statusFilterOptions; track option) {
+                        @for (option of effectiveConfig.statusFilterOptions; track option) {
                           <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" (click)="selectStatusFilter(option)">{{ option }}</button>
                         }
                       </div>
@@ -216,7 +242,7 @@ type AppliedCustomFilter = {
                     @if (actionTypeFilterMenuOpen) {
                       <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar tipos de accion" (click)="closeActionTypeFilterMenu()"></button>
                       <div class="absolute left-0 top-10 z-30 w-[220px] overflow-hidden rounded-siaf-md bg-[var(--sys-color-bg-surfaces-surface-highest,white)] py-siaf-xs shadow-siaf-elevation-1" (click)="$event.stopPropagation()">
-                        @for (option of config.actionTypeFilterOptions; track option) {
+                        @for (option of effectiveConfig.actionTypeFilterOptions; track option) {
                           <button class="flex min-h-8 w-full items-center px-siaf-md py-siaf-xxs text-left text-sm font-normal leading-normal text-[var(--sys-color-text-neutral-medium)] transition hover:bg-[var(--sys-color-bg-states-light-hover)]" type="button" (click)="selectActionTypeFilter(option)">{{ option }}</button>
                         }
                       </div>
@@ -271,8 +297,8 @@ type AppliedCustomFilter = {
                 [activeTab]="activeTab"
                 [columns]="visibleColumns"
                 [rows]="paginatedRows"
-                [minWidthClass]="activeTab === 'documents' ? config.documentTableMinWidthClass : config.recordTableMinWidthClass"
-                [recordTrackKey]="config.recordTrackKey"
+                [minWidthClass]="activeTab === 'documents' ? effectiveConfig.documentTableMinWidthClass : effectiveConfig.recordTableMinWidthClass"
+                [recordTrackKey]="effectiveConfig.recordTrackKey"
                 [documentRoute]="documentRoute"
                 [selectionDisabled]="selectionDisabled"
                 (selectionChanged)="toggleRowSelection($event)"
@@ -299,9 +325,9 @@ type AppliedCustomFilter = {
               <button class="fixed inset-0 z-20 cursor-default bg-transparent" type="button" aria-label="Cerrar filtros" (click)="closeCustomFilter()"></button>
               <div class="fixed inset-x-siaf-md top-24 z-30 sm:absolute sm:left-[40px] sm:top-[188px] sm:w-[936px] sm:max-w-[calc(100%-80px)]" (click)="$event.stopPropagation()">
                 <siaf-custom-filter
-                  [campoOptions]="config.filterCampoOptions"
+                  [campoOptions]="effectiveConfig.filterCampoOptions"
                   [condicionOptions]="filterCondicionOptions"
-                  [valorOptions]="config.filterValorOptions"
+                  [valorOptions]="effectiveConfig.filterValorOptions"
                   [initialRows]="customFilterInitialRows"
                   [deleteEnabled]="!!editingCustomFilterId"
                   (aplicar)="onCustomFilterApply($event)"
@@ -331,8 +357,29 @@ type AppliedCustomFilter = {
 })
 export class DocumentsRecordsPageComponent implements OnChanges {
   private readonly router = inject(Router);
+  private readonly permissionService = inject(PermissionService);
 
   @Input({ required: true }) config!: DocumentsRecordsConfig;
+
+  // Config efectivo con reglas de rol aplicadas automáticamente
+  get effectiveConfig(): DocumentsRecordsConfig {
+    const esAprobador = this.permissionService.currentRole() === 'approver';
+    if (!esAprobador) return this.config;
+
+    return {
+      ...this.config,
+      // Sin botón crear
+      createDocumentOptions: [],
+      // Solo estados del APROBADOR
+      statusFilterOptions: ESTADOS_APROBADOR,
+      // Acción principal: Aprobar
+      accionPrincipal: 'aprobar',
+      // Filtrar documentRows para no mostrar Elaborado/Eliminado
+      documentRows: this.config.documentRows.filter(r =>
+        ESTADOS_APROBADOR.includes(String(r['status'] ?? ''))
+      ),
+    };
+  }
 
   activeTab: DocumentsRecordsTab = 'documents';
   createDocumentPopoverOpen = false;
@@ -352,6 +399,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   accountHistoryOpen = false;
   documentHistoryOpen = false;
   verifyModalOpen = false;
+  approveModalOpen = false;
   approvalSnackbarOpen = false;
   approvalSnackbarNumbers = '';
   createDocumentDocument = '';
@@ -381,12 +429,13 @@ export class DocumentsRecordsPageComponent implements OnChanges {
       return;
     }
 
-    this.documentRows = this.config.documentRows.map((row) => ({ ...row }));
-    this.recordRows = this.config.recordRows.map((row) => ({ ...row }));
-    this.hiddenDocumentColumns = new Set(this.config.documentColumns.filter((column) => column.visibility !== 'visible').map((column) => column.key));
-    this.hiddenRecordColumns = new Set(this.config.recordColumns.filter((column) => column.visibility !== 'visible').map((column) => column.key));
+    const cfg = this.effectiveConfig;
+    this.documentRows = cfg.documentRows.map((row) => ({ ...row }));
+    this.recordRows = cfg.recordRows.map((row) => ({ ...row }));
+    this.hiddenDocumentColumns = new Set(cfg.documentColumns.filter((column) => column.visibility !== 'visible').map((column) => column.key));
+    this.hiddenRecordColumns = new Set(cfg.recordColumns.filter((column) => column.visibility !== 'visible').map((column) => column.key));
     this.selectedHistorySummary = {
-      document: String(this.documentRows[0]?.['document'] ?? this.config.recordHistoryDocumentLabel),
+      document: String(this.documentRows[0]?.['document'] ?? cfg.recordHistoryDocumentLabel),
       number: String(this.documentRows[0]?.['number'] ?? ''),
       actionType: String(this.documentRows[0]?.['actionType'] ?? '')
     };
@@ -425,12 +474,22 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     return this.documentRows.some((row) => row.selected && row['status'] === 'Elaborado');
   }
 
+  get canApproveSelectedDocuments(): boolean {
+    return this.documentRows.some((row) => row.selected && row['status'] === 'Verificado');
+  }
+
+  get selectedVerificadoCount(): number {
+    return this.documentRows.filter((row) => row.selected && row['status'] === 'Verificado').length;
+  }
+
   get visibleSelectableElaboradoDocuments(): DocumentsRecordsRow[] {
     if (this.activeTab !== 'documents') {
       return [];
     }
 
-    return this.paginatedRows.filter((row) => row['status'] === 'Elaborado');
+    // APROBADOR selecciona Verificados — CREADOR selecciona Elaborados
+    const selectableStatus = this.effectiveConfig.accionPrincipal === 'aprobar' ? 'Verificado' : 'Elaborado';
+    return this.paginatedRows.filter((row) => row['status'] === selectableStatus);
   }
 
   get allVisibleElaboradoDocumentsSelected(): boolean {
@@ -444,7 +503,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   get activeColumnOptions(): DocumentsRecordsColumn[] {
-    return this.activeTab === 'documents' ? this.config.documentColumns : this.config.recordColumns;
+    return this.activeTab === 'documents' ? this.effectiveConfig.documentColumns : this.effectiveConfig.recordColumns;
   }
 
   get visibleColumns(): DocumentsRecordsColumn[] {
@@ -477,7 +536,12 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   get verifyModalDescription(): string {
-    return `Estás a punto de aprobar ${this.selectedElaboradoDocuments.length} solicitudes en simultáneo.`;
+    return `Estás a punto de verificar ${this.selectedElaboradoDocuments.length} solicitudes en simultáneo.`;
+  }
+
+  get approveModalDescription(): string {
+    const count = this.selectedVerificadoCount;
+    return `Estás a punto de aprobar ${count} solicitud${count !== 1 ? 'es' : ''} en simultáneo.`;
   }
 
   get createDocumentFields(): CreateDocumentField[] {
@@ -487,7 +551,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
         type: 'select',
         required: true,
         value: this.createDocumentDocument,
-        options: this.config.createDocumentOptions[0]?.documents ?? []
+        options: this.effectiveConfig.createDocumentOptions[0]?.documents ?? []
       },
       {
         placeholder: 'Tipo de acción',
@@ -501,7 +565,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   get createDocumentActionTypeOptions(): string[] {
-    return this.config.createDocumentOptions[0]?.documentOptions?.find((document) => document.label === this.createDocumentDocument)?.actionTypes || this.config.createDocumentOptions[0]?.actionTypes || [];
+    return this.effectiveConfig.createDocumentOptions[0]?.documentOptions?.find((document) => document.label === this.createDocumentDocument)?.actionTypes || this.effectiveConfig.createDocumentOptions[0]?.actionTypes || [];
   }
 
   get createDocumentAcceptDisabled(): boolean {
@@ -552,7 +616,11 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   selectionDisabled = (row: DocumentsRecordsRow): boolean => {
-    return this.activeTab === 'documents' && row['status'] !== 'Elaborado';
+    if (this.activeTab !== 'documents') return false;
+    // APROBADOR solo puede seleccionar Verificados
+    // CREADOR solo puede seleccionar Elaborados
+    const selectableStatus = this.effectiveConfig.accionPrincipal === 'aprobar' ? 'Verificado' : 'Elaborado';
+    return row['status'] !== selectableStatus;
   };
 
   documentRoute = (row: DocumentsRecordsRow): string => {
@@ -560,7 +628,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
       return row['linkRoute'];
     }
 
-    const documentOption = this.config.createDocumentOptions[0]?.documentOptions?.find((document) => document.label === row['document']);
+    const documentOption = this.effectiveConfig.createDocumentOptions[0]?.documentOptions?.find((document) => document.label === row['document']);
     return documentOption?.route || this.config.defaultRequestRoute;
   };
 
@@ -575,6 +643,27 @@ export class DocumentsRecordsPageComponent implements OnChanges {
 
   closeVerifyModal(): void {
     this.verifyModalOpen = false;
+  }
+
+  openApproveModal(): void {
+    if (!this.canApproveSelectedDocuments) return;
+    this.closeToolbarMenus();
+    this.approveModalOpen = true;
+  }
+
+  closeApproveModal(): void {
+    this.approveModalOpen = false;
+  }
+
+  confirmApproveModal(): void {
+    const selectedRows = this.documentRows.filter(row => row.selected && row['status'] === 'Verificado');
+    this.approvalSnackbarNumbers = this.formatDocumentNumbers(selectedRows.map(row => String(row['number'] ?? '')));
+    selectedRows.forEach(row => {
+      row['status'] = 'Aprobado';
+      row.selected = false;
+    });
+    this.approveModalOpen = false;
+    this.approvalSnackbarOpen = selectedRows.length > 0;
   }
 
   confirmVerifyModal(): void {
@@ -859,7 +948,7 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   private getFilterCampoLabel(campo: string): string {
-    return this.config.filterCampoOptions.find((option) => option.value === campo)?.label ?? campo;
+    return this.effectiveConfig.filterCampoOptions.find((option) => option.value === campo)?.label ?? campo;
   }
 
   private createCustomFilterId(): string {

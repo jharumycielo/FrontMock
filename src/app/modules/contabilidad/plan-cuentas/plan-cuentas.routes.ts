@@ -16,6 +16,13 @@ export const PLAN_CUENTAS_ROUTES: Routes = [
       ),
   },
   {
+    path: 'detalle/:id',
+    loadComponent: () =>
+      import('./pages/detail/chart-accounts-detail.component').then(
+        (m) => m.ChartAccountsDetailComponent,
+      ),
+  },
+  {
     path: 'carga-masiva/solicitud',
     loadComponent: () =>
       import('./pages/bulk-request/chart-accounts-bulk-request.component').then(

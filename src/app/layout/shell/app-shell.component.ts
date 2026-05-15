@@ -14,6 +14,7 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { SidebarComponent, SidebarNavigation } from '../sidebar/sidebar.component';
 import { AdminMenuComponent } from '../admin-menu/admin-menu.component';
 import { CurrentUserService } from '../../core/auth/current-user.service';
+import { PermissionService } from '../../core/auth/permission.service';
 import { ShellNavigationService } from './shell-navigation.service';
 
 @Component({
@@ -38,6 +39,7 @@ import { ShellNavigationService } from './shell-navigation.service';
         <siaf-sidebar
           [navigation]="activeNavigation"
           [buttonHelp]="true"
+          [ctaAdd]="puedeCrear"
           (created)="openCreateDocument()"
           (navigationChanged)="onNavigationChange($event)"
         />
@@ -100,7 +102,13 @@ export class AppShellComponent {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly shellNavigation = inject(ShellNavigationService);
+  private readonly permissionService = inject(PermissionService);
   readonly currentUser = inject(CurrentUserService);
+
+  // El botón Crear solo está habilitado si el rol puede crear documentos
+  get puedeCrear(): boolean {
+    return this.permissionService.can('document.create');
+  }
 
   activeNavigation: SidebarNavigation = 'Panel';
   processMenuOpen = false;

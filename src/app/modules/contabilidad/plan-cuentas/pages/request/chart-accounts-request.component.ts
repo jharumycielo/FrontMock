@@ -24,6 +24,7 @@ import { UploadedFileCardComponent } from '../../../../../shared/ui/uploaded-fil
 import { UploadSideNavComponent } from '../../../../../shared/ui/upload-side-nav/upload-side-nav.component';
 import { CHART_ACCOUNTS_RECORD_ROWS } from '../../../config/chart-accounts-records.mock';
 import type { DocumentsRecordsRow } from '../../../../../shared/types/documents-records.types';
+import { SolicitudesStateService } from '../../../../../core/state/solicitudes-state.service';
 
 type TipoPlanContable = {
   id: string;
@@ -1172,6 +1173,8 @@ const EXTERNAL_ENTITY_OPTIONS: ExternalEntityOption[] = [
 export class ChartAccountsRequestComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly solicitudesState = inject(SolicitudesStateService);
+  private _solicitudId: string | null = null;
 
   // Códigos existentes (mock — reemplazar con llamada real a API)
   private readonly EXISTING_ACCOUNT_CODES = new Set(['1.1.01', '1.1.02', '1.1.03', '1.2.01', '2.1.01']);
@@ -1525,6 +1528,37 @@ export class ChartAccountsRequestComponent {
     this.isReadOnly = true;
     this.snackbarVariant = 'creation-elaborated';
     this.saveSnackbarOpen = true;
+
+    // Guardar en el estado compartido
+    const cuentas = this.createdAccountingAccounts().map(c => ({
+      recordId: crypto.randomUUID(),
+      status: 'Activo',
+      element: c.element,
+      group: c.group,
+      account: c.account,
+      subAccount1: c.subAccount1,
+      subAccount2: c.subAccount2,
+      subAccount3: c.subAccount3,
+      accountName: c.name,
+      imputable: c.imputable,
+      previousCode: c.previousCode,
+      institutionalScopes: c.institutionalScopes,
+      aep: c.appliesExtraBudgetary,
+      reciprocal: c.reciprocal,
+    }));
+
+    const archivos = this.uploadedFile() ? [this.uploadedFile()!.name] : [];
+
+    const solicitud = this.solicitudesState.crear({
+      tipoAccion: this.requestAction,
+      plan: this.selectedChartAccountPlan()?.nombre ?? 'Plan Contable',
+      justificacion: this.justification(),
+      organoLinea: 'Dirección General de Contabilidad Pública',
+      cuentas,
+      archivos,
+    });
+
+    this._solicitudId = solicitud.id;
   }
 
   openVerifyModal(): void {
@@ -1542,6 +1576,11 @@ export class ChartAccountsRequestComponent {
     this.isReadOnly = true;
     this.snackbarVariant = 'creation-verified';
     this.saveSnackbarOpen = true;
+
+    // Actualizar estado a Verificado — aparece en bandeja del APROBADOR
+    if (this._solicitudId) {
+      this.solicitudesState.verificar(this._solicitudId);
+    }
   }
 
   enableEditing(): void {

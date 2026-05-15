@@ -1,8 +1,11 @@
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListener, Inject, Input, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, HostListener, Inject, Input, Output, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
 import { IconComponent } from '../../shared/ui/icon/icon.component';
+import { PermissionService } from '../../core/auth/permission.service';
+import { CurrentUserService } from '../../core/auth/current-user.service';
+import { UserRole } from '../../core/auth/role.model';
 
 type ViewTransitionDocument = Document & {
   startViewTransition?: (updateCallback: () => void) => { ready: Promise<void> };
@@ -66,15 +69,47 @@ type ViewTransitionDocument = Document & {
 
             @if (userMenuOpen()) {
               <div
-                class="absolute right-0 top-[calc(100%+8px)] z-50 w-[220px] overflow-hidden rounded-siaf-md bg-surface py-siaf-xs text-[var(--sys-color-text-neutral-medium)] shadow-siaf-elevation-2"
+                class="absolute right-0 top-[calc(100%+8px)] z-50 w-[260px] overflow-hidden rounded-siaf-md bg-surface py-siaf-xs text-[var(--sys-color-text-neutral-medium)] shadow-siaf-elevation-2"
                 role="menu"
                 aria-label="Opciones de usuario"
                 (click)="$event.stopPropagation()"
               >
-                <button class="flex min-h-12 w-full items-center gap-siaf-md px-siaf-md py-siaf-sm text-left text-sm transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-brand-primary" type="button" role="menuitem">
+                <!-- Perfil — abre/cierra selector de rol -->
+                <button
+                  class="flex min-h-12 w-full items-center gap-siaf-md px-siaf-md py-siaf-sm text-left text-sm transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-brand-primary"
+                  type="button"
+                  role="menuitem"
+                  (click)="perfilMenuOpen.set(!perfilMenuOpen())"
+                >
                   <siaf-icon class="shrink-0" name="perm_identity" [size]="24" />
                   <span class="min-w-0 flex-1 truncate">Perfil</span>
+                  <siaf-icon class="shrink-0 transition-transform" [class.rotate-180]="perfilMenuOpen()" name="keyboard_arrow_down" [size]="18" />
                 </button>
+
+                <!-- Selector de rol (se expande al hacer click en Perfil) -->
+                @if (perfilMenuOpen()) {
+                  <div class="border-y border-[var(--sys-color-divider-default)] bg-[var(--sys-color-bg-surfaces-surface-lowest)] py-siaf-xs">
+                    <p class="px-siaf-md py-siaf-xs text-[10px] font-semibold uppercase text-[var(--sys-color-text-secondary)]">
+                      Seleccionar perfil
+                    </p>
+                    @for (rol of rolesDemo; track rol.value) {
+                      <button
+                        class="flex min-h-10 w-full items-center gap-siaf-md px-siaf-md py-siaf-xs text-left text-sm transition hover:bg-surface-muted"
+                        type="button"
+                        role="menuitem"
+                        (click)="cambiarRol(rol.value)"
+                      >
+                        @if (rolActual() === rol.value) {
+                          <siaf-icon class="shrink-0 text-brand-primary" name="radio_button_checked" [size]="18" />
+                          <span class="min-w-0 flex-1 truncate font-bold text-brand-primary">{{ rol.label }}</span>
+                        } @else {
+                          <siaf-icon class="shrink-0" name="radio_button_unchecked" [size]="18" />
+                          <span class="min-w-0 flex-1 truncate">{{ rol.label }}</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
 
                 <button class="flex min-h-12 w-full items-center gap-siaf-md px-siaf-md py-siaf-sm text-left text-sm transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-brand-primary" type="button" role="menuitem" (click)="toggleTheme()">
                   <siaf-icon class="shrink-0" name="color_lens" [size]="24" />
@@ -104,6 +139,37 @@ type ViewTransitionDocument = Document & {
 })
 export class NavbarComponent {
   private readonly themeStorageKey = 'siaf-theme';
+  private readonly permissionService = inject(PermissionService);
+  private readonly currentUserService = inject(CurrentUserService);
+
+  readonly rolActual = this.permissionService.currentRole;
+  readonly perfilMenuOpen = signal(false);
+
+  readonly rolesDemo: { value: UserRole; label: string }[] = [
+    { value: 'creator',  label: 'Creador (Juan Pérez)' },
+    { value: 'approver', label: 'Aprobador (María López)' },
+    { value: 'admin_sistema', label: 'Admin Sistema (OGTI)' },
+  ];
+
+  cambiarRol(rol: UserRole): void {
+    this.permissionService.setRole(rol);
+    const nombres: Record<string, string> = {
+      creator: 'Juan Pérez García',
+      approver: 'María López Torres',
+      admin_sistema: 'Administrador OGTI',
+    };
+    const oficinas: Record<string, string> = {
+      creator: 'CREADOR — MEF / DGCP',
+      approver: 'APROBADOR — MEF / DGCP',
+      admin_sistema: 'ADMIN SISTEMA — MEF / OGTI',
+    };
+    this.currentUserService.setUser({
+      name: nombres[rol] ?? rol,
+      office: oficinas[rol] ?? rol,
+    });
+    this.perfilMenuOpen.set(false);
+    this.userMenuOpen.set(false);
+  }
 
   @Input() homeHref = '/panel';
   @Input() initials = 'JP';
