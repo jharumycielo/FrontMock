@@ -64,7 +64,7 @@ type AccountingRow = {
             />
           </section>
 
-          <section class="flex flex-col gap-siaf-md p-siaf-md sm:p-siaf-lg">
+          <section class="flex flex-col gap-siaf-md p-siaf-md pb-24 sm:p-siaf-lg lg:pb-siaf-lg">
             <div class="flex flex-col gap-siaf-md xl:flex-row">
               <section class="flex min-w-0 flex-1 flex-col gap-siaf-xs rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
                 @for (field of entityFields; track field.label) {

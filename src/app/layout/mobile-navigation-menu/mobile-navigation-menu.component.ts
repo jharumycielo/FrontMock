@@ -21,8 +21,9 @@ type MobileNavigationItem = {
 
       <div class="flex flex-col gap-siaf-lg bg-[var(--sys-color-bg-surfaces-field,var(--sys-color-bg-surfaces-surface))] px-siaf-md py-siaf-xs">
         <button
-          class="inline-flex min-h-10 w-full items-center justify-center gap-siaf-xs rounded-siaf-md bg-[var(--sys-color-bg-brand-accent)] px-siaf-md py-siaf-xs text-sm font-medium text-[var(--sys-color-text-brand-white)] transition hover:brightness-90 active:brightness-75"
+          class="inline-flex min-h-10 w-full items-center justify-center gap-siaf-xs rounded-siaf-md px-siaf-md py-siaf-xs text-sm font-medium transition enabled:bg-[var(--sys-color-bg-brand-accent)] enabled:text-[var(--sys-color-text-brand-white)] enabled:hover:brightness-90 enabled:active:brightness-75 disabled:cursor-not-allowed disabled:bg-[var(--sys-color-bg-surfaces-disabled)] disabled:text-[var(--sys-color-text-neutral-disabled)]"
           type="button"
+          [disabled]="!ctaAdd"
           (click)="created.emit()"
         >
           <siaf-icon name="add" [size]="24" />
@@ -65,6 +66,7 @@ type MobileNavigationItem = {
 })
 export class MobileNavigationMenuComponent {
   @Input() navigation: SidebarNavigation = 'Panel';
+  @Input() ctaAdd = false;
 
   @Output() created = new EventEmitter<void>();
   @Output() navigationChanged = new EventEmitter<SidebarNavigation>();

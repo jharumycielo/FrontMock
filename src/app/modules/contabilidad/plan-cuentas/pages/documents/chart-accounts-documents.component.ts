@@ -18,11 +18,13 @@ export class ChartAccountsDocumentsComponent {
   private readonly permissionService = inject(PermissionService);
 
   readonly config = computed((): DocumentsRecordsConfig => {
-    const esAprobador = this.permissionService.currentRole() === 'approver';
+    const role = this.permissionService.currentRole();
 
-    const solicitudes = esAprobador
+    const solicitudes = role === 'approver'
       ? this.solicitudesState.bandejaAprobador()
-      : this.solicitudesState.bandejaCreador();
+      : role === 'creator'
+        ? this.solicitudesState.bandejaCreador()
+        : [];
 
     // Si hay solicitudes reales usar esas, si no usar el mock base
     // El DocumentsRecordsPageComponent aplica automáticamente las reglas de rol

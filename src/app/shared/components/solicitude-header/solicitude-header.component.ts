@@ -116,7 +116,7 @@ const HEADER_CONFIG_BY_ROLE: Partial<Record<SolicitudeHeaderRole, Partial<Record
   imports: [ButtonComponent, IconComponent, NgClass],
   template: `
     <header
-      class="flex w-full flex-col gap-siaf-lg bg-surface px-siaf-lg py-siaf-md sm:flex-row sm:items-start sm:justify-between"
+      class="flex w-full flex-col gap-siaf-lg bg-surface px-siaf-lg py-siaf-md lg:flex-row lg:items-start lg:justify-between"
       [ngClass]="containerClass"
     >
       <div class="flex min-w-0 flex-1 items-start gap-siaf-xs">
@@ -156,7 +156,7 @@ const HEADER_CONFIG_BY_ROLE: Partial<Record<SolicitudeHeaderRole, Partial<Record
       </div>
 
       @if (resolvedType === 'actions' && showButtonGroup) {
-        <div class="flex w-full flex-wrap items-center justify-end gap-siaf-sm sm:w-auto sm:shrink-0">
+        <div class="hidden w-full flex-wrap items-center justify-end gap-siaf-sm lg:flex lg:w-auto lg:shrink-0">
           <siaf-button variant="secondary" size="md" icon="close" (click)="canceled.emit()">Cancelar</siaf-button>
           <siaf-button [variant]="resolvedSaveVariant" size="md" icon="save" [disabled]="saveDisabled" (click)="saved.emit()">Grabar</siaf-button>
           @if (resolvedShowVerify) {
@@ -166,7 +166,7 @@ const HEADER_CONFIG_BY_ROLE: Partial<Record<SolicitudeHeaderRole, Partial<Record
       }
 
       @if (resolvedType === 'readonly' && showButtonGroup) {
-        <div class="flex w-full flex-wrap items-center justify-end gap-siaf-sm sm:w-auto sm:shrink-0">
+        <div class="hidden w-full flex-wrap items-center justify-end gap-siaf-sm lg:flex lg:w-auto lg:shrink-0">
           @if (resolvedShowDelete) {
             <siaf-button variant="secondary" size="md" icon="delete" (click)="deleted.emit()">{{ deleteLabel }}</siaf-button>
           }
@@ -179,6 +179,48 @@ const HEADER_CONFIG_BY_ROLE: Partial<Record<SolicitudeHeaderRole, Partial<Record
         </div>
       }
     </header>
+
+    @if (showMobileActionBar) {
+      <div class="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--sys-color-divider-default)] bg-surface px-siaf-md py-siaf-sm shadow-siaf-elevation-2 lg:hidden">
+        <div class="grid w-full grid-flow-col auto-cols-fr items-center gap-siaf-xs sm:flex sm:justify-end sm:gap-siaf-sm">
+          @if (resolvedType === 'actions') {
+            <siaf-button class="w-full sm:w-auto" variant="secondary" size="md" ariaLabel="Cancelar" (click)="canceled.emit()">
+              <siaf-icon class="hidden min-[360px]:inline-flex" name="close" [size]="18" />
+              <span>Cancelar</span>
+            </siaf-button>
+            <siaf-button class="w-full sm:w-auto" [variant]="resolvedSaveVariant" size="md" ariaLabel="Grabar" [disabled]="saveDisabled" (click)="saved.emit()">
+              <siaf-icon class="hidden min-[360px]:inline-flex" name="save" [size]="18" />
+              <span>Grabar</span>
+            </siaf-button>
+            @if (resolvedShowVerify) {
+              <siaf-button class="w-full sm:w-auto" size="md" [ariaLabel]="verifyLabel" [disabled]="verifyDisabled" (click)="verified.emit()">
+                <siaf-icon class="hidden min-[360px]:inline-flex" name="task_alt" [size]="18" />
+                <span>{{ verifyLabel }}</span>
+              </siaf-button>
+            }
+          } @else {
+            @if (resolvedShowDelete) {
+              <siaf-button class="w-full sm:w-auto" variant="secondary" size="md" [ariaLabel]="deleteLabel" (click)="deleted.emit()">
+                <siaf-icon class="hidden min-[360px]:inline-flex" name="delete" [size]="18" />
+                <span>{{ deleteLabel }}</span>
+              </siaf-button>
+            }
+            @if (resolvedShowEdit) {
+              <siaf-button class="w-full sm:w-auto" variant="secondary" size="md" [ariaLabel]="editLabel" (click)="edited.emit()">
+                <siaf-icon class="hidden min-[360px]:inline-flex" name="edit" [size]="18" />
+                <span>{{ editLabel }}</span>
+              </siaf-button>
+            }
+            @if (resolvedShowVerify) {
+              <siaf-button class="w-full sm:w-auto" size="md" [ariaLabel]="verifyLabel" [disabled]="verifyDisabled" (click)="verified.emit()">
+                <siaf-icon class="hidden min-[360px]:inline-flex" name="task_alt" [size]="18" />
+                <span>{{ verifyLabel }}</span>
+              </siaf-button>
+            }
+          }
+        </div>
+      </div>
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -250,6 +292,18 @@ export class SolicitudeHeaderComponent {
 
   get resolvedShowVerify(): boolean {
     return this.roleStateConfig?.showVerify ?? this.showVerify;
+  }
+
+  get showMobileActionBar(): boolean {
+    if (!this.showButtonGroup) {
+      return false;
+    }
+
+    if (this.resolvedType === 'actions') {
+      return true;
+    }
+
+    return this.resolvedShowDelete || this.resolvedShowEdit || this.resolvedShowVerify;
   }
 
   private get roleStateConfig(): SolicitudeHeaderConfig | undefined {

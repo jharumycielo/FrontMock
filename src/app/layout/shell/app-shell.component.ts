@@ -49,6 +49,7 @@ import { ShellNavigationService } from './shell-navigation.service';
         <div class="fixed inset-x-0 bottom-0 top-14 z-20 lg:hidden">
           <siaf-mobile-navigation-menu
             [navigation]="activeNavigation"
+            [ctaAdd]="puedeCrear"
             (created)="openCreateDocumentFromMobileMenu()"
             (navigationChanged)="onMobileNavigationChange($event)"
           />
@@ -195,6 +196,11 @@ export class AppShellComponent {
   }
 
   openCreateDocument(): void {
+    if (!this.puedeCrear) {
+      this.closeFloatingPanels();
+      return;
+    }
+
     this.mobileNavigationOpen = false;
     this.processMenuOpen = false;
     this.trayMenuOpen = false;

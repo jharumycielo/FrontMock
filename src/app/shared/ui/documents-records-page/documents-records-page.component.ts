@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { Router } from '@angular/router';
 import { PermissionService } from '../../../core/auth/permission.service';
+import type { UserRole } from '../../../core/auth/role.model';
 
 import { BreadcrumbComponent } from '../../components/breadcrumb/breadcrumb.component';
 import { CustomFilterApplyEvent, CustomFilterComponent, FilterRow } from '../../components/custom-filter/custom-filter.component';
@@ -27,6 +28,9 @@ type AppliedCustomFilter = {
 
 // Estados visibles para el APROBADOR (filtra Elaborado y Eliminado)
 const ESTADOS_APROBADOR = ['Verificado', 'Aprobado', 'Observado', 'Rechazado'];
+const ESTADOS_CREADOR = ['Elaborado', 'Verificado', 'Observado', 'Rechazado'];
+
+type DocumentsRecordsRoleMode = 'creator' | 'approver' | 'readOnly';
 
 @Component({
   selector: 'siaf-documents-records-page',
@@ -134,7 +138,7 @@ const ESTADOS_APROBADOR = ['Verificado', 'Aprobado', 'Observado', 'Rechazado'];
                 <h2 class="m-0 text-sm font-bold uppercase leading-normal text-text">
                   {{ activeTab === 'documents' ? 'Documentos existentes' : 'Registros existentes' }}
                 </h2>
-                @if (activeTab === 'documents') {
+                @if (activeTab === 'documents' && effectiveConfig.accionPrincipal) {
                   @if (effectiveConfig.accionPrincipal === 'aprobar') {
                     <siaf-button variant="primary" icon="check_circle" [disabled]="!canApproveSelectedDocuments" (click)="openApproveModal()">
                       Aprobar
@@ -363,8 +367,26 @@ export class DocumentsRecordsPageComponent implements OnChanges {
 
   // Config efectivo con reglas de rol aplicadas automáticamente
   get effectiveConfig(): DocumentsRecordsConfig {
-    const esAprobador = this.permissionService.currentRole() === 'approver';
-    if (!esAprobador) return this.config;
+    const roleMode = this.documentsRecordsRoleMode;
+
+    if (roleMode === 'creator') {
+      return {
+        ...this.config,
+        statusFilterOptions: ESTADOS_CREADOR,
+        accionPrincipal: 'verificar',
+        documentRows: this.config.documentRows.filter(r =>
+          ESTADOS_CREADOR.includes(String(r['status'] ?? ''))
+        ),
+      };
+    }
+
+    if (roleMode === 'readOnly') {
+      return {
+        ...this.config,
+        createDocumentOptions: [],
+        accionPrincipal: undefined,
+      };
+    }
 
     return {
       ...this.config,
@@ -488,7 +510,10 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     }
 
     // APROBADOR selecciona Verificados — CREADOR selecciona Elaborados
-    const selectableStatus = this.effectiveConfig.accionPrincipal === 'aprobar' ? 'Verificado' : 'Elaborado';
+    const selectableStatus = this.selectableDocumentStatus;
+    if (!selectableStatus) {
+      return [];
+    }
     return this.paginatedRows.filter((row) => row['status'] === selectableStatus);
   }
 
@@ -580,6 +605,32 @@ export class DocumentsRecordsPageComponent implements OnChanges {
     return this.documentRows.filter((row) => row.selected && row['status'] === 'Elaborado');
   }
 
+  private get documentsRecordsRoleMode(): DocumentsRecordsRoleMode {
+    const role = this.permissionService.currentRole() as UserRole;
+
+    if (role === 'approver') {
+      return 'approver';
+    }
+
+    if (role === 'creator') {
+      return 'creator';
+    }
+
+    return 'readOnly';
+  }
+
+  private get selectableDocumentStatus(): 'Elaborado' | 'Verificado' | '' {
+    if (this.effectiveConfig.accionPrincipal === 'verificar') {
+      return 'Elaborado';
+    }
+
+    if (this.effectiveConfig.accionPrincipal === 'aprobar') {
+      return 'Verificado';
+    }
+
+    return '';
+  }
+
   inputValue(event: Event): string {
     return (event.target as HTMLInputElement).value;
   }
@@ -605,8 +656,10 @@ export class DocumentsRecordsPageComponent implements OnChanges {
   }
 
   toggleVisibleElaboradoDocuments(selected: boolean): void {
+    const selectableStatus = this.selectableDocumentStatus;
+
     this.paginatedRows.forEach((row) => {
-      if (row['status'] === 'Elaborado') {
+      if (selectableStatus && row['status'] === selectableStatus) {
         row.selected = selected;
         return;
       }
@@ -617,9 +670,11 @@ export class DocumentsRecordsPageComponent implements OnChanges {
 
   selectionDisabled = (row: DocumentsRecordsRow): boolean => {
     if (this.activeTab !== 'documents') return false;
+    const selectableStatus = this.selectableDocumentStatus;
+    if (!selectableStatus) return true;
+
     // APROBADOR solo puede seleccionar Verificados
     // CREADOR solo puede seleccionar Elaborados
-    const selectableStatus = this.effectiveConfig.accionPrincipal === 'aprobar' ? 'Verificado' : 'Elaborado';
     return row['status'] !== selectableStatus;
   };
 

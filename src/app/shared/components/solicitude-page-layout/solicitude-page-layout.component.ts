@@ -32,7 +32,7 @@ import { SolicitudeHeaderComponent, SolicitudeHeaderRole, SolicitudeHeaderState 
         />
       </section>
 
-      <section class="flex flex-col gap-siaf-md p-siaf-md">
+      <section class="flex flex-col gap-siaf-md p-siaf-md pb-24 lg:pb-siaf-md">
         <ng-content />
       </section>
     </section>
