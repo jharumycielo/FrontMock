@@ -13,8 +13,8 @@ export interface BreadcrumbItem {
   standalone: true,
   imports: [IconComponent, RouterLink],
   template: `
-    <nav class="flex h-10 w-full items-center bg-surface px-siaf-md py-siaf-xxs" aria-label="Ruta de navegacion">
-      <ol class="flex min-w-0 items-center gap-siaf-xxs overflow-visible text-xs leading-none">
+    <nav class="flex h-10 w-full min-w-0 items-center bg-surface px-siaf-md py-siaf-xxs" aria-label="Ruta de navegación">
+      <ol class="flex w-full min-w-0 items-center gap-siaf-xxs overflow-visible text-xs leading-none">
         <li class="flex shrink-0 items-center gap-siaf-xxs">
           <a
             class="inline-flex size-8 items-center justify-center rounded-siaf-md text-text transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-primary"
@@ -43,7 +43,7 @@ export interface BreadcrumbItem {
 
             @if (collapsedMenuOpen) {
               <div
-                class="absolute left-0 top-9 z-30 min-w-64 max-w-80 rounded-siaf-md border border-border bg-surface py-siaf-xs shadow-lg"
+                class="absolute left-0 top-9 z-30 w-[min(256px,calc(100vw-32px))] rounded-siaf-md border border-border bg-surface py-siaf-xs shadow-lg"
                 role="menu"
                 (click)="$event.stopPropagation()"
               >
@@ -107,14 +107,14 @@ export interface BreadcrumbItem {
         }
 
         @for (item of mobileVisibleItems; track item.label; let last = $last) {
-          <li class="flex min-w-0 shrink-0 items-center gap-siaf-xxs md:hidden">
+          <li class="flex min-w-0 flex-1 items-center gap-siaf-xxs md:hidden">
             @if (item.href && !last) {
-              <a class="max-w-[180px] truncate font-medium text-text hover:underline" [routerLink]="item.href">
+              <a class="min-w-0 flex-1 truncate font-medium text-text hover:underline" [routerLink]="item.href">
                 {{ item.label }}
               </a>
             } @else {
               <span
-                class="max-w-[220px] truncate"
+                class="min-w-0 flex-1 truncate"
                 [class.font-medium]="!last"
                 [class.font-normal]="last"
                 [class.text-text]="!last"

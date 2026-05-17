@@ -1,13 +1,14 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+﻿import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { BreadcrumbItem } from '../../../../../shared/components/breadcrumb/breadcrumb.component';
 import { FormTableSearchComponent } from '../../../../../shared/components/form-table-search/form-table-search.component';
 import { ButtonComponent } from '../../../../../shared/ui/button/button.component';
+import { DocumentSummaryCardComponent } from '../../../../../shared/ui/document-summary-card/document-summary-card.component';
 import { ModalComponent } from '../../../../../shared/ui/modal/modal.component';
 import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-picker/date-time-picker.component';
 import { EmptySectionComponent } from '../../../../../shared/ui/empty-section/empty-section.component';
-import { FlowStatus, FlowStatusTagComponent } from '../../../../../shared/ui/flow-status-tag/flow-status-tag.component';
+import { FlowStatus } from '../../../../../shared/ui/flow-status-tag/flow-status-tag.component';
 import { IconComponent } from '../../../../../shared/ui/icon/icon.component';
 import { LoaderOverlayComponent } from '../../../../../shared/ui/loader-overlay/loader-overlay.component';
 import { MessageBoxComponent } from '../../../../../shared/ui/message-box/message-box.component';
@@ -89,9 +90,9 @@ type PeriodoGroup = {
   standalone: true,
   imports: [
     ButtonComponent,
+    DocumentSummaryCardComponent,
     DateTimePickerComponent,
     EmptySectionComponent,
-    FlowStatusTagComponent,
     FormTableSearchComponent,
     IconComponent,
     LoaderOverlayComponent,
@@ -126,7 +127,7 @@ type PeriodoGroup = {
         (deleted)="openDeleteModal()"
       >
           @if (isElaborated) {
-            <section class="grid gap-siaf-md xl:grid-cols-[1fr_360px]">
+            <section class="grid gap-siaf-md lg:grid-cols-[1fr_360px]">
               <article class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
                 <div class="grid gap-siaf-xs">
                   @for (field of entityFields; track field.label) {
@@ -138,18 +139,7 @@ type PeriodoGroup = {
                 </div>
               </article>
 
-              <article class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">
-                <div class="grid gap-siaf-xs">
-                  <div class="grid min-h-6 gap-siaf-xs sm:grid-cols-[140px_1fr]">
-                    <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">N° documento</span>
-                    <strong class="min-w-0 text-sm font-bold leading-6 text-text">{{ generatedDocumentNumber }}</strong>
-                  </div>
-                  <div class="grid min-h-6 gap-siaf-xs sm:grid-cols-[140px_1fr]">
-                    <span class="truncate text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Estado</span>
-                    <siaf-flow-status-tag [status]="documentStatus" size="standard" />
-                  </div>
-                </div>
-              </article>
+              <siaf-document-summary-card [documentNumber]="generatedDocumentNumber" [status]="documentStatus" />
             </section>
           } @else {
             <section class="rounded-siaf-md bg-surface px-siaf-lg py-siaf-md">

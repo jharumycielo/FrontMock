@@ -6,13 +6,17 @@ import { BreadcrumbItem } from '../../../../../shared/components/breadcrumb/brea
 import { FormTableSearchComponent } from '../../../../../shared/components/form-table-search/form-table-search.component';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { SolicitudeFormCardComponent } from '../../../../../shared/components/solicitude-form-card/solicitude-form-card.component';
+import { SolicitudeHeaderState } from '../../../../../shared/components/solicitude-header/solicitude-header.component';
 import { SolicitudeInfoCardComponent, SolicitudeInfoField } from '../../../../../shared/components/solicitude-info-card/solicitude-info-card.component';
 import { SolicitudePageLayoutComponent } from '../../../../../shared/components/solicitude-page-layout/solicitude-page-layout.component';
 import { TableControlsComponent } from '../../../../../shared/components/table-controls/table-controls.component';
 import { ButtonComponent } from '../../../../../shared/ui/button/button.component';
 import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-picker/date-time-picker.component';
+import { DocumentSummaryCardComponent } from '../../../../../shared/ui/document-summary-card/document-summary-card.component';
+import { FlowStatus } from '../../../../../shared/ui/flow-status-tag/flow-status-tag.component';
 import { LoaderComponent } from '../../../../../shared/ui/loader/loader.component';
 import { MessageBoxComponent } from '../../../../../shared/ui/message-box/message-box.component';
+import { ModalComponent } from '../../../../../shared/ui/modal/modal.component';
 import { SnackbarComponent } from '../../../../../shared/ui/snackbar/snackbar.component';
 import { TextAreaControlComponent } from '../../../../../shared/ui/text-area-control/text-area-control.component';
 import { TextFieldComponent, TextFieldOption } from '../../../../../shared/ui/text-field/text-field.component';
@@ -61,9 +65,11 @@ type BulkExcelData = {
   imports: [
     ButtonComponent,
     DateTimePickerComponent,
+    DocumentSummaryCardComponent,
     FormTableSearchComponent,
     LoaderComponent,
     MessageBoxComponent,
+    ModalComponent,
     PaginationComponent,
     SnackbarComponent,
     SolicitudeFormCardComponent,
@@ -81,16 +87,24 @@ type BulkExcelData = {
       <siaf-solicitude-page-layout
         [breadcrumbs]="breadcrumbs"
         role="creator"
-        state="new"
+        [state]="solicitudeHeaderState"
         heading="Solicitud de carga masiva de plan de cuentas contables"
         secondaryText="Creación"
         [showReturn]="true"
-        [saveDisabled]="true"
+        [saveDisabled]="!isFormValid()"
         [verifyDisabled]="true"
         (returned)="goBack()"
         (canceled)="goBack()"
+        (saved)="openSaveModal()"
       >
-        <siaf-solicitude-info-card [fields]="infoFields" [liveDate]="true" />
+        @if (isElaborated()) {
+          <section class="grid gap-siaf-md xl:grid-cols-[1fr_360px]">
+            <siaf-solicitude-info-card [fields]="infoFields" [liveDate]="true" />
+            <siaf-document-summary-card [documentNumber]="generatedDocumentNumber" [status]="documentStatus" />
+          </section>
+        } @else {
+          <siaf-solicitude-info-card [fields]="infoFields" [liveDate]="true" />
+        }
 
         <siaf-solicitude-form-card title="Lista de cuentas contables">
           <siaf-tooltip card-actions text="Carga masiva">
@@ -329,6 +343,15 @@ type BulkExcelData = {
         (confirmed)="onSupportUploadConfirmed($event)"
       />
 
+      <siaf-modal
+        variant="save"
+        [open]="saveModalOpen()"
+        confirmVariant="primary"
+        (confirmed)="onConfirmSave()"
+        (canceled)="saveModalOpen.set(false)"
+        (closed)="saveModalOpen.set(false)"
+      />
+
       <div class="fixed bottom-siaf-lg left-1/2 z-[70] w-[min(430px,calc(100vw-32px))] -translate-x-1/2">
         <siaf-snackbar [open]="successSnackbarOpen()" variant="custom" (closed)="successSnackbarOpen.set(false)">
           <span><strong class="font-bold">La carga masiva</strong> del Plan de Cuentas Contables se procesó <strong class="font-bold">exitosamente</strong>.</span>
@@ -363,6 +386,9 @@ export class ChartAccountsBulkRequestComponent implements OnDestroy {
   readonly accountsRowsPerPageOptions = [10, 25, 50, 100];
   readonly supportUploadSideNavOpen = signal(false);
   readonly supportFile = signal<File | null>(null);
+  readonly saveModalOpen = signal(false);
+  readonly isElaborated = signal(false);
+  readonly generatedDocumentNumber = '0001';
   readonly planTypeOptions: TextFieldOption[] = [
     { label: 'Plan Contable Gubernamental Único', value: 'pcgu' },
     { label: 'Plan Contable General Empresarial', value: 'pcge' },
@@ -407,6 +433,22 @@ export class ChartAccountsBulkRequestComponent implements OnDestroy {
     const start = (this.accountsPage() - 1) * this.accountsRowsPerPage();
     return this.filteredAccounts().slice(start, start + this.accountsRowsPerPage());
   });
+  readonly isFormValid = computed(() => !!(
+    !this.isElaborated() &&
+    this.bulkProcessed() &&
+    this.processedExcelAccounts().length > 0 &&
+    this.loadedStartDate() &&
+    this.justification().trim().length > 0 &&
+    this.supportFile()
+  ));
+
+  get documentStatus(): FlowStatus {
+    return 'Elaborado';
+  }
+
+  get solicitudeHeaderState(): SolicitudeHeaderState {
+    return this.isElaborated() ? 'elaborated' : 'new';
+  }
 
   goBack(): void {
     void this.router.navigate([PROCESS_ROUTE]);
@@ -421,6 +463,20 @@ export class ChartAccountsBulkRequestComponent implements OnDestroy {
   onSupportUploadConfirmed(file: File): void {
     this.supportFile.set(file);
     this.supportUploadSideNavOpen.set(false);
+  }
+
+  openSaveModal(): void {
+    if (!this.isFormValid()) {
+      return;
+    }
+
+    this.saveModalOpen.set(true);
+  }
+
+  onConfirmSave(): void {
+    this.saveModalOpen.set(false);
+    this.isElaborated.set(true);
+    this.successSnackbarOpen.set(true);
   }
 
   inputValue(event: Event): string {
