@@ -14,8 +14,8 @@ const SIAF_LOGO_WIDTH = 84;
 
 let siafLogoPngPromise: Promise<string | null> | null = null;
 
-/** Rasteriza el logo SVG (con PNG embebido) a un dataURL PNG usable por jsPDF. Cachea el resultado. */
-function loadSiafLogoPng(): Promise<string | null> {
+/** Rasteriza el logo SVG (con PNG embebido) a un dataURL PNG usable por jsPDF/ExcelJS. Cachea el resultado. */
+export function loadSiafLogoPng(): Promise<string | null> {
   if (siafLogoPngPromise) {
     return siafLogoPngPromise;
   }

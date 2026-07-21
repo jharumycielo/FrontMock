@@ -32,6 +32,7 @@ import { computeAmountSlots } from '../../utils/libros-contables-amount-slots';
 import { generateLibrosContablesMayorPdfReport, generateLibrosContablesPdfReport, generateLibrosContablesPliegoDiarioPdfReport, generateLibrosContablesPliegoMayorPdfReport } from '../../utils/libros-contables-pdf-report';
 import {
   ExportMatrix,
+  ReportMeta,
   buildLibroDiarioMatrix,
   buildLibroMayorMatrix,
   buildLibroPliegoDiarioMatrix,
@@ -460,7 +461,7 @@ export class LibrosContablesSearchResultsComponent {
     const tipoLabel = LIBROS_CONTABLES_TIPO_OPTIONS.find((option) => option.value === this.criteria.tipoLibro)?.label ?? 'Libro Contable';
     const mesLabel = LIBROS_CONTABLES_MES_OPTIONS.find((option) => option.value === this.criteria.mes)?.label;
     const anioLabel = LIBROS_CONTABLES_ANIO_OPTIONS.find((option) => option.value === this.criteria.anioCuenta)?.label;
-    const periodo = mesLabel && anioLabel ? ` al mes de ${mesLabel} del ${anioLabel}` : '';
+    const periodo = mesLabel ? ` al mes de ${mesLabel}${anioLabel ? ` del ${anioLabel}` : ''}` : '';
 
     return `${tipoLabel}${periodo}`;
   });
@@ -654,12 +655,33 @@ export class LibrosContablesSearchResultsComponent {
     }
 
     const matrix = this.buildExportMatrix();
+    const meta: ReportMeta = {
+      correlativo,
+      title,
+      entity: this.entity,
+      condiciones: this.filterChips(),
+      totalRegistros: this.exportRecordCount(),
+    };
 
     if (format === 'excel') {
-      downloadExcel(matrix, correlativo, title);
+      downloadExcel(matrix, meta);
     } else {
-      downloadCsv(matrix, correlativo, title);
+      downloadCsv(matrix, meta);
     }
+  }
+
+  /** Cantidad de registros del resultado, según la combinación de filtros aplicada. */
+  private exportRecordCount(): number {
+    if (this.isPliegoMayor()) {
+      return this.pliegoMayorTotalRows();
+    }
+    if (this.isPliegoDiario()) {
+      return this.pliegoDiarioRows().length;
+    }
+    if (this.isMayor()) {
+      return this.mayorTotalRows();
+    }
+    return this.filteredGroups().reduce((total, group) => total + group.cuentas.length, 0);
   }
 
   /** Construye la matriz de datos (Excel/CSV) equivalente al PDF según la combinación de filtros. */
