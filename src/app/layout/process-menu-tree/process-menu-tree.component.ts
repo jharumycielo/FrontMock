@@ -134,6 +134,13 @@ export const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
           },
           { id: 'consulta-reporte-asiento-ajuste', label: 'Consultas y reportes de proceso de registro de asiento de ajuste' }
         ]
+      },
+      {
+        id: 'libros-contables',
+        label: 'Libros contables',
+        children: [
+          { id: 'libro-diario-mayor', label: 'Consultas y reportes de Libros Contables' }
+        ]
       }
     ]
   }

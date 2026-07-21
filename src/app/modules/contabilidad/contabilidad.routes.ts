@@ -11,4 +11,9 @@ export const CONTABILIDAD_ROUTES: Routes = [
     loadChildren: () =>
       import('./asiento-ajuste/asiento-ajuste.routes').then((m) => m.ASIENTO_AJUSTE_ROUTES),
   },
+  {
+    path: 'procesos/libros-contables',
+    loadChildren: () =>
+      import('./libros-contables/libros-contables.routes').then((m) => m.LIBROS_CONTABLES_ROUTES),
+  },
 ];

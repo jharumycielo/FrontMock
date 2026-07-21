@@ -18,7 +18,7 @@ type CalendarDay = {
   imports: [ButtonComponent, IconComponent],
   template: `
     <label class="grid gap-1.5">
-      <span class="relative block w-full max-w-[300px]">
+      <span class="relative block w-full" [class.max-w-[300px]]="!fullWidth">
         @if (floatingLabel) {
           <span class="absolute -top-2.5 left-3 z-[1] rounded-siaf-sm bg-surface px-siaf-xxs text-xs font-medium leading-normal" [class]="labelClass">
             {{ labelText }}@if (required) { <span class="text-[var(--sys-color-text-feedback-danger)]">*</span> }
@@ -141,6 +141,7 @@ export class DateTimePickerComponent implements OnChanges, OnInit {
   @Input() variant: DatePickerVariant = 'date';
   @Input() defaultToToday = true;
   @Input() required = false;
+  @Input() fullWidth = false;
 
   @Output() valueChange = new EventEmitter<string>();
 

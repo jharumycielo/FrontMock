@@ -171,6 +171,10 @@ export class AppShellComponent {
     this.trayMenuOpen = navigation === 'Bandeja';
     this.createDocumentOpen = false;
     this.adminMenuOpen = false;
+
+    if (navigation === 'Proceso' && !this.router.url.startsWith('/procesos')) {
+      void this.router.navigate(['/procesos']);
+    }
   }
 
   onMobileNavigationChange(navigation: SidebarNavigation): void {
@@ -240,6 +244,12 @@ export class AppShellComponent {
     if (node.id === 'plan-cuentas-contables') {
       this.closeFloatingPanels();
       void this.router.navigate(['/procesos/plan-cuentas-contables']);
+      return;
+    }
+
+    if (node.id === 'libro-diario-mayor') {
+      this.closeFloatingPanels();
+      void this.router.navigate(['/procesos/libros-contables']);
       return;
     }
 

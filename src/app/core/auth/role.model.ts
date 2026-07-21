@@ -1,4 +1,4 @@
-export type UserRole = 'creator' | 'reviewer' | 'approver' | 'admin_sistema' | 'admin_entidad';
+export type UserRole = 'visualizador' | 'creator' | 'reviewer' | 'approver' | 'admin_sistema' | 'admin_entidad';
 
 export type Permission =
   // Documentos / Solicitudes
@@ -38,6 +38,7 @@ export type RoleRouteData = {
 };
 
 export const ROLE_LABELS: Record<UserRole, string> = {
+  visualizador: 'Visualizador',
   creator: 'Creador',
   reviewer: 'Revisor',
   approver: 'Aprobador',
@@ -46,6 +47,9 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  visualizador: [
+    'document.read', 'chart_account.read',
+  ],
   creator: [
     'document.create', 'document.edit', 'document.delete',
     'document.verify', 'document.read',

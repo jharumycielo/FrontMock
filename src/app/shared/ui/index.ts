@@ -5,6 +5,7 @@
  */
 
 export { AlertComponent } from './alert/alert.component';
+export { EmptyStateComponent } from './empty-state/empty-state.component';
 export type { AlertTone } from './alert/alert.component';
 export { ButtonComponent } from './button/button.component';
 export { SelectOptionsComponent, SelectOptionsComponent as SelectComponent } from './select-options/select-options.component';

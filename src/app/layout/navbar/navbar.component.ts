@@ -4,8 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { IconComponent } from '../../shared/ui/icon/icon.component';
 import { PermissionService } from '../../core/auth/permission.service';
-import { CurrentUserService } from '../../core/auth/current-user.service';
-import { UserRole } from '../../core/auth/role.model';
+import { CurrentUserService, VISUALIZADOR_TIPO_LABELS, VisualizadorTipo } from '../../core/auth/current-user.service';
 
 type ViewTransitionDocument = Document & {
   startViewTransition?: (updateCallback: () => void) => { ready: Promise<void> };
@@ -92,19 +91,19 @@ type ViewTransitionDocument = Document & {
                     <p class="px-siaf-md py-siaf-xs text-[10px] font-semibold uppercase text-[var(--sys-color-text-secondary)]">
                       Seleccionar perfil
                     </p>
-                    @for (rol of rolesDemo; track rol.value) {
+                    @for (perfil of visualizadorPerfiles; track perfil.tipo) {
                       <button
                         class="flex min-h-10 w-full items-center gap-siaf-md px-siaf-md py-siaf-xs text-left text-sm transition hover:bg-surface-muted"
                         type="button"
                         role="menuitem"
-                        (click)="cambiarRol(rol.value)"
+                        (click)="seleccionarPerfil(perfil.tipo)"
                       >
-                        @if (rolActual() === rol.value) {
+                        @if (visualizadorTipoActual() === perfil.tipo) {
                           <siaf-icon class="shrink-0 text-brand-primary" name="radio_button_checked" [size]="18" />
-                          <span class="min-w-0 flex-1 truncate font-bold text-brand-primary">{{ rol.label }}</span>
+                          <span class="min-w-0 flex-1 truncate font-bold text-brand-primary">{{ perfil.label }}</span>
                         } @else {
                           <siaf-icon class="shrink-0" name="radio_button_unchecked" [size]="18" />
-                          <span class="min-w-0 flex-1 truncate">{{ rol.label }}</span>
+                          <span class="min-w-0 flex-1 truncate">{{ perfil.label }}</span>
                         }
                       </button>
                     }
@@ -142,30 +141,21 @@ export class NavbarComponent {
   private readonly permissionService = inject(PermissionService);
   private readonly currentUserService = inject(CurrentUserService);
 
-  readonly rolActual = this.permissionService.currentRole;
   readonly perfilMenuOpen = signal(false);
 
-  readonly rolesDemo: { value: UserRole; label: string }[] = [
-    { value: 'creator',  label: 'Creador (Juan Pérez)' },
-    { value: 'approver', label: 'Aprobador (María López)' },
-    { value: 'admin_sistema', label: 'Admin Sistema (OGTI)' },
+  readonly visualizadorTipoActual = this.currentUserService.visualizadorTipo;
+
+  readonly visualizadorPerfiles: { tipo: VisualizadorTipo; label: string }[] = [
+    { tipo: 'unidad_ejecutora', label: 'Unidad Ejecutora' },
+    { tipo: 'pliego', label: 'Pliego' },
   ];
 
-  cambiarRol(rol: UserRole): void {
-    this.permissionService.setRole(rol);
-    const nombres: Record<string, string> = {
-      creator: 'Juan Pérez García',
-      approver: 'María López Torres',
-      admin_sistema: 'Administrador OGTI',
-    };
-    const oficinas: Record<string, string> = {
-      creator: 'CREADOR — MEF / DGCP',
-      approver: 'APROBADOR — MEF / DGCP',
-      admin_sistema: 'ADMIN SISTEMA — MEF / OGTI',
-    };
+  seleccionarPerfil(tipo: VisualizadorTipo): void {
+    this.permissionService.setRole('visualizador');
     this.currentUserService.setUser({
-      name: nombres[rol] ?? rol,
-      office: oficinas[rol] ?? rol,
+      name: 'Usuario rol Visualizador',
+      office: VISUALIZADOR_TIPO_LABELS[tipo],
+      visualizadorTipo: tipo,
     });
     this.perfilMenuOpen.set(false);
     this.userMenuOpen.set(false);

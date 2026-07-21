@@ -27,6 +27,14 @@ export const routes: Routes = [
           import('./layout/virtual-desk/virtual-desk.routes').then((m) => m.VIRTUAL_DESK_ROUTES),
         data: { permissions: ['document.read'] }
       },
+      // ── Navegador de procesos — estado vacío antes de seleccionar un proceso ──
+      {
+        path: 'procesos',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./layout/procesos-landing/procesos-landing.component').then((m) => m.ProcesosLandingComponent),
+        data: { permissions: ['document.read'] }
+      },
       // ── Módulo: Administración (OGTI y ADMIN_ENTIDAD) ──
       {
         path: 'admin',

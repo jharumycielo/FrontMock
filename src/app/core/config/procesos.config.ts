@@ -45,6 +45,13 @@ export const MODULOS_CONFIG: ModuloConfig[] = [
         icono: 'edit_note',
         permisos: ['document.read'],
       },
+      {
+        id: 'libros-contables',
+        nombre: 'Libros Contables',
+        ruta: '/procesos/libros-contables',
+        icono: 'menu_book',
+        permisos: ['document.read'],
+      },
     ],
   },
 
