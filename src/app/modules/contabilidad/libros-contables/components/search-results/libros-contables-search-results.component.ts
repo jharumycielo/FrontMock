@@ -1,18 +1,23 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, Output, computed, inject, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 
-import { CurrentUserService } from '../../../../../core/auth/current-user.service';
+import { CurrentUserService, VISUALIZADOR_TIPO_LABELS } from '../../../../../core/auth/current-user.service';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { ButtonComponent } from '../../../../../shared/ui/button/button.component';
 import { IconComponent } from '../../../../../shared/ui/icon/icon.component';
 import { TagComponent } from '../../../../../shared/ui/tag/tag.component';
 import {
   LIBROS_CONTABLES_ANIO_OPTIONS,
+  LIBROS_CONTABLES_DIARIO_MATRIX_ROWS,
   LIBROS_CONTABLES_ENTIDAD_PLIEGO_OPTIONS,
+  LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS,
+  LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS,
   LIBROS_CONTABLES_MAYOR_RESULT_GROUPS,
   LIBROS_CONTABLES_MES_OPTIONS,
   LIBROS_CONTABLES_PLIEGO_DIARIO_ROWS,
+  LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS,
   LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS,
+  LIBROS_CONTABLES_PLIEGO_OPTIONS,
   LIBROS_CONTABLES_PLIEGO_VAN_DEBE,
   LIBROS_CONTABLES_PLIEGO_VAN_HABER,
   LIBROS_CONTABLES_PLIEGO_VIENEN_DEBE,
@@ -25,15 +30,21 @@ import {
   LIBROS_CONTABLES_RESULT_VIENEN_HABER,
   LIBROS_CONTABLES_SCOPE_OPTIONS,
   LIBROS_CONTABLES_TIPO_OPTIONS,
+  LIBROS_CONTABLES_UNIDAD_EJECUTORA_OPTIONS,
   LibroContableAccountRow,
+  LibroMayorExtendidoUeGroup,
+  LibroPliegoDiarioRow,
+  LibroPliegoMayorGroup,
+  LibroPliegoMayorRow,
 } from '../../../config/accounting-books.mock';
 import { LibrosContablesSearchCriteria } from '../search-panel/libros-contables-search-panel.component';
 import { computeAmountSlots } from '../../utils/libros-contables-amount-slots';
-import { generateLibrosContablesMayorPdfReport, generateLibrosContablesPdfReport, generateLibrosContablesPliegoDiarioPdfReport, generateLibrosContablesPliegoMayorPdfReport } from '../../utils/libros-contables-pdf-report';
+import { generateLibrosContablesMayorExtendidoUePdfReport, generateLibrosContablesMayorPdfReport, generateLibrosContablesPdfReport, generateLibrosContablesPliegoDiarioPdfReport, generateLibrosContablesPliegoMayorPdfReport } from '../../utils/libros-contables-pdf-report';
 import {
   ExportMatrix,
   ReportMeta,
   buildLibroDiarioMatrix,
+  buildLibroMayorExtendidoUeMatrix,
   buildLibroMayorMatrix,
   buildLibroPliegoDiarioMatrix,
   buildLibroPliegoMayorMatrix,
@@ -44,8 +55,26 @@ import {
 type ReportFormat = 'pdf' | 'excel' | 'csv';
 
 type DisplayRow =
-  | { type: 'group'; groupId: string; codCuenta: string; fecha: string; documento: string }
+  | { type: 'group'; groupId: string; tipoRegistro: string; nroDocContable: string; codCuenta: string; fecha: string; tipoDocumento: string; codDocOrigen: string; documento: string }
   | { type: 'account'; groupId: string; account: LibroContableAccountRow };
+
+/** Filas del Libro Diario · Integrado a nivel pliego: acordeón por Unidad Ejecutora + operaciones estándar. */
+type PliegoDiarioUeDisplayRow =
+  | { type: 'ue'; ueId: string; unidadEjecutora: string }
+  | { type: 'group'; ueId: string; groupId: string; tipoRegistro: string; nroDocContable: string; codCuenta: string; fecha: string; tipoDocumento: string; codDocOrigen: string; documento: string }
+  | { type: 'account'; ueId: string; groupId: string; account: LibroContableAccountRow };
+
+/** Filas del Libro Mayor Extendido consolidado (ENTE RECTOR): acordeón por Unidad Ejecutora + sub-cuentas y su detalle. */
+type MayorExtendidoUeDisplayRow =
+  | { type: 'ue'; ueId: string; unidadEjecutora: string }
+  | { type: 'group'; ueId: string; group: LibroPliegoMayorGroup }
+  | { type: 'detalle'; ueId: string; groupId: string; det: LibroPliegoMayorRow };
+
+/** Fecha/hora de generación con formato DD/MM/YYYY HH:MM:SS. */
+function formatFechaHora(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
 
 @Component({
   selector: 'siaf-libros-contables-search-results',
@@ -101,20 +130,45 @@ type DisplayRow =
         <div class="grid gap-siaf-md">
           <h3 class="m-0 text-sm font-bold uppercase leading-normal text-text">{{ bookTitle() }}</h3>
 
-          <div class="grid gap-siaf-md sm:grid-cols-2">
+          <div class="grid gap-siaf-md" [ngClass]="esEnteRector() ? 'sm:grid-cols-2' : muestraPliegoUnidad() ? 'sm:grid-cols-4' : 'sm:grid-cols-3'">
             <div class="grid gap-siaf-xxs">
               <span class="text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Entidad</span>
               <span class="text-sm text-text">{{ entity.entidad }}</span>
             </div>
+            @if (esEnteRector()) {
+              <!-- Ente Rector: el Pliego ya está en los filtros, solo se muestra Entidad. -->
+            } @else if (muestraPliegoUnidad()) {
+              <!-- Unidad Ejecutora: Entidad · Pliego · Unidad Ejecutora. -->
+              <div class="grid gap-siaf-xxs">
+                <span class="text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Pliego</span>
+                <span class="text-sm text-text">{{ entity.pliego }}</span>
+              </div>
+              <div class="grid gap-siaf-xxs">
+                <span class="text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Unidad Ejecutora</span>
+                <span class="text-sm text-text">{{ entity.unidadEjecutora }}</span>
+              </div>
+            } @else if (esPliego()) {
+              <!-- Pliego: en todos los resultados solo Entidad · Pliego (sin Unidad Ejecutora). -->
+              <div class="grid gap-siaf-xxs">
+                <span class="text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Pliego</span>
+                <span class="text-sm text-text">{{ entity.pliego }}</span>
+              </div>
+            } @else {
+              <div class="grid gap-siaf-xxs">
+                <span class="text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Sector</span>
+                <span class="text-sm text-text">{{ entity.sector }}</span>
+              </div>
+            }
+            <!-- Fecha/hora de generación: última columna en todas las vistas y libros. -->
             <div class="grid gap-siaf-xxs">
-              <span class="text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Sector</span>
-              <span class="text-sm text-text">{{ entity.sector }}</span>
+              <span class="text-[11px] font-medium uppercase tracking-[0.66px] text-text-muted">Fecha</span>
+              <span class="text-sm text-text">{{ reportFechaHora() }}</span>
             </div>
           </div>
         </div>
 
         <div class="grid gap-siaf-md border-t border-[var(--sys-color-divider-default)] pt-siaf-md">
-          <h3 class="m-0 text-sm font-bold uppercase leading-normal text-text">Cuenta contable</h3>
+          <h3 class="m-0 text-sm font-bold uppercase leading-normal text-text">{{ searchSectionTitle() }}</h3>
 
           <div class="flex flex-col gap-siaf-sm lg:flex-row lg:items-center">
             <label class="flex h-10 min-w-0 flex-1 items-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] bg-surface px-siaf-md">
@@ -127,15 +181,7 @@ type DisplayRow =
           </div>
 
           <div class="flex flex-wrap items-center gap-siaf-xs">
-            <button class="inline-flex h-8 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] px-siaf-sm text-sm text-text-muted" type="button">
-              Label
-              <siaf-icon name="expand_more" [size]="18" />
-            </button>
-            <button class="inline-flex h-8 items-center gap-siaf-xs rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] px-siaf-sm text-sm text-text-muted" type="button">
-              Label
-              <siaf-icon name="expand_more" [size]="18" />
-            </button>
-            <button class="inline-flex size-8 items-center justify-center rounded-siaf-md border border-[var(--sys-color-border-states-enabled)] text-text-muted" type="button" aria-label="Agregar filtro">
+            <button class="inline-flex size-8 items-center justify-center rounded-siaf-md text-text-muted disabled:cursor-not-allowed disabled:opacity-40" type="button" aria-label="Agregar filtro" disabled>
               <siaf-icon name="add" [size]="18" />
             </button>
           </div>
@@ -144,51 +190,76 @@ type DisplayRow =
             <label class="inline-flex items-center gap-siaf-xs">
               <input class="size-4 border-border text-brand-primary focus:ring-brand-primary" type="checkbox" aria-label="Seleccionar todo" [checked]="allSelected()" (change)="toggleSelectAll()" />
             </label>
-            <siaf-pagination navigation="Activate" position="Top" [page]="groupsPage()" [pageSize]="groupsPageSize()" [totalItems]="isPliegoDiario() ? pliegoDiarioRows().length : isPliegoMayor() ? pliegoMayorTotalRows() : isMayor() ? mayorTotalRows() : filteredGroups().length" [totalPages]="1" (previous)="previousGroupsPage()" (next)="nextGroupsPage()" />
+            <siaf-pagination navigation="Activate" position="Top" [page]="groupsPage()" [pageSize]="groupsPageSize()" [totalItems]="isPliegoDiario() ? pliegoDiarioUeTotalRows() : isMayorExtendidoUe() ? mayorExtendidoUeTotalRows() : (isPliegoMayor() || isMayorExtendido()) ? mayorConsolidadoTotalRows() : isMayor() ? mayorTotalRows() : filteredGroups().length" [totalPages]="1" (previous)="previousGroupsPage()" (next)="nextGroupsPage()" />
           </div>
 
           @if (isPliegoDiario()) {
-          <div class="siaf-table-shell">
-            <table class="siaf-table w-full [&_th]:border [&_th]:border-[var(--sys-color-divider-strong)]">
+          <div class="siaf-table-shell max-h-[460px] [&_.siaf-table-td]:h-14">
+            <table class="siaf-table min-w-[1440px]">
               <thead>
                 <tr class="siaf-table-head-row">
-                  <th class="siaf-table-th align-middle" rowspan="3">Fecha</th>
-                  <th class="siaf-table-th align-middle" rowspan="3">Cod. Asiento</th>
-                  <th class="siaf-table-th align-middle" rowspan="3">Mayor</th>
-                  <th class="siaf-table-th text-center" colspan="3">Cuenta</th>
-                  <th class="siaf-table-th text-right align-middle" rowspan="3">Debe</th>
-                  <th class="siaf-table-th text-right align-middle" rowspan="3">Haber</th>
-                </tr>
-                <tr class="siaf-table-head-row">
-                  <th class="siaf-table-th text-center" colspan="3">Denominación</th>
-                </tr>
-                <tr class="siaf-table-head-row">
-                  <th class="siaf-table-th">Sub Cuenta</th>
-                  <th class="siaf-table-th">Mnen.</th>
-                  <th class="siaf-table-th">Nombre</th>
+                  <th class="siaf-table-th"></th>
+                  <th class="siaf-table-th whitespace-nowrap">Ejercicio</th>
+                  <th class="siaf-table-th whitespace-nowrap">Entidad</th>
+                  <th class="siaf-table-th whitespace-nowrap">Tipo Registro</th>
+                  <th class="siaf-table-th whitespace-nowrap">Nro Reg. Contable</th>
+                  <th class="siaf-table-th whitespace-nowrap">Nro. Asiento Contable</th>
+                  <th class="siaf-table-th">Fecha</th>
+                  <th class="siaf-table-th whitespace-nowrap">Tipo doc origen</th>
+                  <th class="siaf-table-th whitespace-nowrap">Nro doc origen</th>
+                  <th class="siaf-table-th">Documento origen</th>
+                  <th class="siaf-table-th text-right">Debe</th>
+                  <th class="siaf-table-th text-right">Haber</th>
                 </tr>
               </thead>
               <tbody>
                 <tr class="siaf-table-row bg-[var(--sys-color-bg-surfaces-surface-low)] text-[length:var(--sys-typography-size-caption-1)] font-bold">
-                  <td class="siaf-table-td text-center" colspan="6">-Vienen-</td>
-                  <td class="siaf-table-td text-right">{{ formatImporte(pliegoVienenDebe) }}</td>
-                  <td class="siaf-table-td text-right">{{ formatImporte(pliegoVienenHaber) }}</td>
+                  <td class="siaf-table-td text-center" colspan="10">-Vienen-</td>
+                  <td class="siaf-table-td text-right">{{ formatImporte(vienenDebe) }}</td>
+                  <td class="siaf-table-td text-right">{{ formatImporte(vienenHaber) }}</td>
                 </tr>
-                @for (row of pliegoDiarioRows(); track $index) {
-                  <tr class="siaf-table-row">
-                    <td class="siaf-table-td whitespace-nowrap">{{ row.fecha }}</td>
-                    <td class="siaf-table-td whitespace-nowrap">{{ row.codAsiento }}</td>
-                    <td class="siaf-table-td whitespace-nowrap">{{ row.mayor }}</td>
-                    <td class="siaf-table-td whitespace-nowrap" [style.paddingLeft.px]="row.subCuentaIndent * 24 + 16">{{ row.subCuenta }}</td>
-                    <td class="siaf-table-td whitespace-nowrap">{{ row.mnen }}</td>
-                    <td class="siaf-table-td whitespace-nowrap">{{ row.nombre }}</td>
-                    <td class="siaf-table-td whitespace-nowrap text-right">{{ row.debe ? formatImporte(row.debe) : '' }}</td>
-                    <td class="siaf-table-td whitespace-nowrap text-right">{{ row.haber ? formatImporte(row.haber) : '' }}</td>
-                  </tr>
+                @for (row of pliegoDiarioUeRows(); track pliegoUeRowKey(row)) {
+                  @if (row.type === 'ue') {
+                    <tr class="siaf-table-row">
+                      <td class="siaf-table-td font-bold" colspan="12">
+                        <button class="inline-flex items-center gap-siaf-xs font-bold" type="button" [attr.aria-label]="isUeExpanded(row.ueId) ? 'Contraer ' + row.unidadEjecutora : 'Expandir ' + row.unidadEjecutora" (click)="toggleUeExpanded(row.ueId)">
+                          <siaf-icon [name]="isUeExpanded(row.ueId) ? 'expand_more' : 'chevron_right'" [size]="20" />
+                          <span class="font-bold">{{ row.unidadEjecutora }}</span>
+                        </button>
+                      </td>
+                    </tr>
+                  } @else if (row.type === 'group') {
+                    <tr class="siaf-table-row">
+                      <td class="siaf-table-td">
+                        <input class="size-4 border-border text-brand-primary focus:ring-brand-primary" type="checkbox" [attr.aria-label]="'Seleccionar ' + row.codCuenta" [checked]="isSelected(row.groupId)" (change)="toggleSelected(row.groupId)" />
+                      </td>
+                      <td class="siaf-table-td whitespace-nowrap font-medium">{{ reportEjercicio }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-medium">{{ reportEntidadCodigo }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-medium">{{ row.tipoRegistro }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-medium">{{ row.nroDocContable }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-medium">{{ row.codCuenta }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-medium">{{ row.fecha }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-medium">{{ row.tipoDocumento }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-medium">{{ row.codDocOrigen }}</td>
+                      <td class="siaf-table-td font-medium" colspan="3">{{ row.documento }}</td>
+                    </tr>
+                  } @else {
+                    <tr class="siaf-table-row">
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td" [style.paddingLeft.px]="(row.account.nivel - 1) * 24 + 16" colspan="5">
+                        {{ row.account.codigo }} {{ row.account.nombre }}
+                      </td>
+                      @for (slot of amountSlots(row.account); track $index) {
+                        <td class="siaf-table-td text-right" [class.font-medium]="$index >= 2">{{ slot }}</td>
+                      }
+                    </tr>
+                  }
                 }
                 @empty {
                   <tr>
-                    <td colspan="8" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
+                    <td colspan="12" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
                       No se encontraron operaciones para el criterio de búsqueda.
                     </td>
                   </tr>
@@ -196,18 +267,20 @@ type DisplayRow =
               </tbody>
               <tfoot>
                 <tr class="siaf-table-row bg-[var(--sys-color-bg-surfaces-surface-low)] text-[length:var(--sys-typography-size-caption-1)] font-bold">
-                  <td class="siaf-table-td text-center" colspan="6">-Van-</td>
-                  <td class="siaf-table-td text-right">{{ formatImporte(pliegoVanDebe) }}</td>
-                  <td class="siaf-table-td text-right">{{ formatImporte(pliegoVanHaber) }}</td>
+                  <td class="siaf-table-td text-center" colspan="10">-Van-</td>
+                  <td class="siaf-table-td text-right">{{ formatImporte(totalDebe) }}</td>
+                  <td class="siaf-table-td text-right">{{ formatImporte(totalHaber) }}</td>
                 </tr>
               </tfoot>
             </table>
           </div>
-          } @else if (isPliegoMayor()) {
+          } @else if (isMayorExtendidoUe()) {
           <div class="siaf-table-shell">
             <table class="siaf-table w-full [&_th]:border [&_th]:border-[var(--sys-color-divider-strong)]">
               <thead>
                 <tr class="siaf-table-head-row">
+                  <th class="siaf-table-th align-middle" rowspan="3">Ejercicio</th>
+                  <th class="siaf-table-th align-middle" rowspan="3">Entidad</th>
                   <th class="siaf-table-th align-middle" rowspan="3">Fecha</th>
                   <th class="siaf-table-th align-middle" rowspan="3">Código</th>
                   <th class="siaf-table-th text-center" colspan="2">Cuenta</th>
@@ -224,8 +297,78 @@ type DisplayRow =
                 </tr>
               </thead>
               <tbody>
-                @for (group of pliegoMayorGroups(); track group.id) {
+                @for (row of mayorExtendidoUeRows(); track mayorExtendidoUeRowKey(row)) {
+                  @if (row.type === 'ue') {
+                    <tr class="siaf-table-row">
+                      <td class="siaf-table-td font-bold" colspan="9">
+                        <button class="inline-flex items-center gap-siaf-xs font-bold" type="button" [attr.aria-label]="isUeExpanded(row.ueId) ? 'Contraer ' + row.unidadEjecutora : 'Expandir ' + row.unidadEjecutora" (click)="toggleUeExpanded(row.ueId)">
+                          <siaf-icon [name]="isUeExpanded(row.ueId) ? 'expand_more' : 'chevron_right'" [size]="20" />
+                          <span class="font-bold">{{ row.unidadEjecutora }}</span>
+                        </button>
+                      </td>
+                    </tr>
+                  } @else if (row.type === 'group') {
+                    <tr class="siaf-table-row">
+                      <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ reportEntidadCodigo }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ row.group.fecha }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.group.codigo }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold" colspan="2">{{ row.group.cuenta }}</td>
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td"></td>
+                    </tr>
+                  } @else {
+                    <tr class="siaf-table-row">
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ row.det.minen }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ row.det.nombre }}</td>
+                      <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.det.debe) }}</td>
+                      <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.det.haber) }}</td>
+                      <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.det.saldo) }}</td>
+                    </tr>
+                  }
+                }
+                @empty {
+                  <tr>
+                    <td colspan="9" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
+                      No se encontraron operaciones para el criterio de búsqueda.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          } @else if (isPliegoMayor() || isMayorExtendido()) {
+          <div class="siaf-table-shell">
+            <table class="siaf-table w-full [&_th]:border [&_th]:border-[var(--sys-color-divider-strong)]">
+              <thead>
+                <tr class="siaf-table-head-row">
+                  <th class="siaf-table-th align-middle" rowspan="3">Ejercicio</th>
+                  <th class="siaf-table-th align-middle" rowspan="3">Entidad</th>
+                  <th class="siaf-table-th align-middle" rowspan="3">Fecha</th>
+                  <th class="siaf-table-th align-middle" rowspan="3">Código</th>
+                  <th class="siaf-table-th text-center" colspan="2">Cuenta</th>
+                  <th class="siaf-table-th text-right align-middle" rowspan="3">Debe</th>
+                  <th class="siaf-table-th text-right align-middle" rowspan="3">Haber</th>
+                  <th class="siaf-table-th text-right align-middle" rowspan="3">Saldo</th>
+                </tr>
+                <tr class="siaf-table-head-row">
+                  <th class="siaf-table-th align-middle" rowspan="2">Minen.</th>
+                  <th class="siaf-table-th text-center">Denominación</th>
+                </tr>
+                <tr class="siaf-table-head-row">
+                  <th class="siaf-table-th">Nombre - Unidad Ejecutora</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (group of mayorConsolidadoGroups(); track group.id) {
                   <tr class="siaf-table-row">
+                    <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio }}</td>
+                    <td class="siaf-table-td whitespace-nowrap">{{ reportEntidadCodigo }}</td>
                     <td class="siaf-table-td whitespace-nowrap">{{ group.fecha }}</td>
                     <td class="siaf-table-td whitespace-nowrap font-bold">{{ group.codigo }}</td>
                     <td class="siaf-table-td whitespace-nowrap font-bold" colspan="2">{{ group.cuenta }}</td>
@@ -235,6 +378,8 @@ type DisplayRow =
                   </tr>
                   @for (det of group.detalles; track $index) {
                     <tr class="siaf-table-row">
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td"></td>
                       <td class="siaf-table-td"></td>
                       <td class="siaf-table-td"></td>
                       <td class="siaf-table-td whitespace-nowrap">{{ det.minen }}</td>
@@ -247,7 +392,7 @@ type DisplayRow =
                 }
                 @empty {
                   <tr>
-                    <td colspan="7" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
+                    <td colspan="9" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
                       No se encontraron operaciones para el criterio de búsqueda.
                     </td>
                   </tr>
@@ -257,46 +402,68 @@ type DisplayRow =
           </div>
           } @else if (isMayor()) {
           <div class="siaf-table-shell">
-            <table class="siaf-table min-w-[1000px]">
+            <table class="siaf-table w-full min-w-[1420px]">
+              <colgroup>
+                <col class="w-12" />
+                <col class="w-[90px]" />
+                <col class="w-[90px]" />
+                <col class="w-[95px]" />
+                <col class="w-[130px]" />
+                <col class="w-[145px]" />
+                <col class="w-[150px]" />
+                <col class="w-[160px]" />
+                <col class="w-[150px]" />
+                <col class="w-[95px]" />
+                <col class="w-[118px]" />
+                <col class="w-[140px]" />
+              </colgroup>
               <thead>
                 <tr class="siaf-table-head-row">
                   <th class="siaf-table-th"></th>
+                  <th class="siaf-table-th whitespace-nowrap">Ejercicio</th>
+                  <th class="siaf-table-th whitespace-nowrap">Entidad</th>
                   <th class="siaf-table-th">Fecha</th>
-                  <th class="siaf-table-th">Doc. CA/REG/Nota</th>
-                  <th class="siaf-table-th">Documento</th>
-                  <th class="siaf-table-th">Nro Documento</th>
-                  <th class="siaf-table-th">Nro. Asiento</th>
+                  <th class="siaf-table-th whitespace-nowrap">Nro Reg. Contable</th>
+                  <th class="siaf-table-th whitespace-nowrap">Nro. Asiento</th>
+                  <th class="siaf-table-th whitespace-nowrap">Tipo Registro</th>
+                  <th class="siaf-table-th">Documento origen</th>
+                  <th class="siaf-table-th">Nro doc origen</th>
                   <th class="siaf-table-th text-right">Debe</th>
                   <th class="siaf-table-th text-right">Haber</th>
+                  <th class="siaf-table-th text-right">Saldo</th>
                 </tr>
               </thead>
               <tbody>
-                @for (group of mayorGroups(); track group.id) {
+                @for (group of mayorGroupsView(); track group.id) {
                   <tr class="siaf-table-row">
                     <td class="siaf-table-td">
                       <input class="size-4 border-border text-brand-primary focus:ring-brand-primary" type="checkbox" [attr.aria-label]="'Seleccionar ' + group.codCuenta" [checked]="isSelected(group.id)" (change)="toggleSelected(group.id)" />
                     </td>
                     <td class="siaf-table-td font-bold">{{ group.codCuenta }}</td>
-                    <td class="siaf-table-td font-bold" colspan="6">{{ group.nombreCuenta }}</td>
+                    <td class="siaf-table-td font-bold" colspan="10">{{ group.nombreCuenta }}</td>
                   </tr>
                   @for (mov of group.movimientos; track $index) {
                     <tr class="siaf-table-row">
                       <td class="siaf-table-td">
                         <input class="size-4 border-border text-brand-primary focus:ring-brand-primary" type="checkbox" [attr.aria-label]="'Seleccionar movimiento ' + mov.nroAsiento" [checked]="isMayorRowSelected(group.id + '-' + $index)" (change)="toggleMayorRow(group.id + '-' + $index)" />
                       </td>
-                      <td class="siaf-table-td">{{ mov.fecha }}</td>
-                      <td class="siaf-table-td">{{ mov.docCaRegNota }}</td>
-                      <td class="siaf-table-td">{{ mov.documento }}</td>
-                      <td class="siaf-table-td">{{ mov.nroDocumento }}</td>
-                      <td class="siaf-table-td">{{ mov.nroAsiento }}</td>
-                      <td class="siaf-table-td text-right">{{ mov.debe ? formatImporte(mov.debe) : '' }}</td>
-                      <td class="siaf-table-td text-right">{{ mov.haber ? formatImporte(mov.haber) : '' }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ reportEntidadCodigo }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ mov.fecha }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ mov.nroDocContable }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ mov.nroAsiento }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ mov.tipo }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ mov.documento }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ mov.nroDocumento }}</td>
+                      <td class="siaf-table-td whitespace-nowrap text-right">{{ mov.debe ? formatImporte(mov.debe) : '' }}</td>
+                      <td class="siaf-table-td whitespace-nowrap text-right">{{ mov.haber ? formatImporte(mov.haber) : '' }}</td>
+                      <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(mov.saldo) }}</td>
                     </tr>
                   }
                 }
                 @empty {
                   <tr>
-                    <td colspan="8" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
+                    <td colspan="12" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
                       No se encontraron operaciones para el criterio de búsqueda.
                     </td>
                   </tr>
@@ -305,16 +472,20 @@ type DisplayRow =
             </table>
           </div>
           } @else {
-          <div class="siaf-table-shell">
-            <table class="siaf-table min-w-[900px]">
+          <div class="siaf-table-shell max-h-[420px] [&_.siaf-table-td]:h-14">
+            <table class="siaf-table min-w-[1440px]">
               <thead>
                 <tr class="siaf-table-head-row">
                   <th class="siaf-table-th"></th>
-                  <th class="siaf-table-th">Cod. Asiento</th>
+                  <th class="siaf-table-th whitespace-nowrap">Ejercicio</th>
+                  <th class="siaf-table-th whitespace-nowrap">Entidad</th>
+                  <th class="siaf-table-th whitespace-nowrap">Tipo Registro</th>
+                  <th class="siaf-table-th whitespace-nowrap">Nro Reg. Contable</th>
+                  <th class="siaf-table-th whitespace-nowrap">Nro. Asiento Contable</th>
                   <th class="siaf-table-th">Fecha</th>
-                  <th class="siaf-table-th">Documento</th>
-                  <th class="siaf-table-th"></th>
-                  <th class="siaf-table-th"></th>
+                  <th class="siaf-table-th whitespace-nowrap">Tipo doc origen</th>
+                  <th class="siaf-table-th whitespace-nowrap">Nro doc origen</th>
+                  <th class="siaf-table-th">Documento origen</th>
                   <th class="siaf-table-th text-right">Debe</th>
                   <th class="siaf-table-th text-right">Haber</th>
                 </tr>
@@ -322,7 +493,7 @@ type DisplayRow =
               <tbody>
                 @if (displayRows().length > 0) {
                   <tr class="siaf-table-row bg-[var(--sys-color-bg-surfaces-surface-low)] text-[length:var(--sys-typography-size-caption-1)] font-bold">
-                    <td class="siaf-table-td text-center" colspan="6">-Vienen-</td>
+                    <td class="siaf-table-td text-center" colspan="10">-Vienen-</td>
                     <td class="siaf-table-td text-right">{{ formatImporte(vienenDebe) }}</td>
                     <td class="siaf-table-td text-right">{{ formatImporte(vienenHaber) }}</td>
                   </tr>
@@ -338,14 +509,22 @@ type DisplayRow =
                           </button>
                         </div>
                       </td>
-                      <td class="siaf-table-td font-bold">{{ row.codCuenta }}</td>
-                      <td class="siaf-table-td font-bold">{{ row.fecha }}</td>
-                      <td class="siaf-table-td font-bold" colspan="5">{{ row.documento }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ reportEjercicio }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ reportEntidadCodigo }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.tipoRegistro }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.nroDocContable }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.codCuenta }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.fecha }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.tipoDocumento }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.codDocOrigen }}</td>
+                      <td class="siaf-table-td font-bold" colspan="3">{{ row.documento }}</td>
                     </tr>
                   } @else {
                     <tr class="siaf-table-row">
                       <td class="siaf-table-td"></td>
-                      <td class="siaf-table-td" [style.paddingLeft.px]="(row.account.nivel - 1) * 24 + 16" colspan="3">
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td" [style.paddingLeft.px]="(row.account.nivel - 1) * 24 + 16" colspan="5">
                         {{ row.account.codigo }} {{ row.account.nombre }}
                       </td>
                       @for (slot of amountSlots(row.account); track $index) {
@@ -356,7 +535,7 @@ type DisplayRow =
                 }
                 @empty {
                   <tr>
-                    <td colspan="8" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
+                    <td colspan="12" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
                       No se encontraron operaciones para el criterio de búsqueda.
                     </td>
                   </tr>
@@ -365,7 +544,7 @@ type DisplayRow =
               @if (displayRows().length > 0) {
                 <tfoot>
                   <tr class="siaf-table-row bg-[var(--sys-color-bg-surfaces-surface-low)] text-[length:var(--sys-typography-size-caption-1)] font-bold">
-                    <td class="siaf-table-td text-center" colspan="6">-Van-</td>
+                    <td class="siaf-table-td text-center" colspan="10">-Van-</td>
                     <td class="siaf-table-td text-right">{{ formatImporte(totalDebe) }}</td>
                     <td class="siaf-table-td text-right">{{ formatImporte(totalHaber) }}</td>
                   </tr>
@@ -375,7 +554,7 @@ type DisplayRow =
           </div>
           }
 
-          <siaf-pagination navigation="Activate" position="Bottom" [rowPage]="true" [page]="1" [pageSize]="rowsPerPage()" [rowsPerPage]="rowsPerPage()" [totalItems]="isPliegoDiario() ? pliegoDiarioRows().length : isPliegoMayor() ? pliegoMayorTotalRows() : isMayor() ? mayorTotalRows() : displayRows().length" [totalPages]="1" (rowsPerPageChange)="rowsPerPage.set($event)" />
+          <siaf-pagination navigation="Activate" position="Bottom" [rowPage]="true" [page]="1" [pageSize]="rowsPerPage()" [rowsPerPage]="rowsPerPage()" [totalItems]="isPliegoDiario() ? pliegoDiarioUeTotalRows() : isMayorExtendidoUe() ? mayorExtendidoUeTotalRows() : (isPliegoMayor() || isMayorExtendido()) ? mayorConsolidadoTotalRows() : isMayor() ? mayorTotalRows() : displayRows().length" [totalPages]="1" (rowsPerPageChange)="rowsPerPage.set($event)" />
         </div>
       </div>
     </div>
@@ -383,11 +562,25 @@ type DisplayRow =
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LibrosContablesSearchResultsComponent {
-  @Input({ required: true }) criteria!: LibrosContablesSearchCriteria;
+  /** Fecha/hora real de generación del resultado; se refresca en cada búsqueda aplicada. */
+  readonly reportFechaHora = signal(formatFechaHora(new Date()));
+
+  private _criteria!: LibrosContablesSearchCriteria;
+  @Input({ required: true })
+  get criteria(): LibrosContablesSearchCriteria {
+    return this._criteria;
+  }
+  set criteria(value: LibrosContablesSearchCriteria) {
+    this._criteria = value;
+    this.reportFechaHora.set(formatFechaHora(new Date()));
+  }
 
   @Output() quitarFiltros = new EventEmitter<void>();
 
   readonly entity = LIBROS_CONTABLES_RESULT_ENTITY;
+  /** Ejercicio contable y código de entidad, mostrados como primeras columnas en cada libro. */
+  readonly reportEjercicio = 2026;
+  readonly reportEntidadCodigo = Number(LIBROS_CONTABLES_RESULT_ENTITY.entidad.match(/\d+/)?.[0] ?? 0);
   readonly vienenDebe = LIBROS_CONTABLES_RESULT_VIENEN_DEBE;
   readonly vienenHaber = LIBROS_CONTABLES_RESULT_VIENEN_HABER;
   readonly totalDebe = LIBROS_CONTABLES_RESULT_TOTAL_DEBE;
@@ -424,6 +617,13 @@ export class LibrosContablesSearchResultsComponent {
 
   readonly searchTerm = signal('');
   readonly expandedGroups = signal<Set<string>>(new Set(LIBROS_CONTABLES_RESULT_GROUPS.map((group) => group.id)));
+  // Acordeones de Unidad Ejecutora (Libro Diario integrado y Libro Mayor extendido): todos expandidos por defecto.
+  readonly expandedUeGroups = signal<Set<string>>(
+    new Set([
+      ...LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS.map((ue) => ue.id),
+      ...LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS.map((ue) => ue.id),
+    ]),
+  );
   readonly selectedGroups = signal<Set<string>>(new Set());
   readonly groupsPage = signal(1);
   readonly groupsPageSize = signal(5);
@@ -436,29 +636,57 @@ export class LibrosContablesSearchResultsComponent {
     const entidadLabel = LIBROS_CONTABLES_ENTIDAD_PLIEGO_OPTIONS.find((option) => option.value === this.criteria.entidad)?.label;
     const mesLabel = LIBROS_CONTABLES_MES_OPTIONS.find((option) => option.value === this.criteria.mes)?.label;
     const anioLabel = LIBROS_CONTABLES_ANIO_OPTIONS.find((option) => option.value === this.criteria.anioCuenta)?.label;
+    const pliegoLabel = LIBROS_CONTABLES_PLIEGO_OPTIONS.find((option) => option.value === this.criteria.pliego)?.label;
+    // El filtro Unidad Ejecutora solo existe para el visualizador ENTE RECTOR.
+    const unidadEjecutoraLabel = this.esEnteRector()
+      ? LIBROS_CONTABLES_UNIDAD_EJECUTORA_OPTIONS.find((option) => option.value === this.criteria.unidadEjecutora)?.label
+      : undefined;
 
     if (scopeLabel) chips.push(scopeLabel);
     if (tipoLabel) chips.push(`Tipo de Libro: ${tipoLabel}`);
     if (entidadLabel) chips.push(`Entidad: ${entidadLabel}`);
+    if (anioLabel) chips.push(`Ejercicio contable: ${anioLabel}`);
     if (mesLabel) chips.push(`Mes: ${mesLabel}`);
-    if (anioLabel) chips.push(`Año cuenta: ${anioLabel}`);
+    if (pliegoLabel) chips.push(`Pliego: ${pliegoLabel}`);
+    if (unidadEjecutoraLabel) chips.push(`Unidad ejecutora: ${unidadEjecutoraLabel}`);
     if (this.criteria.fechaDesde) chips.push(`Desde: ${this.criteria.fechaDesde}`);
     if (this.criteria.fechaHasta) chips.push(`Hasta: ${this.criteria.fechaHasta}`);
 
     return chips;
   });
 
+  /** Etiqueta del tipo de libro; añade "Detallado" en la variante de Libro Mayor detallado. */
+  private readonly tipoLibroLabel = computed(() => {
+    const base = LIBROS_CONTABLES_TIPO_OPTIONS.find((option) => option.value === this.criteria.tipoLibro)?.label ?? 'Libro Contable';
+    return this.isMayorExtendido() ? `${base} Detallado` : base;
+  });
+
   readonly bookTitle = computed(() => {
-    const tipoLabel = LIBROS_CONTABLES_TIPO_OPTIONS.find((option) => option.value === this.criteria.tipoLibro)?.label ?? 'Libro Contable';
+    const tipoLabel = this.tipoLibroLabel();
     const mesLabel = LIBROS_CONTABLES_MES_OPTIONS.find((option) => option.value === this.criteria.mes)?.label;
     const anioLabel = LIBROS_CONTABLES_ANIO_OPTIONS.find((option) => option.value === this.criteria.anioCuenta)?.label;
-    const periodo = mesLabel && anioLabel ? ` al mes de ${mesLabel} de ${anioLabel}` : '';
+    // Muestra el mes cuando está seleccionado; el año solo si el filtro lo incluye (p. ej. Unidad Ejecutora).
+    const periodo = mesLabel ? ` al mes de ${mesLabel}${anioLabel ? ` de ${anioLabel}` : ''}` : '';
 
     return `Datos del ${tipoLabel}${periodo}`;
   });
 
+  /**
+   * Título del buscador de contenido de la tabla; refleja el libro mostrado y añade
+   * "Integrado" en las vistas consolidadas por unidad ejecutora (integrado a pliego / Ente Rector Todos).
+   */
+  readonly searchSectionTitle = computed(() => {
+    const libro = this.isMayorExtendido()
+      ? 'Libro Mayor Detallado'
+      : this.isMayor()
+        ? 'Libro Mayor'
+        : 'Libro Diario';
+    const integrado = this.isPliegoDiario() || this.isPliegoMayor() || this.isMayorExtendidoUe();
+    return `Búsqueda ${libro}${integrado ? ' Integrado' : ''}`;
+  });
+
   readonly reportTitle = computed(() => {
-    const tipoLabel = LIBROS_CONTABLES_TIPO_OPTIONS.find((option) => option.value === this.criteria.tipoLibro)?.label ?? 'Libro Contable';
+    const tipoLabel = this.tipoLibroLabel();
     const mesLabel = LIBROS_CONTABLES_MES_OPTIONS.find((option) => option.value === this.criteria.mes)?.label;
     const anioLabel = LIBROS_CONTABLES_ANIO_OPTIONS.find((option) => option.value === this.criteria.anioCuenta)?.label;
     const periodo = mesLabel ? ` al mes de ${mesLabel}${anioLabel ? ` del ${anioLabel}` : ''}` : '';
@@ -482,7 +710,7 @@ export class LibrosContablesSearchResultsComponent {
     const rows: DisplayRow[] = [];
 
     for (const group of this.filteredGroups()) {
-      rows.push({ type: 'group', groupId: group.id, codCuenta: group.codCuenta, fecha: group.fecha, documento: group.documento });
+      rows.push({ type: 'group', groupId: group.id, tipoRegistro: group.tipoRegistro, nroDocContable: group.nroDocContable, codCuenta: group.codCuenta, fecha: group.fecha, tipoDocumento: group.tipoDocumento, codDocOrigen: group.codDocOrigen, documento: group.documento });
 
       if (this.isExpanded(group.id)) {
         for (const account of group.cuentas) {
@@ -496,24 +724,108 @@ export class LibrosContablesSearchResultsComponent {
 
   readonly allSelected = computed(() => this.filteredGroups().length > 0 && this.filteredGroups().every((group) => this.selectedGroups().has(group.id)));
 
+  /** Grupos de Unidad Ejecutora del Libro Diario · Integrado a nivel pliego (filtrados por búsqueda). */
+  readonly pliegoDiarioUeGroups = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) {
+      return LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS;
+    }
+    return LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS.map((ue) => ({
+      ...ue,
+      operaciones: ue.operaciones.filter(
+        (group) => group.documento.toLowerCase().includes(term) || group.codCuenta.toLowerCase().includes(term),
+      ),
+    })).filter((ue) => ue.unidadEjecutora.toLowerCase().includes(term) || ue.operaciones.length > 0);
+  });
+
+  /** Filas planas (UE / asiento / cuenta) para renderizar los acordeones de Unidad Ejecutora. */
+  readonly pliegoDiarioUeRows = computed<PliegoDiarioUeDisplayRow[]>(() => {
+    const rows: PliegoDiarioUeDisplayRow[] = [];
+    for (const ue of this.pliegoDiarioUeGroups()) {
+      rows.push({ type: 'ue', ueId: ue.id, unidadEjecutora: ue.unidadEjecutora });
+      if (this.isUeExpanded(ue.id)) {
+        for (const group of ue.operaciones) {
+          rows.push({ type: 'group', ueId: ue.id, groupId: group.id, tipoRegistro: group.tipoRegistro, nroDocContable: group.nroDocContable, codCuenta: group.codCuenta, fecha: group.fecha, tipoDocumento: group.tipoDocumento, codDocOrigen: group.codDocOrigen, documento: group.documento });
+          for (const account of group.cuentas) {
+            rows.push({ type: 'account', ueId: ue.id, groupId: group.id, account });
+          }
+        }
+      }
+    }
+    return rows;
+  });
+
+  readonly pliegoDiarioUeTotalRows = computed(() =>
+    this.pliegoDiarioUeGroups().reduce((total, ue) => total + ue.operaciones.length, 0),
+  );
+
+  pliegoUeRowKey(row: PliegoDiarioUeDisplayRow): string {
+    if (row.type === 'ue') return `ue:${row.ueId}`;
+    if (row.type === 'group') return `grp:${row.groupId}`;
+    return `acc:${row.groupId}:${row.account.codigo}`;
+  }
+
+  isUeExpanded(ueId: string): boolean {
+    return this.expandedUeGroups().has(ueId);
+  }
+
+  toggleUeExpanded(ueId: string): void {
+    this.expandedUeGroups.update((set) => {
+      const next = new Set(set);
+      next.has(ueId) ? next.delete(ueId) : next.add(ueId);
+      return next;
+    });
+  }
+
   private readonly currentUserService = inject(CurrentUserService);
 
   readonly isMayor = computed(() => this.criteria.tipoLibro === 'mayor');
 
-  private readonly esPliego = computed(() => this.currentUserService.visualizadorTipo() === 'pliego');
+  /** El visualizador ENTE RECTOR muestra solo Entidad en los datos del reporte (el Pliego va en los filtros). */
+  readonly esEnteRector = computed(() => this.currentUserService.visualizadorTipo() === 'ente_rector');
+
+  // ENTE RECTOR replica el contenido de PLIEGO (mismas tablas, vistas consolidadas y reportes).
+  readonly esPliego = computed(() => {
+    const tipo = this.currentUserService.visualizadorTipo();
+    return tipo === 'pliego' || tipo === 'ente_rector';
+  });
 
   /**
-   * La vista consolidada por unidad ejecutora solo aplica al visualizador PLIEGO cuando
-   * la Entidad es "Integrado a nivel pliego". Con "Programa nacional de becas" (u otra
-   * entidad puntual) se muestran las tablas y reportes estándar del libro.
+   * Muestra Entidad · Pliego · Unidad Ejecutora (en vez de Entidad · Pliego) solo para el
+   * visualizador Unidad Ejecutora. El visualizador Pliego muestra siempre Entidad · Pliego.
    */
+  readonly muestraPliegoUnidad = computed(
+    () => this.currentUserService.visualizadorTipo() === 'unidad_ejecutora',
+  );
+
+  /** Vista consolidada por unidad ejecutora del visualizador PLIEGO (Entidad = "Integrado a nivel pliego"). */
   private readonly esIntegradoPliego = computed(() => this.esPliego() && this.criteria.entidad === 'integrado-pliego');
 
-  /** El visualizador PLIEGO integrado con Libro Diario ve el desglose por unidad ejecutora. */
-  readonly isPliegoDiario = computed(() => this.esIntegradoPliego() && !this.isMayor());
+  /** Ente Rector con Unidad Ejecutora = "Todos" (sin unidad concreta seleccionada). */
+  private readonly esEnteRectorTodos = computed(
+    () => this.esEnteRector() && (!this.criteria.unidadEjecutora || this.criteria.unidadEjecutora === 'todos'),
+  );
 
-  /** El visualizador PLIEGO integrado con Libro Mayor ve los saldos por unidad ejecutora. */
-  readonly isPliegoMayor = computed(() => this.esIntegradoPliego() && this.isMayor());
+  /**
+   * Libro Diario consolidado (acordeón por unidad ejecutora):
+   *  - PLIEGO con Entidad = "Integrado a nivel pliego";
+   *  - ENTE RECTOR con Unidad Ejecutora = "Todos". Con una unidad concreta se muestra
+   *    su libro diario individual (tabla estándar).
+   */
+  readonly isPliegoDiario = computed(
+    () => !this.isMayor() && (this.esEnteRectorTodos() || this.esIntegradoPliego()),
+  );
+
+  /**
+   * Libro Mayor consolidado por unidad ejecutora:
+   *  - PLIEGO con Entidad = "Integrado a nivel pliego";
+   *  - ENTE RECTOR con Unidad Ejecutora = "Todos".
+   * Con una unidad ejecutora concreta, Ente Rector muestra la tabla estándar de movimientos
+   * del Libro Mayor de esa unidad (rama isMayor).
+   */
+  readonly isPliegoMayor = computed(
+    () => this.isMayor() && (this.esEnteRectorTodos() || this.esIntegradoPliego()),
+  );
 
   readonly pliegoMayorGroups = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -531,6 +843,111 @@ export class LibrosContablesSearchResultsComponent {
   });
 
   readonly pliegoMayorTotalRows = computed(() => this.pliegoMayorGroups().reduce((total, group) => total + group.detalles.length, 0));
+
+  /**
+   * Libro Mayor Extendido: cualquier visualizador que en los filtros elija la variante
+   * "Libro mayor extendido". Reutiliza la tabla consolidada por unidad ejecutora del Libro
+   * Mayor integrado a pliego (código a nivel sub-cuenta, p. ej. 1101.01). El encabezado de
+   * datos varía por perfil: UE muestra Entidad · Pliego · Unidad Ejecutora, Pliego muestra
+   * Entidad · Pliego, y Ente Rector solo Entidad.
+   */
+  readonly isMayorExtendido = computed(
+    () => this.isMayor() && this.criteria.mayorVariante === 'extendido',
+  );
+
+  /** Pliego con Libro Mayor extendido: el encabezado de datos muestra solo Entidad · Pliego. */
+  readonly isPliegoExtendido = computed(
+    () => this.isMayorExtendido() && this.currentUserService.visualizadorTipo() === 'pliego',
+  );
+
+  readonly mayorExtendidoGroups = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+
+    if (!term) {
+      return LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS;
+    }
+
+    return LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS.map((group) => ({
+      ...group,
+      detalles: group.detalles.filter((det) =>
+        det.nombre.toLowerCase().includes(term) || det.minen.toLowerCase().includes(term)
+      ),
+    })).filter((group) => group.detalles.length > 0 || group.cuenta.toLowerCase().includes(term) || group.codigo.toLowerCase().includes(term));
+  });
+
+  /** Grupos de la tabla consolidada por unidad ejecutora (integrado a pliego o mayor extendido). */
+  readonly mayorConsolidadoGroups = computed(() =>
+    this.isMayorExtendido() ? this.mayorExtendidoGroups() : this.pliegoMayorGroups(),
+  );
+
+  readonly mayorConsolidadoTotalRows = computed(() =>
+    this.mayorConsolidadoGroups().reduce((total, group) => total + group.detalles.length, 0),
+  );
+
+  /**
+   * Libro Mayor extendido con acordeones por unidad ejecutora (cada uno agrupa sus sub-cuentas
+   * 1101.01, 1101.02, …). Aplica cuando la vista consolida varias unidades ejecutoras:
+   *  - ENTE RECTOR con Unidad Ejecutora = "Todos";
+   *  - PLIEGO con Entidad = "Integrado a nivel pliego".
+   */
+  readonly isMayorExtendidoUe = computed(
+    () => this.isMayorExtendido() && (this.esEnteRectorTodos() || this.esIntegradoPliego()),
+  );
+
+  readonly mayorExtendidoUeGroups = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+
+    if (!term) {
+      return LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS;
+    }
+
+    return LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS.map((ue) => ({
+      ...ue,
+      cuentas: ue.cuentas
+        .map((group) => ({
+          ...group,
+          detalles: group.detalles.filter(
+            (det) => det.nombre.toLowerCase().includes(term) || det.minen.toLowerCase().includes(term),
+          ),
+        }))
+        .filter(
+          (group) =>
+            group.detalles.length > 0 ||
+            group.cuenta.toLowerCase().includes(term) ||
+            group.codigo.toLowerCase().includes(term),
+        ),
+    })).filter((ue) => ue.unidadEjecutora.toLowerCase().includes(term) || ue.cuentas.length > 0);
+  });
+
+  /** Filas planas (UE / sub-cuenta / detalle) para renderizar el acordeón del mayor extendido. */
+  readonly mayorExtendidoUeRows = computed<MayorExtendidoUeDisplayRow[]>(() => {
+    const rows: MayorExtendidoUeDisplayRow[] = [];
+    for (const ue of this.mayorExtendidoUeGroups()) {
+      rows.push({ type: 'ue', ueId: ue.id, unidadEjecutora: ue.unidadEjecutora });
+      if (this.isUeExpanded(ue.id)) {
+        for (const group of ue.cuentas) {
+          rows.push({ type: 'group', ueId: ue.id, group });
+          for (const det of group.detalles) {
+            rows.push({ type: 'detalle', ueId: ue.id, groupId: group.id, det });
+          }
+        }
+      }
+    }
+    return rows;
+  });
+
+  readonly mayorExtendidoUeTotalRows = computed(() =>
+    this.mayorExtendidoUeGroups().reduce(
+      (total, ue) => total + ue.cuentas.reduce((sum, group) => sum + group.detalles.length, 0),
+      0,
+    ),
+  );
+
+  mayorExtendidoUeRowKey(row: MayorExtendidoUeDisplayRow): string {
+    if (row.type === 'ue') return `ue:${row.ueId}`;
+    if (row.type === 'group') return `grp:${row.group.id}`;
+    return `det:${row.groupId}:${row.det.minen}`;
+  }
 
   readonly pliegoDiarioRows = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -566,6 +983,20 @@ export class LibrosContablesSearchResultsComponent {
   });
 
   readonly mayorTotalRows = computed(() => this.mayorGroups().reduce((total, group) => total + group.movimientos.length, 0));
+
+  /** Grupos del Libro Mayor con el saldo acumulado calculado por cada movimiento. */
+  readonly mayorGroupsView = computed(() =>
+    this.mayorGroups().map((group) => {
+      let saldo = group.saldoInicial;
+      return {
+        ...group,
+        movimientos: group.movimientos.map((mov) => {
+          saldo = Math.round((saldo + mov.debe - mov.haber + Number.EPSILON) * 100) / 100;
+          return { ...mov, saldo };
+        }),
+      };
+    })
+  );
 
   readonly selectedMayorRows = signal<Set<string>>(new Set());
 
@@ -658,7 +1089,7 @@ export class LibrosContablesSearchResultsComponent {
     const meta: ReportMeta = {
       correlativo,
       title,
-      entity: this.entity,
+      entity: this.reportEntity(),
       condiciones: this.filterChips(),
       totalRegistros: this.exportRecordCount(),
     };
@@ -672,8 +1103,11 @@ export class LibrosContablesSearchResultsComponent {
 
   /** Cantidad de registros del resultado, según la combinación de filtros aplicada. */
   private exportRecordCount(): number {
-    if (this.isPliegoMayor()) {
-      return this.pliegoMayorTotalRows();
+    if (this.isMayorExtendidoUe()) {
+      return this.mayorExtendidoUeTotalRows();
+    }
+    if (this.isPliegoMayor() || this.isMayorExtendido()) {
+      return this.mayorConsolidadoTotalRows();
     }
     if (this.isPliegoDiario()) {
       return this.pliegoDiarioRows().length;
@@ -681,7 +1115,43 @@ export class LibrosContablesSearchResultsComponent {
     if (this.isMayor()) {
       return this.mayorTotalRows();
     }
-    return this.filteredGroups().reduce((total, group) => total + group.cuentas.length, 0);
+    return LIBROS_CONTABLES_DIARIO_MATRIX_ROWS.length;
+  }
+
+  /**
+   * Entidad para el reporte (PDF/Excel/CSV):
+   *  - Entidad · Pliego · Unidad Ejecutora  (UE / Pliego + Programa nacional de becas)
+   *  - Entidad · Pliego                       (Pliego · Integrado a nivel pliego · Libro Diario)
+   *  - Entidad · Sector                       (resto)
+   */
+  private reportEntity(): { entidad: string; sector?: string; pliego?: string; unidadEjecutora?: string; fecha?: string } {
+    const fecha = this.reportFechaHora();
+    // Ente Rector: solo Entidad (el Pliego ya está en los filtros).
+    if (this.esEnteRector()) {
+      return { entidad: this.entity.entidad, fecha };
+    }
+    // Unidad Ejecutora: Entidad · Pliego · Unidad Ejecutora.
+    if (this.muestraPliegoUnidad()) {
+      return { entidad: this.entity.entidad, pliego: this.entity.pliego, unidadEjecutora: this.entity.unidadEjecutora, fecha };
+    }
+    // Pliego: en todos los resultados solo Entidad · Pliego (sin Unidad Ejecutora).
+    if (this.esPliego()) {
+      return { entidad: this.entity.entidad, pliego: this.entity.pliego, fecha };
+    }
+    return { entidad: this.entity.entidad, sector: this.entity.sector, fecha };
+  }
+
+  /**
+   * Usuario mostrado en el encabezado del PDF: el tipo de visualizador (Unidad Ejecutora,
+   * Pliego, Ente Rector) desde el que se descarga el reporte, ya que cambia según la vista.
+   */
+  private reportUsuario(): string {
+    const tipo = this.currentUserService.visualizadorTipo();
+    if (!tipo) {
+      return this.currentUserService.name;
+    }
+    const label = VISUALIZADOR_TIPO_LABELS[tipo];
+    return label.charAt(0) + label.slice(1).toLowerCase();
   }
 
   /** Construye la matriz de datos (Excel/CSV) equivalente al PDF según la combinación de filtros. */
@@ -689,54 +1159,60 @@ export class LibrosContablesSearchResultsComponent {
     const correlativo = this.reportCorrelativo;
     const title = this.reportTitle();
 
-    if (this.isPliegoMayor()) {
-      return buildLibroPliegoMayorMatrix({ correlativo, title, entity: this.entity, groups: this.pliegoMayorGroups() });
+    if (this.isMayorExtendidoUe()) {
+      return buildLibroMayorExtendidoUeMatrix({ correlativo, title, entity: this.reportEntity(), ueGroups: this.mayorExtendidoUeGroups() });
+    }
+
+    if (this.isPliegoMayor() || this.isMayorExtendido()) {
+      return buildLibroPliegoMayorMatrix({ correlativo, title, entity: this.reportEntity(), groups: this.mayorConsolidadoGroups() });
     }
 
     if (this.isPliegoDiario()) {
-      return buildLibroPliegoDiarioMatrix({
-        correlativo, title, entity: this.entity, rows: this.pliegoDiarioRows(),
-        vienenDebe: this.pliegoVienenDebe, vienenHaber: this.pliegoVienenHaber,
-        vanDebe: this.pliegoVanDebe, vanHaber: this.pliegoVanHaber,
-      });
+      return buildLibroPliegoDiarioMatrix({ correlativo, title, entity: this.reportEntity(), ueGroups: this.pliegoDiarioUeGroups() });
     }
 
     if (this.isMayor()) {
-      return buildLibroMayorMatrix({ correlativo, title, entity: this.entity, groups: this.mayorGroups() });
+      return buildLibroMayorMatrix({ correlativo, title, entity: this.reportEntity(), groups: this.mayorGroups() });
     }
 
     return buildLibroDiarioMatrix({
-      correlativo, title, entity: this.entity, groups: this.filteredGroups(),
-      vienenDebe: this.vienenDebe, vienenHaber: this.vienenHaber,
-      totalDebe: this.totalDebe, totalHaber: this.totalHaber,
+      correlativo, title, entity: this.reportEntity(), rows: LIBROS_CONTABLES_DIARIO_MATRIX_ROWS,
     });
   }
 
   private exportarPdf(): void {
     const correlativo = this.reportCorrelativo;
     const title = this.reportTitle();
+    const usuario = this.reportUsuario();
+    // En el PDF el encabezado de la sección va sin la palabra "Búsqueda" (solo el libro).
+    const sectionTitle = this.searchSectionTitle().replace(/^Búsqueda\s+/i, '');
 
-    if (this.isPliegoMayor()) {
-      generateLibrosContablesPliegoMayorPdfReport({ correlativo, title, entity: this.entity, groups: this.pliegoMayorGroups() });
+    if (this.isMayorExtendidoUe()) {
+      generateLibrosContablesMayorExtendidoUePdfReport({ correlativo, title, sectionTitle, entity: this.reportEntity(), usuario, ueGroups: this.mayorExtendidoUeGroups() });
+      return;
+    }
+
+    if (this.isPliegoMayor() || this.isMayorExtendido()) {
+      generateLibrosContablesPliegoMayorPdfReport({ correlativo, title, sectionTitle, entity: this.reportEntity(), usuario, groups: this.mayorConsolidadoGroups() });
       return;
     }
 
     if (this.isPliegoDiario()) {
       generateLibrosContablesPliegoDiarioPdfReport({
-        correlativo, title, entity: this.entity, rows: this.pliegoDiarioRows(),
-        vienenDebe: this.pliegoVienenDebe, vienenHaber: this.pliegoVienenHaber,
-        vanDebe: this.pliegoVanDebe, vanHaber: this.pliegoVanHaber,
+        correlativo, title, sectionTitle, entity: this.reportEntity(), usuario, ueGroups: this.pliegoDiarioUeGroups(),
+        vienenDebe: this.vienenDebe, vienenHaber: this.vienenHaber,
+        vanDebe: this.totalDebe, vanHaber: this.totalHaber,
       });
       return;
     }
 
     if (this.isMayor()) {
-      generateLibrosContablesMayorPdfReport({ correlativo, title, entity: this.entity, groups: this.mayorGroups() });
+      generateLibrosContablesMayorPdfReport({ correlativo, title, sectionTitle, entity: this.reportEntity(), usuario, groups: this.mayorGroups() });
       return;
     }
 
     generateLibrosContablesPdfReport({
-      correlativo, title, entity: this.entity, groups: this.filteredGroups(),
+      correlativo, title, sectionTitle, entity: this.reportEntity(), usuario, groups: this.filteredGroups(),
       vienenDebe: this.vienenDebe, vienenHaber: this.vienenHaber,
       totalDebe: this.totalDebe, totalHaber: this.totalHaber,
     });
@@ -752,5 +1228,25 @@ export class LibrosContablesSearchResultsComponent {
 
   amountSlots(account: LibroContableAccountRow): [string, string, string, string] {
     return computeAmountSlots(account, (value) => this.formatImporte(value));
+  }
+
+  /** La fila de cabecera del asiento (con Mayor) muestra sus montos en las columnas Debe/Haber. */
+  pliegoEsAsiento(row: LibroPliegoDiarioRow): boolean {
+    return Boolean(row.mayor);
+  }
+
+  /** Importe del movimiento de detalle (débito o crédito) mostrado dentro de la columna Nombre. */
+  pliegoMontoDetalle(row: LibroPliegoDiarioRow): string {
+    const monto = row.debe || row.haber;
+    return monto ? this.formatImporte(monto) : '';
+  }
+
+  /**
+   * Sangría (px) del importe dentro de la columna Nombre para lograr el escalonado del Figma:
+   * subcuenta al extremo derecho, y cada nivel más profundo un paso a la izquierda.
+   */
+  pliegoMontoOffset(row: LibroPliegoDiarioRow): number {
+    const nivel = row.mnen ? 3 : row.subCuentaIndent;
+    return Math.max(0, nivel - 1) * 128;
   }
 }

@@ -5,11 +5,12 @@ import { Injectable, computed, signal } from '@angular/core';
  * información visible y, más adelante, las opciones de filtro disponibles
  * en las consultas y reportes.
  */
-export type VisualizadorTipo = 'pliego' | 'unidad_ejecutora';
+export type VisualizadorTipo = 'pliego' | 'unidad_ejecutora' | 'ente_rector';
 
 export const VISUALIZADOR_TIPO_LABELS: Record<VisualizadorTipo, string> = {
   pliego: 'PLIEGO',
   unidad_ejecutora: 'UNIDAD EJECUTORA',
+  ente_rector: 'ENTE RECTOR',
 };
 
 export type CurrentUser = {

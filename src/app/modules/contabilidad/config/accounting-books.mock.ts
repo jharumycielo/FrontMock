@@ -31,6 +31,23 @@ export const LIBROS_CONTABLES_ENTIDAD_PLIEGO_OPTIONS: TextFieldOption[] = [
   { label: 'Integrado a nivel pliego', value: 'integrado-pliego' },
 ];
 
+// Opciones de Pliego para el visualizador ENTE RECTOR (filtro adicional).
+export const LIBROS_CONTABLES_PLIEGO_OPTIONS: TextFieldOption[] = [
+  { label: 'Ministerio de Salud', value: 'minsa' },
+  { label: 'Ministerio de Educación', value: 'minedu' },
+  { label: 'Ministerio de Economía y Finanzas', value: 'mef' },
+  { label: 'Ministerio del Interior', value: 'mininter' },
+  { label: 'Ministerio de Transportes y Comunicaciones', value: 'mtc' },
+];
+
+// Opciones de Unidad Ejecutora para el visualizador ENTE RECTOR (filtro adicional).
+export const LIBROS_CONTABLES_UNIDAD_EJECUTORA_OPTIONS: TextFieldOption[] = [
+  { label: 'Todos', value: 'todos' },
+  { label: 'Hospital Dos de Mayo', value: 'hdm' },
+  { label: 'Hospital María Auxiliadora', value: 'hma' },
+  { label: 'Instituto Nacional de Salud del Niño', value: 'insn' },
+];
+
 export const LIBROS_CONTABLES_MES_OPTIONS: TextFieldOption[] = [
   { label: 'Enero', value: '01' },
   { label: 'Febrero', value: '02' },
@@ -55,6 +72,9 @@ export const LIBROS_CONTABLES_ANIO_OPTIONS: TextFieldOption[] = [
 export const LIBROS_CONTABLES_RESULT_ENTITY = {
   entidad: '010 Ministerio de Economía y Finanzas',
   sector: '10 Economía y Finanzas',
+  // Datos del pliego y unidad ejecutora (visualizador Unidad Ejecutora · Libro Diario).
+  pliego: 'Ministerio de Salud',
+  unidadEjecutora: 'Hospital Dos de Mayo',
 };
 
 export type LibroContableAccountRow = {
@@ -67,8 +87,18 @@ export type LibroContableAccountRow = {
 
 export type LibroContableOperacionGroup = {
   id: string;
+  /** Tipo de registro del asiento (ej. Asiento de ajuste). */
+  tipoRegistro: string;
+  /** Tipo de documento de origen (ej. Factura). */
+  tipoDocumento: string;
+  /** Nro. Documento Contable = Nro. Asiento Contable sin los decimales (ej. 938-2026-5163). */
+  nroDocContable: string;
+  /** Nro. Asiento Contable (con decimales, ej. 938-2026-5163.1.1). */
   codCuenta: string;
   fecha: string;
+  /** Código del documento de origen (ej. 000000003-0002). */
+  codDocOrigen: string;
+  /** Nombre del documento de origen (ej. DISPOSITIVO LEGAL O ACTO DE ADMINISTRACIÓN). */
   documento: string;
   cuentas: LibroContableAccountRow[];
 };
@@ -76,22 +106,119 @@ export type LibroContableOperacionGroup = {
 export const LIBROS_CONTABLES_RESULT_GROUPS: LibroContableOperacionGroup[] = [
   {
     id: 'op1',
-    codCuenta: '0000045163',
+    tipoRegistro: 'Asiento de ajuste',
+    tipoDocumento: 'Factura',
+    nroDocContable: '938-2026-5396',
+    codCuenta: '938-2026-5396.1.1',
     fecha: '03/06/2024',
-    documento: '000000003-0002 DISPOSITIVO LEGAL O ACTO DE ADMINISTRACIÓN',
+    codDocOrigen: '0000001350',
+    documento: 'Nota de pago',
     cuentas: [
       { codigo: '8301', nombre: 'PRESUPUESTOS DE GASTOS', nivel: 1, debe: 1000, haber: 0 },
       { codigo: '8301.01', nombre: 'Recursos Ordinarios', nivel: 2, debe: 1000, haber: 0 },
       { codigo: '8301.01.01', nombre: 'Recursos Ordinarios', nivel: 3, debe: 1000, haber: 0 },
       { codigo: '8401', nombre: 'ASIGNACIONES COMPROMETIDAS', nivel: 1, debe: 0, haber: 1000 },
       { codigo: '8401.01', nombre: 'Recursos Ordinarios', nivel: 2, debe: 1000, haber: 0 },
+      { codigo: '8401.01.01', nombre: 'Recursos Ordinarios', nivel: 3, debe: 1000, haber: 0 },
+      { codigo: 'OT2024-INT-004449', nombre: 'RENDICIÓN Y REPOSICIÓN DE CAJA CHICA UE 024 OT', nivel: 1, debe: 0, haber: 0 },
     ],
   },
+];
+
+// Libro Diario para el visualizador PLIEGO con Entidad "Integrado a nivel pliego":
+// la misma vista del diario estándar, agrupada por Unidad Ejecutora en acordeones.
+export type LibroPliegoDiarioUeGroup = {
+  id: string;
+  unidadEjecutora: string;
+  operaciones: LibroContableOperacionGroup[];
+};
+
+/**
+ * Clona las operaciones estándar con ids únicos por Unidad Ejecutora (evita colisiones de
+ * selección/expansión) y un Nro. Doc Contable/Nro. Asiento propio de esa UE — cada unidad
+ * ejecutora contabiliza sus propios asientos, no puede repetir el número de otra.
+ */
+function pliegoDiarioUeOperaciones(prefix: string, nroBase: number): LibroContableOperacionGroup[] {
+  return LIBROS_CONTABLES_RESULT_GROUPS.map((group, index) => {
+    const nroDocContable = `938-2026-${nroBase + index}`;
+    return { ...group, id: `${prefix}-${group.id}`, nroDocContable, codCuenta: `${nroDocContable}.1.1` };
+  });
+}
+
+/**
+ * Asiento propio de Hospital María Auxiliadora: serie 939 (distinta de la 938 de Hospital
+ * Dos de Mayo) y cuentas de orden por contratos, con su documento de origen y glosa propios.
+ */
+const PLIEGO_DIARIO_MARIA_AUXILIADORA_OPERACIONES: LibroContableOperacionGroup[] = [
+  {
+    id: 'ue-mau-op1',
+    tipoRegistro: 'Asiento de ajuste',
+    tipoDocumento: 'Orden de servicio',
+    nroDocContable: '939-2026-5162',
+    codCuenta: '939-2026-5162.1.2',
+    fecha: '03/06/2024',
+    codDocOrigen: '000000181-0043',
+    documento: 'ORDEN DE SERVICIO',
+    cuentas: [
+      { codigo: '9101', nombre: 'CONTRATOS O COMPROMISOS APROBADOS', nivel: 1, debe: 1000, haber: 0 },
+      { codigo: '9101.09', nombre: 'Ordenes de Servicio Aprobadas', nivel: 2, debe: 1000, haber: 0 },
+      { codigo: '9102', nombre: 'CONTRATOS Y COMPROMISOS POR CONTRA', nivel: 1, debe: 0, haber: 1000 },
+      { codigo: '9102.09', nombre: 'Ordenes de Servicio por Ejecutar', nivel: 2, debe: 1000, haber: 0 },
+      { codigo: '', nombre: 'Adquisición de pasajes aereos', nivel: 1, debe: 0, haber: 0 },
+    ],
+  },
+];
+
+export const LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS: LibroPliegoDiarioUeGroup[] = [
+  { id: 'ue-hospital-dos-de-mayo', unidadEjecutora: 'Hospital Dos de Mayo', operaciones: pliegoDiarioUeOperaciones('ue-hdm', 5396) },
+  { id: 'ue-maria-auxiliadora', unidadEjecutora: 'Hospital María Auxiliadora', operaciones: PLIEGO_DIARIO_MARIA_AUXILIADORA_OPERACIONES },
+];
+
+// Vista matricial (tabular) del Libro Diario para Unidad Ejecutora: una fila plana
+// por movimiento, con todas las dimensiones repetidas, apta para tablas dinámicas.
+export type LibroDiarioMatrixRow = {
+  ejercicio: number;
+  cuentaMayor: string;
+  descMayor: string;
+  cuentaSubCta: string;
+  fecha: string;
+  /** Tipo de registro del asiento (ej. Asiento de ajuste). */
+  tipoRegistro: string;
+  /** Tipo de documento de origen (ej. Factura). */
+  tipoDocumento: string;
+  /** Nro. Registro Contable = Nro. Asiento sin los decimales. */
+  nroDocContable: string;
+  /** Código del documento de origen. */
+  codDocOrigen: string;
+  /** Nombre del documento de origen. */
+  documentoOrigen: string;
+  nroDocumentoOrigen: string;
+  nroAsiento: string;
+  tipoDH: 'Debe' | 'Haber';
+  naturaleza: 'Deudora' | 'Acreedora';
+  montoDebe: number;
+  montoHaber: number;
+};
+
+const DOC_ORIGEN_COD = '0000001350';
+const DOC_ORIGEN_NOMBRE = 'Nota de pago';
+
+export const LIBROS_CONTABLES_DIARIO_MATRIX_ROWS: LibroDiarioMatrixRow[] = [
+  { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '01', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000001', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Deudora', montoDebe: 1000, montoHaber: 0 },
+  { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '0101', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000002', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Deudora', montoDebe: 1000, montoHaber: 0 },
+  { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '0102', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000003', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Deudora', montoDebe: 1000, montoHaber: 0 },
+  { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '0103', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000004', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Haber', naturaleza: 'Deudora', montoDebe: 0, montoHaber: 3000 },
+  { ejercicio: 2026, cuentaMayor: '8401', descMayor: 'ASIGNACIONES COMPROMETIDAS', cuentaSubCta: '01', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000005', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Haber', naturaleza: 'Acreedora', montoDebe: 0, montoHaber: 1000 },
+  { ejercicio: 2026, cuentaMayor: '8401', descMayor: 'ASIGNACIONES COMPROMETIDAS', cuentaSubCta: '02', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000006', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Acreedora', montoDebe: 1000, montoHaber: 0 },
 ];
 
 export type LibroMayorResultRow = {
   fecha: string;
   docCaRegNota: string;
+  /** Nro. Documento Contable = Nro. Asiento sin los decimales. */
+  nroDocContable: string;
+  /** Tipo de asiento (ej. Asiento de ajuste, Serv. de contabilización). */
+  tipo: string;
   documento: string;
   nroDocumento: string;
   nroAsiento: string;
@@ -114,12 +241,12 @@ export const LIBROS_CONTABLES_MAYOR_RESULT_GROUPS: LibroMayorResultGroup[] = [
     nombreCuenta: 'CAJA Y BANCOS',
     saldoInicial: 3609854.68,
     movimientos: [
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004025', documento: 'Nota de pago', nroDocumento: '4025.24.95.2402060', nroAsiento: '0000045396', debe: 73.13, haber: 0 },
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004025', documento: 'Rendición de cuenta', nroDocumento: 'MM', nroAsiento: '0000045393', debe: 0, haber: 73.13 },
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004031', documento: 'Nota de pago', nroDocumento: '4031.24.95.2402059', nroAsiento: '0000045401', debe: 73.20, haber: 0 },
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004031', documento: 'Rendición de cuenta', nroDocumento: 'MM', nroAsiento: '0000045398', debe: 0, haber: 73.20 },
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004044', documento: 'Rendición de cuenta', nroDocumento: 'MM N 436-2024-OT', nroAsiento: '0000045409', debe: 0, haber: 864.19 },
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004044', documento: 'Rendición de cuenta', nroDocumento: 'MM N 436-2024-OT', nroAsiento: '0000045412', debe: 0, haber: 145.00 },
+      { fecha: '03/06/2024', docCaRegNota: 'R0000004025', nroDocContable: '938-2026-5396', tipo: 'Asiento de ajuste', documento: 'Nota de pago', nroDocumento: '0000001350', nroAsiento: '938-2026-5396.1.1', debe: 73.13, haber: 0 },
+      { fecha: '03/06/2024', docCaRegNota: 'R0000004025', nroDocContable: '938-2026-5393', tipo: 'Serv. de contabilización', documento: 'Rendición de cuenta', nroDocumento: '0000001181', nroAsiento: '938-2026-5393.1.2', debe: 0, haber: 73.13 },
+      { fecha: '03/06/2024', docCaRegNota: 'R0000004031', nroDocContable: '938-2026-5401', tipo: 'Serv. de contabilización', documento: 'Nota de pago', nroDocumento: '0000001344', nroAsiento: '938-2026-5401.2.1', debe: 73.20, haber: 0 },
+      { fecha: '03/06/2024', docCaRegNota: 'R0000004031', nroDocContable: '938-2026-5398', tipo: 'Serv. de contabilización', documento: 'Rendición de cuenta', nroDocumento: '0000001346', nroAsiento: '938-2026-5398.2.2', debe: 0, haber: 73.20 },
+      { fecha: '03/06/2024', docCaRegNota: 'R0000004044', nroDocContable: '938-2026-5409', tipo: 'Asiento de ajuste', documento: 'Rendición de cuenta', nroDocumento: '0000001347', nroAsiento: '938-2026-5409.3.1', debe: 0, haber: 864.19 },
+      { fecha: '03/06/2024', docCaRegNota: 'R0000004044', nroDocContable: '938-2026-5412', tipo: 'Asiento de ajuste', documento: 'Rendición de cuenta', nroDocumento: '0000001348', nroAsiento: '938-2026-5412.3.2', debe: 0, haber: 145.00 },
     ],
   },
 ];
@@ -140,16 +267,18 @@ export type LibroPliegoDiarioRow = {
 };
 
 export const LIBROS_CONTABLES_PLIEGO_DIARIO_ROWS: LibroPliegoDiarioRow[] = [
-  { fecha: '31/07/2026', codAsiento: '0000000021', mayor: '1101', subCuenta: 'Caja y bancos', subCuentaIndent: 0, mnen: '', nombre: '', debe: 92191377.19, haber: 0 },
+  { fecha: '31/07/2026', codAsiento: '000-2026-5163.1.1', mayor: '1101', subCuenta: 'Caja y bancos', subCuentaIndent: 0, mnen: '', nombre: '', debe: 92191377.19, haber: 0 },
   { fecha: '', codAsiento: '', mayor: '', subCuenta: '1101.01 Caja', subCuentaIndent: 1, mnen: '', nombre: '', debe: 39372877.45, haber: 0 },
   { fecha: '', codAsiento: '', mayor: '', subCuenta: '1101.0101 Caja M/N', subCuentaIndent: 2, mnen: '', nombre: '', debe: 39372877.45, haber: 0 },
   { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000056', nombre: 'USE 01 San Juan de Miraflores', debe: 8631.33, haber: 0 },
   { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000057', nombre: 'USE 02 San Martin de Porras', debe: 16045.33, haber: 0 },
   { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000058', nombre: 'USE 03 Cercado', debe: 85109.28, haber: 0 },
-  { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000059', nombre: 'USE 03 Cercado', debe: 85109.28, haber: 0 },
-  { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000060', nombre: 'USE 03 Cercado', debe: 85109.28, haber: 0 },
-  { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000061', nombre: 'USE 03 Cercado', debe: 85109.28, haber: 0 },
-  { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000062', nombre: 'USE 03 Cercado', debe: 85109.28, haber: 0 },
+  { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000059', nombre: 'USE 04 Comas', debe: 20433.80, haber: 0 },
+  { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000060', nombre: 'USE 05 San Juan de Lurigancho', debe: 8075.91, haber: 0 },
+  { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000061', nombre: 'USE 06 Vitarte', debe: 87.50, haber: 0 },
+  { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000062', nombre: 'USE 07 San Borja', debe: 12375.37, haber: 0 },
+  { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000058', nombre: 'Dirección de Educación de Lima', debe: 653862.05, haber: 0 },
+  { fecha: '', codAsiento: '', mayor: '', subCuenta: '', subCuentaIndent: 0, mnen: '000058', nombre: 'Escuela Nacional de Bellas Artes', debe: 55056.13, haber: 0 },
 ];
 
 // Resultado del Libro Mayor para el usuario visualizador PLIEGO
@@ -182,6 +311,84 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
       { minen: '000057', nombre: 'USE 02 San Martin de Porras', debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
       { minen: '000058', nombre: 'USE 03 Cercado', debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
       { minen: '000059', nombre: 'USE 04 Comas', debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
+    ],
+  },
+];
+
+/**
+ * Libro Mayor Extendido (visualizador Unidad Ejecutora, variante "Libro mayor extendido").
+ * Reutiliza la estructura consolidada por unidad ejecutora del Libro Mayor integrado a pliego,
+ * pero el código de cuenta se muestra a nivel sub-cuenta (1101.01 en vez de 1101).
+ */
+export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS: LibroPliegoMayorGroup[] = [
+  {
+    id: 'mayor-ext-1101-01',
+    fecha: '03/06/2024',
+    codigo: '1101.01',
+    cuenta: 'Recursos Ordinarios',
+    detalles: [
+      { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
+      { minen: '000057', nombre: 'USE 02 San Martin de Porras', debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
+      { minen: '000058', nombre: 'USE 03 Cercado', debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
+      { minen: '000059', nombre: 'USE 04 Comas', debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
+    ],
+  },
+];
+
+/**
+ * Libro Mayor Extendido consolidado por Unidad Ejecutora (visualizador ENTE RECTOR,
+ * variante "Libro mayor extendido" con Unidad Ejecutora = "Todos"). Cada unidad ejecutora
+ * es un acordeón que agrupa sus sub-cuentas (1101.01, 1101.02, …) con el detalle por USE.
+ */
+export type LibroMayorExtendidoUeGroup = {
+  id: string;
+  unidadEjecutora: string;
+  cuentas: LibroPliegoMayorGroup[];
+};
+
+export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS: LibroMayorExtendidoUeGroup[] = [
+  {
+    id: 'mayor-ext-ue-hdm',
+    unidadEjecutora: 'Hospital Dos de Mayo',
+    cuentas: [
+      {
+        id: 'mayor-ext-hdm-1101-01',
+        fecha: '03/06/2024',
+        codigo: '1101.01',
+        cuenta: 'Recursos Ordinarios',
+        detalles: [
+          { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
+          { minen: '000057', nombre: 'USE 02 San Martin de Porras', debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
+          { minen: '000058', nombre: 'USE 03 Cercado', debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
+          { minen: '000059', nombre: 'USE 04 Comas', debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
+        ],
+      },
+      {
+        id: 'mayor-ext-hdm-1101-02',
+        fecha: '03/06/2024',
+        codigo: '1101.02',
+        cuenta: 'Ordenes de Servicio Aprobadas',
+        detalles: [
+          { minen: '000060', nombre: 'USE 05 San Juan de Lurigancho', debe: 8075.91, haber: 0, saldo: 8075.91 },
+          { minen: '000061', nombre: 'USE 06 Vitarte', debe: 87.50, haber: 0, saldo: 87.50 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'mayor-ext-ue-hma',
+    unidadEjecutora: 'Hospital María Auxiliadora',
+    cuentas: [
+      {
+        id: 'mayor-ext-hma-1102-01',
+        fecha: '03/06/2024',
+        codigo: '1102.01',
+        cuenta: 'Recursos Ordinarios',
+        detalles: [
+          { minen: '000062', nombre: 'USE 07 San Borja', debe: 12375.37, haber: 0, saldo: 12375.37 },
+          { minen: '000063', nombre: 'USE 08 Surquillo', debe: 653862.05, haber: 120450.10, saldo: 533411.95 },
+        ],
+      },
     ],
   },
 ];

@@ -1,9 +1,10 @@
 import { Workbook, Worksheet } from 'exceljs';
 
 import {
-  LibroContableOperacionGroup,
+  LibroDiarioMatrixRow,
+  LibroMayorExtendidoUeGroup,
   LibroMayorResultGroup,
-  LibroPliegoDiarioRow,
+  LibroPliegoDiarioUeGroup,
   LibroPliegoMayorGroup,
 } from '../../config/accounting-books.mock';
 import { loadSiafLogoPng } from './libros-contables-pdf-report';
@@ -11,7 +12,7 @@ import { loadSiafLogoPng } from './libros-contables-pdf-report';
 /** Matriz de celdas (filas x columnas) que alimenta la hoja de resultados y el CSV. */
 export type ExportMatrix = (string | number)[][];
 
-type ReportEntity = { entidad: string; sector: string };
+type ReportEntity = { entidad: string; sector?: string; pliego?: string; unidadEjecutora?: string; fecha?: string };
 
 type BaseInput = {
   correlativo: string;
@@ -20,11 +21,7 @@ type BaseInput = {
 };
 
 export type LibroDiarioExportInput = BaseInput & {
-  groups: LibroContableOperacionGroup[];
-  vienenDebe: number;
-  vienenHaber: number;
-  totalDebe: number;
-  totalHaber: number;
+  rows: LibroDiarioMatrixRow[];
 };
 
 export type LibroMayorExportInput = BaseInput & {
@@ -32,15 +29,15 @@ export type LibroMayorExportInput = BaseInput & {
 };
 
 export type LibroPliegoDiarioExportInput = BaseInput & {
-  rows: LibroPliegoDiarioRow[];
-  vienenDebe: number;
-  vienenHaber: number;
-  vanDebe: number;
-  vanHaber: number;
+  ueGroups: LibroPliegoDiarioUeGroup[];
 };
 
 export type LibroPliegoMayorExportInput = BaseInput & {
   groups: LibroPliegoMayorGroup[];
+};
+
+export type LibroMayorExtendidoUeExportInput = BaseInput & {
+  ueGroups: LibroMayorExtendidoUeGroup[];
 };
 
 /** Devuelve el importe como número para Excel, o cadena vacía cuando es cero/sin valor. */
@@ -58,68 +55,142 @@ function round2(value: number): number {
 // La combinación de filtros determina las columnas y el detalle, igual que el PDF.
 // ---------------------------------------------------------------------------
 
+/** Extrae el código numérico de la entidad (ej. "010 Ministerio…" -> 10). */
+function entidadCodigo(entidad: string): number | string {
+  const match = entidad.match(/\d+/);
+  return match ? Number(match[0]) : '';
+}
+
+/**
+ * Libro Diario (Unidad Ejecutora): matriz plana/tabular, una fila por movimiento
+ * con todas las dimensiones repetidas, para permitir tablas dinámicas en Excel/CSV.
+ */
 export function buildLibroDiarioMatrix(input: LibroDiarioExportInput): ExportMatrix {
   const matrix: ExportMatrix = [];
-  matrix.push(['Cod. Asiento', 'Fecha', 'Documento', 'Cuenta', 'Debe', 'Haber']);
-  matrix.push(['-VIENEN-', '', '', '', input.vienenDebe, input.vienenHaber]);
+  matrix.push([
+    'Ejercicio', 'Cod_Entidad', 'Cuenta Mayor', 'Desc.Mayor', 'Cuenta SubCta', 'Fecha',
+    'Tipo Registro', 'Nro Reg. Contable', 'Nro_Asiento', 'Tipo doc origen', 'Nro doc origen', 'Documento origen',
+    'Nro.Documento Origen o Expediente', 'Tipo_D_H', 'Naturaleza_de_la_Cuenta', 'Monto Debe', 'Monto Haber',
+  ]);
 
-  for (const group of input.groups) {
-    matrix.push([group.codCuenta, group.fecha, group.documento, '', '', '']);
-    for (const cuenta of group.cuentas) {
-      matrix.push(['', '', '', `${cuenta.codigo} ${cuenta.nombre}`, amount(cuenta.debe), amount(cuenta.haber)]);
-    }
+  const codEntidad = entidadCodigo(input.entity.entidad);
+
+  for (const row of input.rows) {
+    matrix.push([
+      row.ejercicio, codEntidad, row.cuentaMayor, row.descMayor, row.cuentaSubCta, row.fecha,
+      row.tipoRegistro, row.nroDocContable, row.nroAsiento, row.tipoDocumento, row.codDocOrigen, row.documentoOrigen,
+      row.nroDocumentoOrigen, row.tipoDH, row.naturaleza,
+      amount(row.montoDebe), amount(row.montoHaber),
+    ]);
   }
 
-  matrix.push(['-VAN-', '', '', '', input.totalDebe, input.totalHaber]);
   return matrix;
 }
 
+const EJERCICIO = 2026;
+
+/**
+ * Libro Mayor (Unidad Ejecutora): matriz plana. Una fila por movimiento, con la
+ * cuenta y su descripción repetidas y el saldo acumulado calculado por movimiento.
+ */
 export function buildLibroMayorMatrix(input: LibroMayorExportInput): ExportMatrix {
   const matrix: ExportMatrix = [];
-  matrix.push(['Fecha', 'Doc. CA/REG/Nota', 'Documento', 'Nro Documento', 'Nro. Asiento', 'Debe', 'Haber', 'Saldo']);
+  matrix.push([
+    'Ejercicio', 'Cod_Entidad', 'Cuenta', 'Desc.Cuenta', 'Fecha', 'Nro Reg. Contable',
+    'Nro Asiento', 'Tipo Registro', 'Documento origen', 'Nro doc origen', 'Debe', 'Haber', 'Saldo',
+  ]);
+
+  const codEntidad = entidadCodigo(input.entity.entidad);
 
   for (const group of input.groups) {
-    matrix.push([`${group.codCuenta} ${group.nombreCuenta}`, '', '', '', '', '', '', '']);
     let saldo = group.saldoInicial;
     for (const mov of group.movimientos) {
       saldo = round2(saldo + mov.debe - mov.haber);
-      matrix.push([mov.fecha, mov.docCaRegNota, mov.documento, mov.nroDocumento, mov.nroAsiento, amount(mov.debe), amount(mov.haber), saldo]);
+      matrix.push([
+        EJERCICIO, codEntidad, group.codCuenta, group.nombreCuenta, mov.fecha, mov.nroDocContable,
+        mov.nroAsiento, mov.tipo, mov.documento, mov.nroDocumento, amount(mov.debe), amount(mov.haber), saldo,
+      ]);
     }
   }
 
   return matrix;
 }
 
+/**
+ * Libro Diario (Pliego, integrado a nivel pliego): matriz plana/tabular. Una fila por cuenta,
+ * propagando la Unidad Ejecutora (acordeón) y todo el contexto del asiento/documento de origen.
+ */
 export function buildLibroPliegoDiarioMatrix(input: LibroPliegoDiarioExportInput): ExportMatrix {
   const matrix: ExportMatrix = [];
-  matrix.push(['Fecha', 'Cod. Asiento', 'Mayor', 'Sub Cuenta', 'Mnen.', 'Nombre - Unidad Ejecutora', 'Debe', 'Haber']);
-  matrix.push(['-VIENEN-', '', '', '', '', '', input.vienenDebe, input.vienenHaber]);
+  matrix.push([
+    'Ejercicio', 'Cod_Entidad', 'Unidad Ejecutora', 'Tipo Registro', 'Nro Reg. Contable', 'Nro_Asiento', 'Fecha',
+    'Tipo doc origen', 'Nro doc origen', 'Documento origen', 'Cuenta', 'Denominación', 'Monto Debe', 'Monto Haber',
+  ]);
 
-  for (const row of input.rows) {
-    matrix.push([row.fecha, row.codAsiento, row.mayor, row.subCuenta, row.mnen, row.nombre, amount(row.debe), amount(row.haber)]);
+  const codEntidad = entidadCodigo(input.entity.entidad);
+
+  for (const ue of input.ueGroups) {
+    for (const group of ue.operaciones) {
+      for (const cuenta of group.cuentas) {
+        matrix.push([
+          EJERCICIO, codEntidad, ue.unidadEjecutora, group.tipoRegistro, group.nroDocContable, group.codCuenta, group.fecha,
+          group.tipoDocumento, group.codDocOrigen, group.documento, cuenta.codigo, cuenta.nombre,
+          amount(cuenta.debe), amount(cuenta.haber),
+        ]);
+      }
+    }
   }
 
-  matrix.push(['-VAN-', '', '', '', '', '', input.vanDebe, input.vanHaber]);
   return matrix;
 }
 
+/**
+ * Libro Mayor (Pliego): matriz plana. Una fila por unidad ejecutora, con la
+ * cuenta y su denominación repetidas; sin banda ni fila de movimiento acumulado.
+ */
 export function buildLibroPliegoMayorMatrix(input: LibroPliegoMayorExportInput): ExportMatrix {
   const matrix: ExportMatrix = [];
-  matrix.push(['Fecha', 'Código', 'Minen.', 'Nombre - Unidad Ejecutora', 'Debe', 'Haber', 'Saldo']);
+  matrix.push([
+    'Ejercicio', 'Cod_Entidad', 'Fecha', 'Codigo', 'Desc.Cuenta', 'Minen.',
+    'Nombre - Unidad Ejecutora', 'Debe', 'Haber', 'Saldo',
+  ]);
+
+  const codEntidad = entidadCodigo(input.entity.entidad);
 
   for (const group of input.groups) {
-    matrix.push([`${group.codigo} ${group.cuenta}`, '', '', '', '', '', '']);
-    matrix.push([group.fecha, group.codigo, '', group.cuenta, '', '', '']);
-
-    let sumDebe = 0;
-    let sumHaber = 0;
     for (const det of group.detalles) {
-      sumDebe += det.debe;
-      sumHaber += det.haber;
-      matrix.push(['', '', det.minen, det.nombre, amount(det.debe), amount(det.haber), det.saldo]);
+      matrix.push([
+        EJERCICIO, codEntidad, group.fecha, group.codigo, group.cuenta, det.minen,
+        det.nombre, amount(det.debe), amount(det.haber), det.saldo,
+      ]);
     }
+  }
 
-    matrix.push([`MOV. ACUMULADO CUENTA: ${group.codigo}`, '', '', '', round2(sumDebe), round2(sumHaber), round2(sumDebe - sumHaber)]);
+  return matrix;
+}
+
+/**
+ * Libro Mayor Extendido consolidado por Unidad Ejecutora (ENTE RECTOR): matriz plana con una
+ * columna adicional "Unidad Ejecutora" (el acordeón) y una fila por detalle de cada sub-cuenta.
+ */
+export function buildLibroMayorExtendidoUeMatrix(input: LibroMayorExtendidoUeExportInput): ExportMatrix {
+  const matrix: ExportMatrix = [];
+  matrix.push([
+    'Ejercicio', 'Cod_Entidad', 'Unidad Ejecutora', 'Fecha', 'Codigo', 'Desc.Cuenta', 'Minen.',
+    'Nombre - Unidad Ejecutora', 'Debe', 'Haber', 'Saldo',
+  ]);
+
+  const codEntidad = entidadCodigo(input.entity.entidad);
+
+  for (const ue of input.ueGroups) {
+    for (const group of ue.cuentas) {
+      for (const det of group.detalles) {
+        matrix.push([
+          EJERCICIO, codEntidad, ue.unidadEjecutora, group.fecha, group.codigo, group.cuenta,
+          det.minen, det.nombre, amount(det.debe), amount(det.haber), det.saldo,
+        ]);
+      }
+    }
   }
 
   return matrix;
@@ -185,17 +256,65 @@ async function buildResumenSheet(ws: Worksheet, meta: ReportMeta, logoPng: strin
   ws.getCell('B9').font = { name: 'Calibri', size: 14, bold: true, color: { argb: SIAF_BLUE } };
   separatorLine(ws, 10, GRAY_LINE, 'thin', LAST_COL);
 
-  ws.getCell('B11').value = 'Entidad:';
-  ws.getCell('B11').font = { name: 'Calibri', size: 11, bold: true };
-  ws.getCell('F11').value = 'Sector:';
-  ws.getCell('F11').font = { name: 'Calibri', size: 11, bold: true };
-  ws.getCell('B12').value = meta.entity.entidad;
-  ws.getCell('B12').font = { name: 'Calibri', size: 11 };
-  ws.getCell('F12').value = meta.entity.sector;
-  ws.getCell('F12').font = { name: 'Calibri', size: 11 };
-  separatorLine(ws, 13, GRAY_LINE, 'thin', LAST_COL);
+  const labelFont = { name: 'Calibri', size: 11, bold: true } as const;
+  const valueFont = { name: 'Calibri', size: 11 } as const;
 
-  let row = 14;
+  ws.getCell('B11').value = 'Entidad:';
+  ws.getCell('B11').font = labelFont;
+  ws.getCell('B12').value = meta.entity.entidad;
+  ws.getCell('B12').font = valueFont;
+
+  // Fecha/hora de generación (última en "Datos del libro", igual que en pantalla).
+  const fecha = meta.entity.fecha;
+
+  let row: number;
+  if (meta.entity.pliego && meta.entity.unidadEjecutora) {
+    // Unidad Ejecutora / Pliego + Programa nacional de becas: Entidad · Pliego · Unidad Ejecutora · Fecha.
+    ws.getCell('F11').value = 'Pliego:';
+    ws.getCell('F11').font = labelFont;
+    ws.getCell('F12').value = meta.entity.pliego;
+    ws.getCell('F12').font = valueFont;
+    ws.getCell('B13').value = 'Unidad Ejecutora:';
+    ws.getCell('B13').font = labelFont;
+    ws.getCell('B14').value = meta.entity.unidadEjecutora;
+    ws.getCell('B14').font = valueFont;
+    if (fecha) {
+      ws.getCell('F13').value = 'Fecha:';
+      ws.getCell('F13').font = labelFont;
+      ws.getCell('F14').value = fecha;
+      ws.getCell('F14').font = valueFont;
+    }
+    separatorLine(ws, 15, GRAY_LINE, 'thin', LAST_COL);
+    row = 16;
+  } else if (meta.entity.pliego || meta.entity.sector) {
+    // Pliego · Integrado a nivel pliego: Entidad · Pliego · Fecha (o Entidad · Sector · Fecha).
+    ws.getCell('F11').value = meta.entity.pliego ? 'Pliego:' : 'Sector:';
+    ws.getCell('F11').font = labelFont;
+    ws.getCell('F12').value = meta.entity.pliego ?? meta.entity.sector ?? '';
+    ws.getCell('F12').font = valueFont;
+    if (fecha) {
+      ws.getCell('B13').value = 'Fecha:';
+      ws.getCell('B13').font = labelFont;
+      ws.getCell('B14').value = fecha;
+      ws.getCell('B14').font = valueFont;
+      separatorLine(ws, 15, GRAY_LINE, 'thin', LAST_COL);
+      row = 16;
+    } else {
+      separatorLine(ws, 13, GRAY_LINE, 'thin', LAST_COL);
+      row = 14;
+    }
+  } else {
+    // Ente Rector: solo Entidad · Fecha (el Pliego va en los filtros).
+    if (fecha) {
+      ws.getCell('F11').value = 'Fecha:';
+      ws.getCell('F11').font = labelFont;
+      ws.getCell('F12').value = fecha;
+      ws.getCell('F12').font = valueFont;
+    }
+    separatorLine(ws, 13, GRAY_LINE, 'thin', LAST_COL);
+    row = 14;
+  }
+
   ws.getCell(`B${row}`).value = 'Filtros aplicados:';
   ws.getCell(`B${row}`).font = { name: 'Calibri', size: 11, bold: true };
   for (const condicion of meta.condiciones) {
@@ -222,10 +341,16 @@ async function buildResumenSheet(ws: Worksheet, meta: ReportMeta, logoPng: strin
   }
 }
 
+/** Columnas de importe (formato moneda). El resto de números quedan como entero (General). */
+function isMoneyColumn(header: string): boolean {
+  return /monto|debe|haber|saldo/i.test(header);
+}
+
 function buildResultadoSheet(ws: Worksheet, table: ExportMatrix): void {
-  ws.views = [{ showGridLines: false }];
+  // La hoja de resultados conserva la cuadrícula normal (solo Resumen va en blanco).
   table.forEach((row) => ws.addRow(row));
 
+  const headers = (table[0] ?? []).map((cell) => String(cell ?? ''));
   const columnCount = table.reduce((max, row) => Math.max(max, row.length), 0);
   const widths: number[] = new Array(columnCount).fill(10);
 
@@ -240,9 +365,11 @@ function buildResultadoSheet(ws: Worksheet, table: ExportMatrix): void {
         cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       } else if (typeof value === 'number') {
-        cell.numFmt = '#,##0.00';
-        cell.alignment = { horizontal: 'right' };
         cell.font = { name: 'Calibri', size: 10 };
+        if (isMoneyColumn(headers[colIndex] ?? '')) {
+          cell.numFmt = '#,##0.00';
+          cell.alignment = { horizontal: 'right' };
+        }
       } else {
         cell.font = { name: 'Calibri', size: 10 };
       }
@@ -287,11 +414,23 @@ function escapeCsvCell(value: string | number): string {
 }
 
 export function downloadCsv(table: ExportMatrix, meta: ReportMeta): void {
+  const entityRow: (string | number)[] =
+    meta.entity.pliego && meta.entity.unidadEjecutora
+      ? ['Entidad', meta.entity.entidad, 'Pliego', meta.entity.pliego, 'Unidad Ejecutora', meta.entity.unidadEjecutora]
+      : meta.entity.pliego
+        ? ['Entidad', meta.entity.entidad, 'Pliego', meta.entity.pliego]
+        : meta.entity.sector
+          ? ['Entidad', meta.entity.entidad, 'Sector', meta.entity.sector]
+          : ['Entidad', meta.entity.entidad];
+  // Fecha/hora de generación (última en "Datos del libro", igual que en pantalla y Excel).
+  if (meta.entity.fecha) {
+    entityRow.push('Fecha', meta.entity.fecha);
+  }
   const rows: ExportMatrix = [
     [meta.title],
     [],
     ['Tipo de informe:', 'Reporte'],
-    ['Entidad', meta.entity.entidad, 'Sector', meta.entity.sector],
+    entityRow,
     ['Condiciones de búsqueda', ...meta.condiciones],
     ['Total de registros:', meta.totalRegistros],
     [],
