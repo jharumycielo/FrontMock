@@ -361,6 +361,8 @@ export async function generateLibrosContablesPdfReport(input: LibrosContablesPdf
 }
 
 const MAYOR_GROUP_ROW_STYLES = { fillColor: [245, 245, 245] as [number, number, number], fontStyle: 'bold' as const };
+// Equivalente en RGB del token --sys-color-bg-surfaces-highlight (azul 1/72/153 al 8% sobre blanco).
+const SALDO_INICIAL_ROW_STYLES = { fillColor: [235, 240, 247] as [number, number, number], halign: 'right' as const };
 
 function buildMayorRows(groups: LibroMayorResultGroup[], codEntidad: number | string): RowInput[] {
   const rows: RowInput[] = [];
@@ -368,6 +370,11 @@ function buildMayorRows(groups: LibroMayorResultGroup[], codEntidad: number | st
   for (const group of groups) {
     rows.push([
       { content: `${group.codCuenta} ${group.nombreCuenta}`, colSpan: 11, styles: MAYOR_GROUP_ROW_STYLES },
+    ]);
+
+    rows.push([
+      { content: 'Saldo inicial', colSpan: 10, styles: SALDO_INICIAL_ROW_STYLES },
+      { content: formatImporte(group.saldoInicial), styles: SALDO_INICIAL_ROW_STYLES },
     ]);
 
     let saldo = group.saldoInicial;
@@ -537,7 +544,7 @@ function buildPliegoMayorRows(groups: LibroPliegoMayorGroup[], codEntidad: numbe
 
   for (const group of groups) {
     body.push([
-      { content: `${group.codigo} ${group.cuenta}`, colSpan: 9, styles: { fillColor: [245, 245, 245], fontStyle: 'bold' } },
+      { content: `${group.codigo} ${group.cuenta}`, colSpan: 10, styles: { fillColor: [245, 245, 245], fontStyle: 'bold' } },
     ]);
 
     body.push([
@@ -549,12 +556,15 @@ function buildPliegoMayorRows(groups: LibroPliegoMayorGroup[], codEntidad: numbe
       '',
       '',
       '',
+      '',
     ]);
 
+    let sumSaldoInicial = 0;
     let sumDebe = 0;
     let sumHaber = 0;
 
     for (const det of group.detalles) {
+      sumSaldoInicial += det.saldoInicial;
       sumDebe += det.debe;
       sumHaber += det.haber;
 
@@ -565,6 +575,7 @@ function buildPliegoMayorRows(groups: LibroPliegoMayorGroup[], codEntidad: numbe
         '',
         det.minen,
         det.nombre,
+        { content: formatImporte(det.saldoInicial), styles: { halign: 'right' } },
         { content: formatImporte(det.debe), styles: { halign: 'right' } },
         { content: formatImporte(det.haber), styles: { halign: 'right' } },
         { content: formatImporte(det.saldo), styles: { halign: 'right' } },
@@ -573,6 +584,7 @@ function buildPliegoMayorRows(groups: LibroPliegoMayorGroup[], codEntidad: numbe
 
     body.push([
       { content: `MOV. ACUMULADO CUENTA: ${group.codigo}`, colSpan: 6, styles: { fillColor: [245, 245, 245], fontStyle: 'bold', halign: 'right' } },
+      { content: formatImporte(sumSaldoInicial), styles: { fillColor: [245, 245, 245], fontStyle: 'bold', halign: 'right' } },
       { content: formatImporte(sumDebe), styles: { fillColor: [245, 245, 245], fontStyle: 'bold', halign: 'right' } },
       { content: formatImporte(sumHaber), styles: { fillColor: [245, 245, 245], fontStyle: 'bold', halign: 'right' } },
       { content: formatImporte(sumDebe - sumHaber), styles: { fillColor: [245, 245, 245], fontStyle: 'bold', halign: 'right' } },
@@ -604,6 +616,7 @@ export async function generateLibrosContablesPliegoMayorPdfReport(input: LibrosC
         { content: 'FECHA', rowSpan: 3, styles: headStyles },
         { content: 'CÓDIGO', rowSpan: 3, styles: headStyles },
         { content: 'CUENTA', colSpan: 2, styles: headStyles },
+        { content: 'SALDO INICIAL', rowSpan: 3, styles: { ...headStyles, halign: 'right' as const } },
         { content: 'DEBE', rowSpan: 3, styles: { ...headStyles, halign: 'right' as const } },
         { content: 'HABER', rowSpan: 3, styles: { ...headStyles, halign: 'right' as const } },
         { content: 'SALDO', rowSpan: 3, styles: { ...headStyles, halign: 'right' as const } },
@@ -624,9 +637,10 @@ export async function generateLibrosContablesPliegoMayorPdfReport(input: LibrosC
       3: { cellWidth: 55 },
       4: { cellWidth: 62 },
       5: { cellWidth: 'auto' },
-      6: { cellWidth: 95, halign: 'right' },
-      7: { cellWidth: 95, halign: 'right' },
-      8: { cellWidth: 95, halign: 'right' },
+      6: { cellWidth: 80, halign: 'right' },
+      7: { cellWidth: 80, halign: 'right' },
+      8: { cellWidth: 80, halign: 'right' },
+      9: { cellWidth: 80, halign: 'right' },
     },
     didDrawPage: (data) => drawPageFooter(doc, data.pageNumber, fecha, hora),
   });
@@ -644,7 +658,7 @@ function buildMayorExtendidoUeRows(ueGroups: LibroMayorExtendidoUeGroup[], codEn
   for (const ue of ueGroups) {
     // Fila de Unidad Ejecutora (acordeón): fondo blanco, texto en negrita.
     body.push([
-      { content: ue.unidadEjecutora, colSpan: 9, styles: { fillColor: [255, 255, 255], fontStyle: 'bold' } },
+      { content: ue.unidadEjecutora, colSpan: 10, styles: { fillColor: [255, 255, 255], fontStyle: 'bold' } },
     ]);
 
     for (const group of ue.cuentas) {
@@ -658,6 +672,7 @@ function buildMayorExtendidoUeRows(ueGroups: LibroMayorExtendidoUeGroup[], codEn
         '',
         '',
         '',
+        '',
       ]);
 
       for (const det of group.detalles) {
@@ -668,6 +683,7 @@ function buildMayorExtendidoUeRows(ueGroups: LibroMayorExtendidoUeGroup[], codEn
           '',
           det.minen,
           det.nombre,
+          { content: formatImporte(det.saldoInicial), styles: { halign: 'right' } },
           { content: formatImporte(det.debe), styles: { halign: 'right' } },
           { content: formatImporte(det.haber), styles: { halign: 'right' } },
           { content: formatImporte(det.saldo), styles: { halign: 'right' } },
@@ -701,6 +717,7 @@ export async function generateLibrosContablesMayorExtendidoUePdfReport(input: Li
         { content: 'FECHA', rowSpan: 3, styles: headStyles },
         { content: 'CÓDIGO', rowSpan: 3, styles: headStyles },
         { content: 'CUENTA', colSpan: 2, styles: headStyles },
+        { content: 'SALDO INICIAL', rowSpan: 3, styles: { ...headStyles, halign: 'right' as const } },
         { content: 'DEBE', rowSpan: 3, styles: { ...headStyles, halign: 'right' as const } },
         { content: 'HABER', rowSpan: 3, styles: { ...headStyles, halign: 'right' as const } },
         { content: 'SALDO', rowSpan: 3, styles: { ...headStyles, halign: 'right' as const } },
@@ -721,9 +738,10 @@ export async function generateLibrosContablesMayorExtendidoUePdfReport(input: Li
       3: { cellWidth: 55 },
       4: { cellWidth: 62 },
       5: { cellWidth: 'auto' },
-      6: { cellWidth: 95, halign: 'right' },
-      7: { cellWidth: 95, halign: 'right' },
-      8: { cellWidth: 95, halign: 'right' },
+      6: { cellWidth: 80, halign: 'right' },
+      7: { cellWidth: 80, halign: 'right' },
+      8: { cellWidth: 80, halign: 'right' },
+      9: { cellWidth: 80, halign: 'right' },
     },
     didDrawPage: (data) => drawPageFooter(doc, data.pageNumber, fecha, hora),
   });

@@ -287,6 +287,7 @@ export const LIBROS_CONTABLES_PLIEGO_DIARIO_ROWS: LibroPliegoDiarioRow[] = [
 export type LibroPliegoMayorRow = {
   minen: string;
   nombre: string;
+  saldoInicial: number;
   debe: number;
   haber: number;
   saldo: number;
@@ -307,10 +308,10 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
     codigo: '1101',
     cuenta: 'CAJA Y BANCOS',
     detalles: [
-      { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
-      { minen: '000057', nombre: 'USE 02 San Martin de Porras', debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
-      { minen: '000058', nombre: 'USE 03 Cercado', debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
-      { minen: '000059', nombre: 'USE 04 Comas', debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
+      { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', saldoInicial: 5922.53, debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
+      { minen: '000057', nombre: 'USE 02 San Martin de Porras', saldoInicial: 15625.30, debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
+      { minen: '000058', nombre: 'USE 03 Cercado', saldoInicial: 2128.74, debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
+      { minen: '000059', nombre: 'USE 04 Comas', saldoInicial: 8089.15, debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
     ],
   },
 ];
@@ -327,10 +328,10 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS: LibroPliegoMayorGroup[] = 
     codigo: '1101.01',
     cuenta: 'Recursos Ordinarios',
     detalles: [
-      { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
-      { minen: '000057', nombre: 'USE 02 San Martin de Porras', debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
-      { minen: '000058', nombre: 'USE 03 Cercado', debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
-      { minen: '000059', nombre: 'USE 04 Comas', debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
+      { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', saldoInicial: 309854.68, debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
+      { minen: '000057', nombre: 'USE 02 San Martin de Porras', saldoInicial: 315625.30, debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
+      { minen: '000058', nombre: 'USE 03 Cercado', saldoInicial: 2128.74, debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
+      { minen: '000059', nombre: 'USE 04 Comas', saldoInicial: 38089.15, debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
     ],
   },
 ];
@@ -357,10 +358,10 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS: LibroMayorExtendidoUeGr
         codigo: '1101.01',
         cuenta: 'Recursos Ordinarios',
         detalles: [
-          { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
-          { minen: '000057', nombre: 'USE 02 San Martin de Porras', debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
-          { minen: '000058', nombre: 'USE 03 Cercado', debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
-          { minen: '000059', nombre: 'USE 04 Comas', debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
+          { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', saldoInicial: 5922.53, debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
+          { minen: '000057', nombre: 'USE 02 San Martin de Porras', saldoInicial: 5625.30, debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
+          { minen: '000058', nombre: 'USE 03 Cercado', saldoInicial: 2128.74, debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
+          { minen: '000059', nombre: 'USE 04 Comas', saldoInicial: 8089.15, debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
         ],
       },
       {
@@ -369,8 +370,8 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS: LibroMayorExtendidoUeGr
         codigo: '1101.02',
         cuenta: 'Ordenes de Servicio Aprobadas',
         detalles: [
-          { minen: '000060', nombre: 'USE 05 San Juan de Lurigancho', debe: 8075.91, haber: 0, saldo: 8075.91 },
-          { minen: '000061', nombre: 'USE 06 Vitarte', debe: 87.50, haber: 0, saldo: 87.50 },
+          { minen: '000060', nombre: 'USE 05 San Juan de Lurigancho', saldoInicial: 1075.91, debe: 8075.91, haber: 0, saldo: 8075.91 },
+          { minen: '000061', nombre: 'USE 06 Vitarte', saldoInicial: 87.50, debe: 87.50, haber: 0, saldo: 87.50 },
         ],
       },
     ],
@@ -385,8 +386,8 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS: LibroMayorExtendidoUeGr
         codigo: '1102.01',
         cuenta: 'Recursos Ordinarios',
         detalles: [
-          { minen: '000062', nombre: 'USE 07 San Borja', debe: 12375.37, haber: 0, saldo: 12375.37 },
-          { minen: '000063', nombre: 'USE 08 Surquillo', debe: 653862.05, haber: 120450.10, saldo: 533411.95 },
+          { minen: '000062', nombre: 'USE 07 San Borja', saldoInicial: 2375.37, debe: 12375.37, haber: 0, saldo: 12375.37 },
+          { minen: '000063', nombre: 'USE 08 Surquillo', saldoInicial: 53411.95, debe: 653862.05, haber: 120450.10, saldo: 533411.95 },
         ],
       },
     ],

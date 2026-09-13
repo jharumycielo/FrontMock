@@ -148,7 +148,7 @@ export class NavbarComponent {
   readonly visualizadorPerfiles: { tipo: VisualizadorTipo; label: string }[] = [
     { tipo: 'unidad_ejecutora', label: 'Unidad Ejecutora' },
     { tipo: 'pliego', label: 'Pliego' },
-    { tipo: 'ente_rector', label: 'Ente Rector' },
+    { tipo: 'ente_rector', label: 'DGCP' },
   ];
 
   seleccionarPerfil(tipo: VisualizadorTipo): void {

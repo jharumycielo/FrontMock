@@ -10,7 +10,7 @@ export type VisualizadorTipo = 'pliego' | 'unidad_ejecutora' | 'ente_rector';
 export const VISUALIZADOR_TIPO_LABELS: Record<VisualizadorTipo, string> = {
   pliego: 'PLIEGO',
   unidad_ejecutora: 'UNIDAD EJECUTORA',
-  ente_rector: 'ENTE RECTOR',
+  ente_rector: 'DGCP',
 };
 
 export type CurrentUser = {

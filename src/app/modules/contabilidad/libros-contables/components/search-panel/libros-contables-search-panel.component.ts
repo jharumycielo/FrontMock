@@ -6,6 +6,7 @@ import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-pick
 import { IconComponent } from '../../../../../shared/ui/icon/icon.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import {
+  ACCOUNTING_BOOKS_CUENTAS,
   LIBROS_CONTABLES_ANIO_OPTIONS,
   LIBROS_CONTABLES_ENTIDAD_PLIEGO_OPTIONS,
   LIBROS_CONTABLES_MES_OPTIONS,
@@ -29,6 +30,10 @@ export type LibrosContablesSearchCriteria = {
   unidadEjecutora: string;
   /** Variante del Libro Mayor: 'estandar' (Libro mayor) o 'extendido' (Libro mayor extendido). */
   mayorVariante: string;
+  /** Filtros adicionales del Libro Mayor: cuenta contable y rango de cuentas. */
+  cuentaContable: string;
+  rangoCuentaDesde: string;
+  rangoCuentaHasta: string;
 };
 
 @Component({
@@ -88,17 +93,29 @@ export type LibrosContablesSearchCriteria = {
                 </div>
               }
               @if (esEnteRector()) {
+                <siaf-input label="Ejercicio contable" type="select" [clearable]="true" [options]="anioOptions" [value]="anioCuenta()" (valueChange)="anioCuenta.set(asString($event))" />
                 <siaf-input label="Mes" type="select" [clearable]="true" [options]="mesOptions" [value]="mes()" (valueChange)="mes.set(asString($event))" />
                 <siaf-input label="Pliego" type="select" [clearable]="true" [options]="pliegoOptions" [value]="pliego()" (valueChange)="pliego.set(asString($event))" />
                 <siaf-input label="Unidad Ejecutora" type="select" [clearable]="true" [options]="unidadEjecutoraOptions" [value]="unidadEjecutora()" (valueChange)="unidadEjecutora.set(asString($event))" />
+                <siaf-date-time-picker placeholder="Fecha desde" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaDesde()" (valueChange)="fechaDesde.set($event)" />
+                <siaf-date-time-picker placeholder="Fecha hasta" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaHasta()" (valueChange)="fechaHasta.set($event)" />
               } @else if (usaFiltrosPliego()) {
                 <siaf-input label="Entidad" type="select" [clearable]="true" [options]="entidadOptions" [value]="entidad()" (valueChange)="entidad.set(asString($event))" />
+                <siaf-input label="Ejercicio contable" type="select" [clearable]="true" [options]="anioOptions" [value]="anioCuenta()" (valueChange)="anioCuenta.set(asString($event))" />
                 <siaf-input label="Mes" type="select" [clearable]="true" [options]="mesOptions" [value]="mes()" (valueChange)="mes.set(asString($event))" />
+                <siaf-date-time-picker placeholder="Fecha desde" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaDesde()" (valueChange)="fechaDesde.set($event)" />
+                <siaf-date-time-picker placeholder="Fecha hasta" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaHasta()" (valueChange)="fechaHasta.set($event)" />
               } @else {
                 <siaf-input label="Ejercicio contable" type="select" [clearable]="true" [options]="anioOptions" [value]="anioCuenta()" (valueChange)="anioCuenta.set(asString($event))" />
                 <siaf-input label="Mes" type="select" [clearable]="true" [options]="mesOptions" [value]="mes()" (valueChange)="mes.set(asString($event))" />
                 <siaf-date-time-picker placeholder="Fecha desde" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaDesde()" (valueChange)="fechaDesde.set($event)" />
                 <siaf-date-time-picker placeholder="Fecha hasta" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaHasta()" (valueChange)="fechaHasta.set($event)" />
+              }
+
+              @if (esLibroMayor()) {
+                <siaf-input label="Cuenta contable" type="select" [clearable]="true" [options]="cuentaContableOptions" [value]="cuentaContable()" (valueChange)="cuentaContable.set(asString($event))" />
+                <siaf-input label="Rango de cuenta desde" type="text" [value]="rangoCuentaDesde()" (valueChange)="rangoCuentaDesde.set(asString($event))" />
+                <siaf-input label="Rango de cuenta hasta" type="text" [value]="rangoCuentaHasta()" (valueChange)="rangoCuentaHasta.set(asString($event))" />
               }
             </div>
           </div>
@@ -128,6 +145,7 @@ export class LibrosContablesSearchPanelComponent {
   readonly anioOptions = LIBROS_CONTABLES_ANIO_OPTIONS;
   readonly pliegoOptions = LIBROS_CONTABLES_PLIEGO_OPTIONS;
   readonly unidadEjecutoraOptions = LIBROS_CONTABLES_UNIDAD_EJECUTORA_OPTIONS;
+  readonly cuentaContableOptions = ACCOUNTING_BOOKS_CUENTAS;
 
   /** Variantes disponibles cuando el Tipo de Libro es "Libro Mayor". */
   readonly mayorVarianteOptions = [
@@ -158,9 +176,13 @@ export class LibrosContablesSearchPanelComponent {
   readonly unidadEjecutora = signal('todos');
   /** Variante del Libro Mayor; por defecto "estandar" (Libro mayor). */
   readonly mayorVariante = signal('estandar');
+  /** Filtros adicionales del Libro Mayor. */
+  readonly cuentaContable = signal('');
+  readonly rangoCuentaDesde = signal('');
+  readonly rangoCuentaHasta = signal('');
 
   readonly hasCriteria = computed(() =>
-    Boolean(this.scope() || this.tipoLibro() || this.entidad() || this.mes() || this.anioCuenta() || this.fechaDesde() || this.fechaHasta() || this.pliego())
+    Boolean(this.scope() || this.tipoLibro() || this.entidad() || this.mes() || this.anioCuenta() || this.fechaDesde() || this.fechaHasta() || this.pliego() || this.cuentaContable() || this.rangoCuentaDesde() || this.rangoCuentaHasta())
   );
 
   asString(value: string | number | string[]): string {
@@ -187,6 +209,9 @@ export class LibrosContablesSearchPanelComponent {
     this.pliego.set('');
     this.unidadEjecutora.set('todos');
     this.mayorVariante.set('estandar');
+    this.cuentaContable.set('');
+    this.rangoCuentaDesde.set('');
+    this.rangoCuentaHasta.set('');
   }
 
   aplicarCriteria(): void {
@@ -205,6 +230,9 @@ export class LibrosContablesSearchPanelComponent {
       pliego: this.pliego(),
       unidadEjecutora: this.unidadEjecutora(),
       mayorVariante: this.mayorVariante(),
+      cuentaContable: this.cuentaContable(),
+      rangoCuentaDesde: this.rangoCuentaDesde(),
+      rangoCuentaHasta: this.rangoCuentaHasta(),
     });
   }
 }

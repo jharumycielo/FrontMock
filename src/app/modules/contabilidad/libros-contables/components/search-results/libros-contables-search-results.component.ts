@@ -284,6 +284,7 @@ function formatFechaHora(date: Date): string {
                   <th class="siaf-table-th align-middle" rowspan="3">Fecha</th>
                   <th class="siaf-table-th align-middle" rowspan="3">Código</th>
                   <th class="siaf-table-th text-center" colspan="2">Cuenta</th>
+                  <th class="siaf-table-th text-right align-middle" rowspan="3">Saldo inicial</th>
                   <th class="siaf-table-th text-right align-middle" rowspan="3">Debe</th>
                   <th class="siaf-table-th text-right align-middle" rowspan="3">Haber</th>
                   <th class="siaf-table-th text-right align-middle" rowspan="3">Saldo</th>
@@ -300,7 +301,7 @@ function formatFechaHora(date: Date): string {
                 @for (row of mayorExtendidoUeRows(); track mayorExtendidoUeRowKey(row)) {
                   @if (row.type === 'ue') {
                     <tr class="siaf-table-row">
-                      <td class="siaf-table-td font-bold" colspan="9">
+                      <td class="siaf-table-td font-bold" colspan="10">
                         <button class="inline-flex items-center gap-siaf-xs font-bold" type="button" [attr.aria-label]="isUeExpanded(row.ueId) ? 'Contraer ' + row.unidadEjecutora : 'Expandir ' + row.unidadEjecutora" (click)="toggleUeExpanded(row.ueId)">
                           <siaf-icon [name]="isUeExpanded(row.ueId) ? 'expand_more' : 'chevron_right'" [size]="20" />
                           <span class="font-bold">{{ row.unidadEjecutora }}</span>
@@ -317,6 +318,7 @@ function formatFechaHora(date: Date): string {
                       <td class="siaf-table-td"></td>
                       <td class="siaf-table-td"></td>
                       <td class="siaf-table-td"></td>
+                      <td class="siaf-table-td"></td>
                     </tr>
                   } @else {
                     <tr class="siaf-table-row">
@@ -326,6 +328,7 @@ function formatFechaHora(date: Date): string {
                       <td class="siaf-table-td"></td>
                       <td class="siaf-table-td whitespace-nowrap">{{ row.det.minen }}</td>
                       <td class="siaf-table-td whitespace-nowrap">{{ row.det.nombre }}</td>
+                      <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.det.saldoInicial) }}</td>
                       <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.det.debe) }}</td>
                       <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.det.haber) }}</td>
                       <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.det.saldo) }}</td>
@@ -334,7 +337,7 @@ function formatFechaHora(date: Date): string {
                 }
                 @empty {
                   <tr>
-                    <td colspan="9" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
+                    <td colspan="10" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
                       No se encontraron operaciones para el criterio de búsqueda.
                     </td>
                   </tr>
@@ -352,6 +355,7 @@ function formatFechaHora(date: Date): string {
                   <th class="siaf-table-th align-middle" rowspan="3">Fecha</th>
                   <th class="siaf-table-th align-middle" rowspan="3">Código</th>
                   <th class="siaf-table-th text-center" colspan="2">Cuenta</th>
+                  <th class="siaf-table-th text-right align-middle" rowspan="3">Saldo inicial</th>
                   <th class="siaf-table-th text-right align-middle" rowspan="3">Debe</th>
                   <th class="siaf-table-th text-right align-middle" rowspan="3">Haber</th>
                   <th class="siaf-table-th text-right align-middle" rowspan="3">Saldo</th>
@@ -375,6 +379,7 @@ function formatFechaHora(date: Date): string {
                     <td class="siaf-table-td"></td>
                     <td class="siaf-table-td"></td>
                     <td class="siaf-table-td"></td>
+                    <td class="siaf-table-td"></td>
                   </tr>
                   @for (det of group.detalles; track $index) {
                     <tr class="siaf-table-row">
@@ -384,6 +389,7 @@ function formatFechaHora(date: Date): string {
                       <td class="siaf-table-td"></td>
                       <td class="siaf-table-td whitespace-nowrap">{{ det.minen }}</td>
                       <td class="siaf-table-td whitespace-nowrap">{{ det.nombre }}</td>
+                      <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(det.saldoInicial) }}</td>
                       <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(det.debe) }}</td>
                       <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(det.haber) }}</td>
                       <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(det.saldo) }}</td>
@@ -392,7 +398,7 @@ function formatFechaHora(date: Date): string {
                 }
                 @empty {
                   <tr>
-                    <td colspan="9" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
+                    <td colspan="10" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
                       No se encontraron operaciones para el criterio de búsqueda.
                     </td>
                   </tr>
@@ -441,6 +447,10 @@ function formatFechaHora(date: Date): string {
                     </td>
                     <td class="siaf-table-td font-bold">{{ group.codCuenta }}</td>
                     <td class="siaf-table-td font-bold" colspan="10">{{ group.nombreCuenta }}</td>
+                  </tr>
+                  <tr class="siaf-table-row bg-[var(--sys-color-bg-surfaces-highlight)]">
+                    <td class="siaf-table-td text-right font-medium" colspan="11">Saldo inicial</td>
+                    <td class="siaf-table-td whitespace-nowrap text-right font-medium">{{ formatImporte(group.saldoInicial) }}</td>
                   </tr>
                   @for (mov of group.movimientos; track $index) {
                     <tr class="siaf-table-row">
