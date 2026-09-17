@@ -19,7 +19,7 @@ import { LibrosContablesSearchResultsComponent } from '../../components/search-r
       <div class="border-b border-[var(--sys-color-divider-default)] bg-surface">
         <siaf-breadcrumb class="block" [items]="breadcrumbs" />
         <div class="flex min-h-[56px] items-center justify-between gap-siaf-md px-siaf-md pb-siaf-md">
-          <h1 class="m-0 text-sm font-bold uppercase leading-normal text-[var(--sys-color-text-brand-secondary)]">Consultas y reportes de libros contables</h1>
+          <h1 class="m-0 text-sm font-bold uppercase leading-normal text-[var(--sys-color-text-brand-secondary)]">Generar Libros Contables Oficiales</h1>
           <siaf-button variant="accent" size="md" icon="manage_search" (click)="openSearchPanel()">Búsqueda</siaf-button>
         </div>
       </div>

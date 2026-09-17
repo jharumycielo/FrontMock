@@ -362,7 +362,17 @@ export async function generateLibrosContablesPdfReport(input: LibrosContablesPdf
 
 const MAYOR_GROUP_ROW_STYLES = { fillColor: [245, 245, 245] as [number, number, number], fontStyle: 'bold' as const };
 // Equivalente en RGB del token --sys-color-bg-surfaces-highlight (azul 1/72/153 al 8% sobre blanco).
-const SALDO_INICIAL_ROW_STYLES = { fillColor: [235, 240, 247] as [number, number, number], halign: 'right' as const };
+const SALDO_ROW_STYLES = { fillColor: [235, 240, 247] as [number, number, number], halign: 'right' as const };
+
+/** Fila resaltada de "Saldo inicial"/"Saldo final": etiqueta + monto en Debe y en Saldo. */
+function buildSaldoRow(label: string, monto: number): RowInput {
+  return [
+    { content: label, colSpan: 8, styles: SALDO_ROW_STYLES },
+    { content: formatImporte(monto), styles: SALDO_ROW_STYLES },
+    { content: '', styles: SALDO_ROW_STYLES },
+    { content: formatImporte(monto), styles: SALDO_ROW_STYLES },
+  ];
+}
 
 function buildMayorRows(groups: LibroMayorResultGroup[], codEntidad: number | string): RowInput[] {
   const rows: RowInput[] = [];
@@ -372,10 +382,7 @@ function buildMayorRows(groups: LibroMayorResultGroup[], codEntidad: number | st
       { content: `${group.codCuenta} ${group.nombreCuenta}`, colSpan: 11, styles: MAYOR_GROUP_ROW_STYLES },
     ]);
 
-    rows.push([
-      { content: 'Saldo inicial', colSpan: 10, styles: SALDO_INICIAL_ROW_STYLES },
-      { content: formatImporte(group.saldoInicial), styles: SALDO_INICIAL_ROW_STYLES },
-    ]);
+    rows.push(buildSaldoRow('Saldo inicial', group.saldoInicial));
 
     let saldo = group.saldoInicial;
 
@@ -396,6 +403,8 @@ function buildMayorRows(groups: LibroMayorResultGroup[], codEntidad: number | st
         { content: formatImporte(saldo), styles: { halign: 'right' } },
       ]);
     }
+
+    rows.push(buildSaldoRow('Saldo final', saldo));
   }
 
   return rows;

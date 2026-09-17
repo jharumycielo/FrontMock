@@ -96,19 +96,18 @@ const EJERCICIO = 2026;
 export function buildLibroMayorMatrix(input: LibroMayorExportInput): ExportMatrix {
   const matrix: ExportMatrix = [];
   matrix.push([
-    'Ejercicio', 'Cod_Entidad', 'Cuenta', 'Desc.Cuenta', 'Saldo inicial', 'Fecha', 'Nro Reg. Contable',
+    'Ejercicio', 'Cod_Entidad', 'Cuenta', 'Desc.Cuenta', 'Fecha', 'Nro Reg. Contable',
     'Nro Asiento', 'Tipo Registro', 'Documento origen', 'Nro doc origen', 'Debe', 'Haber', 'Saldo',
   ]);
 
   const codEntidad = entidadCodigo(input.entity.entidad);
 
   for (const group of input.groups) {
-    const saldoInicial = round2(group.saldoInicial);
     let saldo = group.saldoInicial;
     for (const mov of group.movimientos) {
       saldo = round2(saldo + mov.debe - mov.haber);
       matrix.push([
-        EJERCICIO, codEntidad, group.codCuenta, group.nombreCuenta, saldoInicial, mov.fecha, mov.nroDocContable,
+        EJERCICIO, codEntidad, group.codCuenta, group.nombreCuenta, mov.fecha, mov.nroDocContable,
         mov.nroAsiento, mov.tipo, mov.documento, mov.nroDocumento, amount(mov.debe), amount(mov.haber), saldo,
       ]);
     }

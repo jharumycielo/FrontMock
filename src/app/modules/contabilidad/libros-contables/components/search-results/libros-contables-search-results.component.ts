@@ -449,7 +449,9 @@ function formatFechaHora(date: Date): string {
                     <td class="siaf-table-td font-bold" colspan="10">{{ group.nombreCuenta }}</td>
                   </tr>
                   <tr class="siaf-table-row bg-[var(--sys-color-bg-surfaces-highlight)]">
-                    <td class="siaf-table-td text-right font-medium" colspan="11">Saldo inicial</td>
+                    <td class="siaf-table-td text-right font-medium" colspan="9">Saldo inicial</td>
+                    <td class="siaf-table-td whitespace-nowrap text-right font-medium">{{ formatImporte(group.saldoInicial) }}</td>
+                    <td class="siaf-table-td"></td>
                     <td class="siaf-table-td whitespace-nowrap text-right font-medium">{{ formatImporte(group.saldoInicial) }}</td>
                   </tr>
                   @for (mov of group.movimientos; track $index) {
@@ -470,6 +472,12 @@ function formatFechaHora(date: Date): string {
                       <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(mov.saldo) }}</td>
                     </tr>
                   }
+                  <tr class="siaf-table-row bg-[var(--sys-color-bg-surfaces-highlight)]">
+                    <td class="siaf-table-td text-right font-medium" colspan="9">Saldo final</td>
+                    <td class="siaf-table-td whitespace-nowrap text-right font-medium">{{ formatImporte(group.saldoFinal) }}</td>
+                    <td class="siaf-table-td"></td>
+                    <td class="siaf-table-td whitespace-nowrap text-right font-medium">{{ formatImporte(group.saldoFinal) }}</td>
+                  </tr>
                 }
                 @empty {
                   <tr>
@@ -998,13 +1006,11 @@ export class LibrosContablesSearchResultsComponent {
   readonly mayorGroupsView = computed(() =>
     this.mayorGroups().map((group) => {
       let saldo = group.saldoInicial;
-      return {
-        ...group,
-        movimientos: group.movimientos.map((mov) => {
-          saldo = Math.round((saldo + mov.debe - mov.haber + Number.EPSILON) * 100) / 100;
-          return { ...mov, saldo };
-        }),
-      };
+      const movimientos = group.movimientos.map((mov) => {
+        saldo = Math.round((saldo + mov.debe - mov.haber + Number.EPSILON) * 100) / 100;
+        return { ...mov, saldo };
+      });
+      return { ...group, movimientos, saldoFinal: saldo };
     })
   );
 

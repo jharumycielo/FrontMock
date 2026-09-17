@@ -139,7 +139,7 @@ export const DEFAULT_PROCESS_TREE: ProcessMenuNode[] = [
         id: 'libros-contables',
         label: 'Libros contables',
         children: [
-          { id: 'libro-diario-mayor', label: 'Consultas y reportes de Libros Contables' }
+          { id: 'libro-diario-mayor', label: 'Generar Libros Contables Oficiales' }
         ]
       }
     ]
