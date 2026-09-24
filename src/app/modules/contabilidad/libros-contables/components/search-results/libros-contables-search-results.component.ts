@@ -17,6 +17,8 @@ import {
   LIBROS_CONTABLES_MES_OPTIONS,
   LIBROS_CONTABLES_PLIEGO_DIARIO_ROWS,
   LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS,
+  LIBROS_CONTABLES_PLIEGO_DIARIO_UE_VAN_DEBE,
+  LIBROS_CONTABLES_PLIEGO_DIARIO_UE_VAN_HABER,
   LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS,
   LIBROS_CONTABLES_PLIEGO_OPTIONS,
   LIBROS_CONTABLES_PLIEGO_VAN_DEBE,
@@ -270,8 +272,8 @@ function formatFechaHora(date: Date): string {
               <tfoot>
                 <tr class="siaf-table-row bg-[var(--sys-color-bg-surfaces-surface-low)] text-[length:var(--sys-typography-size-caption-1)] font-bold">
                   <td class="siaf-table-td text-center" colspan="10">-Van-</td>
-                  <td class="siaf-table-td text-right">{{ formatImporte(totalDebe) }}</td>
-                  <td class="siaf-table-td text-right">{{ formatImporte(totalHaber) }}</td>
+                  <td class="siaf-table-td text-right">{{ formatImporte(pliegoDiarioVanDebe) }}</td>
+                  <td class="siaf-table-td text-right">{{ formatImporte(pliegoDiarioVanHaber) }}</td>
                 </tr>
               </tfoot>
             </table>
@@ -645,6 +647,8 @@ export class LibrosContablesSearchResultsComponent {
   readonly totalDebe = LIBROS_CONTABLES_RESULT_TOTAL_DEBE;
   readonly totalHaber = LIBROS_CONTABLES_RESULT_TOTAL_HABER;
 
+  readonly pliegoDiarioVanDebe = LIBROS_CONTABLES_PLIEGO_DIARIO_UE_VAN_DEBE;
+  readonly pliegoDiarioVanHaber = LIBROS_CONTABLES_PLIEGO_DIARIO_UE_VAN_HABER;
   readonly pliegoVienenDebe = LIBROS_CONTABLES_PLIEGO_VIENEN_DEBE;
   readonly pliegoVienenHaber = LIBROS_CONTABLES_PLIEGO_VIENEN_HABER;
   readonly pliegoVanDebe = LIBROS_CONTABLES_PLIEGO_VAN_DEBE;
@@ -1286,7 +1290,7 @@ export class LibrosContablesSearchResultsComponent {
       generateLibrosContablesPliegoDiarioPdfReport({
         correlativo, title, sectionTitle, entity: this.reportEntity(), usuario, ueGroups: this.pliegoDiarioUeGroups(),
         vienenDebe: this.vienenDebe, vienenHaber: this.vienenHaber,
-        vanDebe: this.totalDebe, vanHaber: this.totalHaber,
+        vanDebe: this.pliegoDiarioVanDebe, vanHaber: this.pliegoDiarioVanHaber,
       });
       return;
     }

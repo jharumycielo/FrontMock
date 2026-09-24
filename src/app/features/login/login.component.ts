@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
+import { CurrentUserService, VISUALIZADOR_TIPO_LABELS } from '../../core/auth/current-user.service';
+import { findMockUser } from '../../core/auth/mock-users';
+import { PermissionService } from '../../core/auth/permission.service';
 import { ButtonComponent } from '../../shared/ui/button/button.component';
 import { TextFieldComponent } from '../../shared/ui/text-field/text-field.component';
 
@@ -9,7 +12,7 @@ type LoginTab = 'entidades' | 'proveedores';
 @Component({
   selector: 'siaf-login',
   standalone: true,
-  imports: [ButtonComponent, TextFieldComponent, RouterLink],
+  imports: [ButtonComponent, TextFieldComponent],
   template: `
     <main class="flex min-h-screen bg-[var(--sys-color-bg-surfaces-surface)] text-text lg:h-screen lg:overflow-hidden">
       <section class="hidden h-screen flex-[0_0_50%] overflow-hidden lg:block" aria-hidden="true">
@@ -73,7 +76,7 @@ type LoginTab = 'entidades' | 'proveedores';
 
             <!-- Formulario: Entidades del Estado -->
             @if (activeTab() === 'entidades') {
-            <form class="flex w-full flex-col items-center gap-5" aria-label="Inicio de sesión">
+            <form class="flex w-full flex-col items-center gap-5" aria-label="Inicio de sesión" (submit)="$event.preventDefault(); iniciarSesion()">
 
               <!-- Input Usuario -->
               <siaf-input
@@ -83,7 +86,8 @@ type LoginTab = 'entidades' | 'proveedores';
                 leadingIcon="mail"
                 autocomplete="username"
                 [value]="userValue"
-                (valueChange)="userValue = textFieldValue($event)"
+                [error]="loginError()"
+                (valueChange)="userValue = textFieldValue($event); loginError.set('')"
               />
 
               <!-- Input Contraseña -->
@@ -96,14 +100,12 @@ type LoginTab = 'entidades' | 'proveedores';
                 [trailingButtonLabel]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
                 autocomplete="current-password"
                 [value]="passwordValue"
-                (valueChange)="passwordValue = textFieldValue($event)"
+                (valueChange)="passwordValue = textFieldValue($event); loginError.set('')"
                 (trailingAction)="togglePassword()"
               />
 
               <!-- Botón Iniciar sesión -->
-              <a class="block w-full" routerLink="/panel">
-                <siaf-button class="block w-full" variant="primary" type="button">Iniciar sesión</siaf-button>
-              </a>
+              <siaf-button class="block w-full" variant="primary" type="submit">Iniciar sesión</siaf-button>
 
               <!-- Links inferiores -->
               <div class="flex w-full items-center justify-between">
@@ -200,12 +202,32 @@ type LoginTab = 'entidades' | 'proveedores';
 })
 export class LoginComponent {
   private readonly router = inject(Router);
+  private readonly permissionService = inject(PermissionService);
+  private readonly currentUserService = inject(CurrentUserService);
 
   userValue = '';
   passwordValue = '';
   readonly activeTab = signal<LoginTab>('entidades');
   readonly showPassword = signal(false);
   readonly jnePopover = signal(false);
+  readonly loginError = signal('');
+
+  /** Valida las credenciales mock y abre el sistema con la vista del tipo de visualizador. */
+  iniciarSesion(): void {
+    const user = findMockUser(this.userValue, this.passwordValue);
+    if (!user) {
+      this.loginError.set('Usuario o contraseña incorrectos.');
+      return;
+    }
+
+    this.permissionService.setRole('visualizador');
+    this.currentUserService.setUser({
+      name: user.name,
+      office: VISUALIZADOR_TIPO_LABELS[user.visualizadorTipo],
+      visualizadorTipo: user.visualizadorTipo,
+    });
+    void this.router.navigate(['/panel']);
+  }
 
   goToRecuperarContrasena(): void {
     void this.router.navigate(['/login/recuperar-contrasena']);

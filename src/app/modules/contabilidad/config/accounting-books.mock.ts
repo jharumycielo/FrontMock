@@ -103,7 +103,137 @@ export type LibroContableOperacionGroup = {
   cuentas: LibroContableAccountRow[];
 };
 
-export const LIBROS_CONTABLES_RESULT_GROUPS: LibroContableOperacionGroup[] = [
+// ---------------------------------------------------------------------------
+// Constructores de mock data. Garantizan las reglas contables en todos los libros:
+//  - Partida doble: en cada asiento Σ Debe = Σ Haber.
+//  - Nro. Doc. Contable = Nro. Asiento Contable sin los decimales.
+//  - Cada Unidad Ejecutora numera sus asientos con su propia serie (938, 939, 940).
+//  - Saldo = Saldo inicial + Debe − Haber.
+//  - El Libro Mayor se obtiene de los mismos asientos del Libro Diario.
+// ---------------------------------------------------------------------------
+
+type CuentaRef = readonly [codigo: string, nombre: string];
+type Naturaleza = 'Deudora' | 'Acreedora';
+type CuentaMayorRef = readonly [codigo: string, nombre: string, naturaleza: Naturaleza];
+
+const CTA = {
+  cajaBancos: ['1101', 'CAJA Y BANCOS', 'Deudora'],
+  anticipos: ['1205', 'SERVICIOS Y OTROS PAGADOS POR ANTICIPADO', 'Deudora'],
+  depreciacionAcum: ['1508', 'DEPRECIACIÓN, AMORTIZACIÓN Y AGOTAMIENTO', 'Acreedora'],
+  contribuciones: ['2101', 'IMPUESTOS, CONTRIBUCIONES Y OTROS', 'Acreedora'],
+  remuneraciones: ['2102', 'REMUNERACIONES Y BENEFICIOS SOCIALES', 'Acreedora'],
+  proveedores: ['2103', 'CUENTAS POR PAGAR A PROVEEDORES', 'Acreedora'],
+  ventaServicios: ['4301', 'VENTA DE BIENES Y SERVICIOS', 'Acreedora'],
+  personal: ['5201', 'PERSONAL Y OBLIGACIONES SOCIALES', 'Deudora'],
+  compraBienes: ['5301', 'COMPRA DE BIENES', 'Deudora'],
+  estimaciones: ['5801', 'ESTIMACIONES Y PROVISIONES DEL EJERCICIO', 'Deudora'],
+  presupuestoGastos: ['8301', 'PRESUPUESTOS DE GASTOS', 'Deudora'],
+  asignacionesComprometidas: ['8401', 'ASIGNACIONES COMPROMETIDAS', 'Acreedora'],
+  contratosAprobados: ['9101', 'CONTRATOS O COMPROMISOS APROBADOS', 'Deudora'],
+  contratosPorContra: ['9102', 'CONTRATOS Y COMPROMISOS POR CONTRA', 'Acreedora'],
+} as const satisfies Record<string, CuentaMayorRef>;
+
+type Partida = {
+  lado: 'D' | 'H';
+  mayor: CuentaMayorRef;
+  sub: CuentaRef;
+  /** Divisionaria (nivel 3). Algunas cuentas de orden solo llegan a nivel 2. */
+  det?: CuentaRef;
+  monto: number;
+};
+
+const round2 = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+
+const debe = (mayor: CuentaMayorRef, sub: CuentaRef, det: CuentaRef | undefined, monto: number): Partida => ({ lado: 'D', mayor, sub, det, monto });
+const haber = (mayor: CuentaMayorRef, sub: CuentaRef, det: CuentaRef | undefined, monto: number): Partida => ({ lado: 'H', mayor, sub, det, monto });
+
+type OperacionConPartidas = LibroContableOperacionGroup & { partidas: Partida[] };
+
+type OperacionMock = Omit<LibroContableOperacionGroup, 'nroDocContable' | 'cuentas'> & {
+  partidas: Partida[];
+  /** Fila final del asiento: código y glosa del documento que lo sustenta. */
+  referencia: CuentaRef;
+};
+
+/**
+ * Arma las filas jerárquicas del asiento (mayor → sub-cuenta → divisionaria) agrupando por
+ * cuenta mayor y lado, y valida la partida doble.
+ */
+function operacion(op: OperacionMock): OperacionConPartidas {
+  const totalDebe = round2(op.partidas.filter((p) => p.lado === 'D').reduce((t, p) => t + p.monto, 0));
+  const totalHaber = round2(op.partidas.filter((p) => p.lado === 'H').reduce((t, p) => t + p.monto, 0));
+  if (totalDebe !== totalHaber) {
+    throw new Error(`Asiento ${op.codCuenta} descuadrado: Debe ${totalDebe} ≠ Haber ${totalHaber}`);
+  }
+
+  const cuentas: LibroContableAccountRow[] = [];
+  const grupos = new Map<string, Partida[]>();
+  for (const partida of op.partidas) {
+    const key = `${partida.lado}-${partida.mayor[0]}`;
+    grupos.set(key, [...(grupos.get(key) ?? []), partida]);
+  }
+  for (const partidas of grupos.values()) {
+    const { lado, mayor } = partidas[0];
+    const total = round2(partidas.reduce((t, p) => t + p.monto, 0));
+    cuentas.push({ codigo: mayor[0], nombre: mayor[1], nivel: 1, debe: lado === 'D' ? total : 0, haber: lado === 'H' ? total : 0 });
+    // Convención del Figma: el lado Debe/Haber lo indica la cuenta mayor; sub-cuentas y
+    // divisionarias guardan el importe en `debe` para el escalonado (ver computeAmountSlots).
+    for (const partida of partidas) {
+      cuentas.push({ codigo: partida.sub[0], nombre: partida.sub[1], nivel: 2, debe: partida.monto, haber: 0 });
+      if (partida.det) {
+        cuentas.push({ codigo: partida.det[0], nombre: partida.det[1], nivel: 3, debe: partida.monto, haber: 0 });
+      }
+    }
+  }
+  cuentas.push({ codigo: op.referencia[0], nombre: op.referencia[1], nivel: 1, debe: 0, haber: 0 });
+
+  const { referencia: _referencia, ...rest } = op;
+  return { ...rest, nroDocContable: op.codCuenta.split('.')[0], cuentas };
+}
+
+// Sub-cuentas y divisionarias usadas por los asientos.
+const SUB = {
+  bancos: ['1101.03', 'Bancos'],
+  bancosCtaCte: ['1101.0301', 'Cuenta corriente M/N'],
+  entregasRendir: ['1205.03', 'Entregas a rendir cuenta'],
+  encargosInternos: ['1205.0301', 'Encargos internos'],
+  depAcumMaquinaria: ['1508.01', 'Depreciación acumulada de vehículos, maquinaria y otros'],
+  depAcumEquipo: ['1508.0103', 'Maquinaria, equipo y otras unidades'],
+  essaludPorPagar: ['2101.03', 'Contribuciones a EsSalud por pagar'],
+  essaludPorPagarDet: ['2101.0301', 'Contribuciones a EsSalud'],
+  remunPorPagar: ['2102.01', 'Remuneraciones por pagar'],
+  remunPorPagarDet: ['2102.0101', 'Personal administrativo y asistencial'],
+  provBienesServicios: ['2103.01', 'Bienes y servicios'],
+  provNacionales: ['2103.0101', 'Proveedores nacionales'],
+  ventaServicios: ['4301.02', 'Venta de servicios'],
+  serviciosSalud: ['4301.0201', 'Servicios de salud'],
+  retribuciones: ['5201.01', 'Retribuciones y complementos en efectivo'],
+  retribucionesDet: ['5201.0101', 'Personal administrativo y asistencial'],
+  essalud: ['5201.03', 'Contribuciones a EsSalud'],
+  essaludDet: ['5201.0301', 'Contribuciones a EsSalud'],
+  suministrosMedicos: ['5301.08', 'Suministros médicos'],
+  medicamentos: ['5301.0801', 'Medicamentos'],
+  materialMedico: ['5301.0802', 'Material médico descartable'],
+  depreciacion: ['5801.02', 'Depreciación de vehículos, maquinaria y otros'],
+  depreciacionEquipo: ['5801.0203', 'Maquinaria, equipo y otras unidades'],
+  presupuestoRo: ['8301.01', 'Recursos Ordinarios'],
+  presupuestoRoDet: ['8301.0101', 'Recursos Ordinarios'],
+  comprometidoRo: ['8401.01', 'Recursos Ordinarios'],
+  comprometidoRoDet: ['8401.0101', 'Recursos Ordinarios'],
+  ordenesServicioAprobadas: ['9101.09', 'Ordenes de Servicio Aprobadas'],
+  ordenesServicioPorEjecutar: ['9102.09', 'Ordenes de Servicio por Ejecutar'],
+  materialesUtiles: ['5301.02', 'Materiales y útiles'],
+  materialesOficina: ['5301.0201', 'Materiales y útiles de oficina'],
+  cas: ['5201.05', 'Contrato Administrativo de Servicios'],
+  casDet: ['5201.0501', 'Retribución CAS'],
+  depreciacionEdificios: ['5801.01', 'Depreciación de edificios y estructuras'],
+  depreciacionEdificiosDet: ['5801.0101', 'Edificios'],
+  depAcumEdificios: ['1508.02', 'Depreciación acumulada de edificios y estructuras'],
+  depAcumEdificiosDet: ['1508.0201', 'Edificios'],
+} as const satisfies Record<string, CuentaRef>;
+
+/** Asientos de Hospital Dos de Mayo (serie 938), en orden cronológico. */
+const HDM_OPERACIONES: OperacionConPartidas[] = [
   {
     id: 'op1',
     tipoRegistro: 'Asiento de ajuste',
@@ -122,8 +252,274 @@ export const LIBROS_CONTABLES_RESULT_GROUPS: LibroContableOperacionGroup[] = [
       { codigo: '8401.01.01', nombre: 'Recursos Ordinarios', nivel: 3, debe: 1000, haber: 0 },
       { codigo: 'OT2024-INT-004449', nombre: 'RENDICIÓN Y REPOSICIÓN DE CAJA CHICA UE 024 OT', nivel: 1, debe: 0, haber: 0 },
     ],
+    partidas: [
+      debe(CTA.presupuestoGastos, SUB.presupuestoRo, SUB.presupuestoRoDet, 1000),
+      haber(CTA.asignacionesComprometidas, SUB.comprometidoRo, SUB.comprometidoRoDet, 1000),
+    ],
   },
+  operacion({
+    id: 'op2',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Orden de compra',
+    codCuenta: '938-2026-5420.1.1',
+    fecha: '05/06/2026',
+    codDocOrigen: '0000001402',
+    documento: 'Orden de compra - Guía de internamiento',
+    partidas: [
+      debe(CTA.compraBienes, SUB.suministrosMedicos, SUB.medicamentos, 18450),
+      haber(CTA.proveedores, SUB.provBienesServicios, SUB.provNacionales, 18450),
+    ],
+    referencia: ['OC-2026-000412', 'ADQUISICIÓN DE MEDICAMENTOS PARA FARMACIA CENTRAL'],
+  }),
+  operacion({
+    id: 'op3',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Comprobante de pago',
+    codCuenta: '938-2026-5421.1.1',
+    fecha: '08/06/2026',
+    codDocOrigen: '0000001405',
+    documento: 'Comprobante de pago',
+    partidas: [
+      debe(CTA.proveedores, SUB.provBienesServicios, SUB.provNacionales, 18450),
+      haber(CTA.cajaBancos, SUB.bancos, SUB.bancosCtaCte, 18450),
+    ],
+    referencia: ['CP-2026-001205', 'PAGO A PROVEEDOR POR ADQUISICIÓN DE MEDICAMENTOS'],
+  }),
+  operacion({
+    id: 'op4',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Planilla',
+    codCuenta: '938-2026-5422.1.1',
+    fecha: '12/06/2026',
+    codDocOrigen: '0000001411',
+    documento: 'Planilla única de remuneraciones',
+    partidas: [
+      debe(CTA.personal, SUB.retribuciones, SUB.retribucionesDet, 86320.5),
+      debe(CTA.personal, SUB.essalud, SUB.essaludDet, 7768.85),
+      haber(CTA.remuneraciones, SUB.remunPorPagar, SUB.remunPorPagarDet, 86320.5),
+      haber(CTA.contribuciones, SUB.essaludPorPagar, SUB.essaludPorPagarDet, 7768.85),
+    ],
+    referencia: ['PLL-2026-06', 'PLANILLA DE REMUNERACIONES JUNIO 2026'],
+  }),
+  operacion({
+    id: 'op5',
+    tipoRegistro: 'Asiento de ajuste',
+    tipoDocumento: 'Nota contable',
+    codCuenta: '938-2026-5423.1.2',
+    fecha: '20/06/2026',
+    codDocOrigen: '0000001418',
+    documento: 'Nota contable',
+    partidas: [
+      debe(CTA.estimaciones, SUB.depreciacion, SUB.depreciacionEquipo, 4215.6),
+      haber(CTA.depreciacionAcum, SUB.depAcumMaquinaria, SUB.depAcumEquipo, 4215.6),
+    ],
+    referencia: ['NC-2026-000087', 'DEPRECIACIÓN MENSUAL DE EQUIPOS MÉDICOS'],
+  }),
+  operacion({
+    id: 'op6',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Recibo de ingreso',
+    codCuenta: '938-2026-5424.1.1',
+    fecha: '24/06/2026',
+    codDocOrigen: '0000001421',
+    documento: 'Recibo de ingreso',
+    partidas: [
+      debe(CTA.cajaBancos, SUB.bancos, SUB.bancosCtaCte, 12380),
+      haber(CTA.ventaServicios, SUB.ventaServicios, SUB.serviciosSalud, 12380),
+    ],
+    referencia: ['RI-2026-003318', 'RECAUDACIÓN POR SERVICIOS DE CONSULTA EXTERNA'],
+  }),
+  operacion({
+    id: 'op7',
+    tipoRegistro: 'Asiento de ajuste',
+    tipoDocumento: 'Orden de servicio',
+    codCuenta: '938-2026-5425.1.1',
+    fecha: '26/06/2026',
+    codDocOrigen: '0000001426',
+    documento: 'Orden de servicio',
+    partidas: [
+      debe(CTA.presupuestoGastos, SUB.presupuestoRo, SUB.presupuestoRoDet, 6200),
+      haber(CTA.asignacionesComprometidas, SUB.comprometidoRo, SUB.comprometidoRoDet, 6200),
+    ],
+    referencia: ['OS-2026-000233', 'SERVICIO DE MANTENIMIENTO DE EQUIPOS DE RAYOS X'],
+  }),
+  operacion({
+    id: 'op8',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Resolución',
+    codCuenta: '938-2026-5426.2.1',
+    fecha: '29/06/2026',
+    codDocOrigen: '0000001430',
+    documento: 'Dispositivo legal o acto de administración',
+    partidas: [
+      debe(CTA.anticipos, SUB.entregasRendir, SUB.encargosInternos, 3500),
+      haber(CTA.cajaBancos, SUB.bancos, SUB.bancosCtaCte, 3500),
+    ],
+    referencia: ['RD-2026-000145', 'ENCARGO INTERNO PARA CAMPAÑA DE VACUNACIÓN'],
+  }),
+  operacion({
+    id: 'op9',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Recibo de ingreso',
+    codCuenta: '938-2026-5427.1.1',
+    fecha: '02/06/2026',
+    codDocOrigen: '0000001398',
+    documento: 'Recibo de ingreso',
+    partidas: [
+      debe(CTA.cajaBancos, SUB.bancos, SUB.bancosCtaCte, 8640),
+      haber(CTA.ventaServicios, SUB.ventaServicios, SUB.serviciosSalud, 8640),
+    ],
+    referencia: ['RI-2026-003201', 'RECAUDACIÓN POR SERVICIOS DE EMERGENCIA'],
+  }),
+  operacion({
+    id: 'op10',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Orden de compra',
+    codCuenta: '938-2026-5428.1.1',
+    fecha: '04/06/2026',
+    codDocOrigen: '0000001400',
+    documento: 'Orden de compra - Guía de internamiento',
+    partidas: [
+      debe(CTA.compraBienes, SUB.suministrosMedicos, SUB.materialMedico, 7325.4),
+      haber(CTA.proveedores, SUB.provBienesServicios, SUB.provNacionales, 7325.4),
+    ],
+    referencia: ['OC-2026-000409', 'ADQUISICIÓN DE MATERIAL MÉDICO DESCARTABLE'],
+  }),
+  operacion({
+    id: 'op11',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Comprobante de pago',
+    codCuenta: '938-2026-5429.1.1',
+    fecha: '06/06/2026',
+    codDocOrigen: '0000001403',
+    documento: 'Comprobante de pago',
+    partidas: [
+      debe(CTA.proveedores, SUB.provBienesServicios, SUB.provNacionales, 7325.4),
+      haber(CTA.cajaBancos, SUB.bancos, SUB.bancosCtaCte, 7325.4),
+    ],
+    referencia: ['CP-2026-001198', 'PAGO A PROVEEDOR POR MATERIAL MÉDICO DESCARTABLE'],
+  }),
+  operacion({
+    id: 'op12',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Recibo de ingreso',
+    codCuenta: '938-2026-5430.1.1',
+    fecha: '14/06/2026',
+    codDocOrigen: '0000001413',
+    documento: 'Recibo de ingreso',
+    partidas: [
+      debe(CTA.cajaBancos, SUB.bancos, SUB.bancosCtaCte, 15920.6),
+      haber(CTA.ventaServicios, SUB.ventaServicios, SUB.serviciosSalud, 15920.6),
+    ],
+    referencia: ['RI-2026-003264', 'RECAUDACIÓN POR SERVICIOS DE LABORATORIO'],
+  }),
+  operacion({
+    id: 'op13',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Planilla',
+    codCuenta: '938-2026-5431.1.1',
+    fecha: '15/06/2026',
+    codDocOrigen: '0000001414',
+    documento: 'Planilla de Contrato Administrativo de Servicios',
+    partidas: [
+      debe(CTA.personal, SUB.cas, SUB.casDet, 42150),
+      haber(CTA.remuneraciones, SUB.remunPorPagar, SUB.remunPorPagarDet, 42150),
+    ],
+    referencia: ['PLL-CAS-2026-06', 'PLANILLA CAS JUNIO 2026'],
+  }),
+  operacion({
+    id: 'op14',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Comprobante de pago',
+    codCuenta: '938-2026-5432.2.1',
+    fecha: '16/06/2026',
+    codDocOrigen: '0000001415',
+    documento: 'Comprobante de pago',
+    partidas: [
+      debe(CTA.remuneraciones, SUB.remunPorPagar, SUB.remunPorPagarDet, 86320.5),
+      haber(CTA.cajaBancos, SUB.bancos, SUB.bancosCtaCte, 86320.5),
+    ],
+    referencia: ['CP-2026-001241', 'PAGO DE REMUNERACIONES JUNIO 2026'],
+  }),
+  operacion({
+    id: 'op15',
+    tipoRegistro: 'Asiento de ajuste',
+    tipoDocumento: 'Nota contable',
+    codCuenta: '938-2026-5433.1.2',
+    fecha: '18/06/2026',
+    codDocOrigen: '0000001416',
+    documento: 'Nota contable',
+    partidas: [
+      debe(CTA.estimaciones, SUB.depreciacionEdificios, SUB.depreciacionEdificiosDet, 6480.25),
+      haber(CTA.depreciacionAcum, SUB.depAcumEdificios, SUB.depAcumEdificiosDet, 6480.25),
+    ],
+    referencia: ['NC-2026-000085', 'DEPRECIACIÓN MENSUAL DE EDIFICIOS'],
+  }),
+  operacion({
+    id: 'op16',
+    tipoRegistro: 'Asiento de ajuste',
+    tipoDocumento: 'Orden de compra',
+    codCuenta: '938-2026-5434.1.1',
+    fecha: '22/06/2026',
+    codDocOrigen: '0000001419',
+    documento: 'Orden de compra',
+    partidas: [
+      debe(CTA.presupuestoGastos, SUB.presupuestoRo, SUB.presupuestoRoDet, 12500),
+      haber(CTA.asignacionesComprometidas, SUB.comprometidoRo, SUB.comprometidoRoDet, 12500),
+    ],
+    referencia: ['OC-2026-000431', 'COMPROMISO POR ADQUISICIÓN DE REACTIVOS DE LABORATORIO'],
+  }),
+  operacion({
+    id: 'op17',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Recibo de ingreso',
+    codCuenta: '938-2026-5435.1.1',
+    fecha: '27/06/2026',
+    codDocOrigen: '0000001428',
+    documento: 'Recibo de ingreso',
+    partidas: [
+      debe(CTA.cajaBancos, SUB.bancos, SUB.bancosCtaCte, 9870),
+      haber(CTA.ventaServicios, SUB.ventaServicios, SUB.serviciosSalud, 9870),
+    ],
+    referencia: ['RI-2026-003355', 'RECAUDACIÓN POR SERVICIOS DE IMAGENOLOGÍA'],
+  }),
+  operacion({
+    id: 'op18',
+    tipoRegistro: 'Asiento de ajuste',
+    tipoDocumento: 'Planilla',
+    codCuenta: '938-2026-5436.1.1',
+    fecha: '30/06/2026',
+    codDocOrigen: '0000001432',
+    documento: 'Planilla única de remuneraciones',
+    partidas: [
+      debe(CTA.presupuestoGastos, SUB.presupuestoRo, SUB.presupuestoRoDet, 94089.35),
+      haber(CTA.asignacionesComprometidas, SUB.comprometidoRo, SUB.comprometidoRoDet, 94089.35),
+    ],
+    referencia: ['PLL-2026-06', 'COMPROMISO DE PLANILLA DE REMUNERACIONES JUNIO 2026'],
+  }),
+  operacion({
+    id: 'op19',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Rendición de cuenta',
+    codCuenta: '938-2026-5437.1.1',
+    fecha: '30/06/2026',
+    codDocOrigen: '0000001433',
+    documento: 'Rendición de cuenta',
+    partidas: [
+      debe(CTA.compraBienes, SUB.materialesUtiles, SUB.materialesOficina, 2980),
+      haber(CTA.anticipos, SUB.entregasRendir, SUB.encargosInternos, 2980),
+    ],
+    referencia: ['RC-2026-000062', 'RENDICIÓN DE ENCARGO INTERNO - CAMPAÑA DE VACUNACIÓN'],
+  }),
 ];
+
+const fechaOrden = (fecha: string) => fecha.split('/').reverse().join('');
+// Orden cronológico: así se presentan los asientos en el Diario y los movimientos en el Mayor.
+HDM_OPERACIONES.sort((a, b) => fechaOrden(a.fecha).localeCompare(fechaOrden(b.fecha)));
+
+const sinPartidas = ({ partidas: _partidas, ...group }: OperacionConPartidas): LibroContableOperacionGroup => group;
+
+export const LIBROS_CONTABLES_RESULT_GROUPS: LibroContableOperacionGroup[] = HDM_OPERACIONES.map(sinPartidas);
 
 // Libro Diario para el visualizador PLIEGO con Entidad "Integrado a nivel pliego":
 // la misma vista del diario estándar, agrupada por Unidad Ejecutora en acordeones.
@@ -134,22 +530,19 @@ export type LibroPliegoDiarioUeGroup = {
 };
 
 /**
- * Clona las operaciones estándar con ids únicos por Unidad Ejecutora (evita colisiones de
- * selección/expansión) y un Nro. Doc Contable/Nro. Asiento propio de esa UE — cada unidad
- * ejecutora contabiliza sus propios asientos, no puede repetir el número de otra.
+ * Clona las operaciones de la UE con ids únicos por Unidad Ejecutora (evita colisiones de
+ * selección/expansión). Conserva el Nro. Doc Contable/Nro. Asiento: cada unidad ejecutora
+ * contabiliza sus propios asientos con su serie y no puede repetir el número de otra.
  */
-function pliegoDiarioUeOperaciones(prefix: string, nroBase: number): LibroContableOperacionGroup[] {
-  return LIBROS_CONTABLES_RESULT_GROUPS.map((group, index) => {
-    const nroDocContable = `938-2026-${nroBase + index}`;
-    return { ...group, id: `${prefix}-${group.id}`, nroDocContable, codCuenta: `${nroDocContable}.1.1` };
-  });
+function pliegoDiarioUeOperaciones(prefix: string, operaciones: LibroContableOperacionGroup[]): LibroContableOperacionGroup[] {
+  return operaciones.map((group) => ({ ...group, id: `${prefix}-${group.id}` }));
 }
 
 /**
- * Asiento propio de Hospital María Auxiliadora: serie 939 (distinta de la 938 de Hospital
- * Dos de Mayo) y cuentas de orden por contratos, con su documento de origen y glosa propios.
+ * Asientos propios de Hospital María Auxiliadora: serie 939 (distinta de la 938 de Hospital
+ * Dos de Mayo), con sus documentos de origen y glosas propios.
  */
-const PLIEGO_DIARIO_MARIA_AUXILIADORA_OPERACIONES: LibroContableOperacionGroup[] = [
+const HMA_OPERACIONES: OperacionConPartidas[] = [
   {
     id: 'ue-mau-op1',
     tipoRegistro: 'Asiento de ajuste',
@@ -166,12 +559,107 @@ const PLIEGO_DIARIO_MARIA_AUXILIADORA_OPERACIONES: LibroContableOperacionGroup[]
       { codigo: '9102.09', nombre: 'Ordenes de Servicio por Ejecutar', nivel: 2, debe: 1000, haber: 0 },
       { codigo: '', nombre: 'Adquisición de pasajes aereos', nivel: 1, debe: 0, haber: 0 },
     ],
+    partidas: [
+      debe(CTA.contratosAprobados, SUB.ordenesServicioAprobadas, undefined, 1000),
+      haber(CTA.contratosPorContra, SUB.ordenesServicioPorEjecutar, undefined, 1000),
+    ],
   },
+  operacion({
+    id: 'ue-mau-op2',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Orden de compra',
+    codCuenta: '939-2026-5170.1.1',
+    fecha: '09/06/2026',
+    codDocOrigen: '000000184-0012',
+    documento: 'ORDEN DE COMPRA',
+    partidas: [
+      debe(CTA.compraBienes, SUB.suministrosMedicos, SUB.materialMedico, 9640),
+      haber(CTA.proveedores, SUB.provBienesServicios, SUB.provNacionales, 9640),
+    ],
+    referencia: ['OC-2026-000188', 'ADQUISICIÓN DE MATERIAL MÉDICO DESCARTABLE'],
+  }),
+  operacion({
+    id: 'ue-mau-op3',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Comprobante de pago',
+    codCuenta: '939-2026-5171.1.1',
+    fecha: '16/06/2026',
+    codDocOrigen: '000000185-0003',
+    documento: 'COMPROBANTE DE PAGO',
+    partidas: [
+      debe(CTA.proveedores, SUB.provBienesServicios, SUB.provNacionales, 9640),
+      haber(CTA.cajaBancos, SUB.bancos, SUB.bancosCtaCte, 9640),
+    ],
+    referencia: ['CP-2026-000731', 'PAGO POR ADQUISICIÓN DE MATERIAL MÉDICO'],
+  }),
+  operacion({
+    id: 'ue-mau-op4',
+    tipoRegistro: 'Asiento de ajuste',
+    tipoDocumento: 'Nota contable',
+    codCuenta: '939-2026-5172.1.2',
+    fecha: '30/06/2026',
+    codDocOrigen: '000000186-0001',
+    documento: 'NOTA CONTABLE',
+    partidas: [
+      debe(CTA.estimaciones, SUB.depreciacion, SUB.depreciacionEquipo, 2870.4),
+      haber(CTA.depreciacionAcum, SUB.depAcumMaquinaria, SUB.depAcumEquipo, 2870.4),
+    ],
+    referencia: ['NC-2026-000041', 'DEPRECIACIÓN MENSUAL DE MOBILIARIO Y EQUIPO'],
+  }),
+];
+
+/** Asientos propios del Instituto Nacional de Salud del Niño: serie 940. */
+const INSN_OPERACIONES: OperacionConPartidas[] = [
+  operacion({
+    id: 'ue-insn-op1',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Recibo de ingreso',
+    codCuenta: '940-2026-3101.1.1',
+    fecha: '04/06/2026',
+    codDocOrigen: '000000092-0001',
+    documento: 'RECIBO DE INGRESO',
+    partidas: [
+      debe(CTA.cajaBancos, SUB.bancos, SUB.bancosCtaCte, 25760),
+      haber(CTA.ventaServicios, SUB.ventaServicios, SUB.serviciosSalud, 25760),
+    ],
+    referencia: ['RI-2026-001044', 'RECAUDACIÓN POR SERVICIOS DE HOSPITALIZACIÓN'],
+  }),
+  operacion({
+    id: 'ue-insn-op2',
+    tipoRegistro: 'Serv. de contabilización',
+    tipoDocumento: 'Planilla',
+    codCuenta: '940-2026-3102.1.1',
+    fecha: '15/06/2026',
+    codDocOrigen: '000000093-0006',
+    documento: 'PLANILLA ÚNICA DE REMUNERACIONES',
+    partidas: [
+      debe(CTA.personal, SUB.retribuciones, SUB.retribucionesDet, 142380),
+      debe(CTA.personal, SUB.essalud, SUB.essaludDet, 12814.2),
+      haber(CTA.remuneraciones, SUB.remunPorPagar, SUB.remunPorPagarDet, 142380),
+      haber(CTA.contribuciones, SUB.essaludPorPagar, SUB.essaludPorPagarDet, 12814.2),
+    ],
+    referencia: ['PLL-2026-06', 'PLANILLA DE REMUNERACIONES JUNIO 2026'],
+  }),
+  operacion({
+    id: 'ue-insn-op3',
+    tipoRegistro: 'Asiento de ajuste',
+    tipoDocumento: 'Orden de servicio',
+    codCuenta: '940-2026-3103.1.1',
+    fecha: '22/06/2026',
+    codDocOrigen: '000000094-0002',
+    documento: 'ORDEN DE SERVICIO',
+    partidas: [
+      debe(CTA.contratosAprobados, SUB.ordenesServicioAprobadas, undefined, 7500),
+      haber(CTA.contratosPorContra, SUB.ordenesServicioPorEjecutar, undefined, 7500),
+    ],
+    referencia: ['OS-2026-000057', 'SERVICIO DE LIMPIEZA DE ÁREAS CRÍTICAS'],
+  }),
 ];
 
 export const LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS: LibroPliegoDiarioUeGroup[] = [
-  { id: 'ue-hospital-dos-de-mayo', unidadEjecutora: 'Hospital Dos de Mayo', operaciones: pliegoDiarioUeOperaciones('ue-hdm', 5396) },
-  { id: 'ue-maria-auxiliadora', unidadEjecutora: 'Hospital María Auxiliadora', operaciones: PLIEGO_DIARIO_MARIA_AUXILIADORA_OPERACIONES },
+  { id: 'ue-hospital-dos-de-mayo', unidadEjecutora: 'Hospital Dos de Mayo', operaciones: pliegoDiarioUeOperaciones('ue-hdm', LIBROS_CONTABLES_RESULT_GROUPS) },
+  { id: 'ue-maria-auxiliadora', unidadEjecutora: 'Hospital María Auxiliadora', operaciones: HMA_OPERACIONES.map(sinPartidas) },
+  { id: 'ue-insn', unidadEjecutora: 'Instituto Nacional de Salud del Niño', operaciones: INSN_OPERACIONES.map(sinPartidas) },
 ];
 
 // Vista matricial (tabular) del Libro Diario para Unidad Ejecutora: una fila plana
@@ -203,7 +691,7 @@ export type LibroDiarioMatrixRow = {
 const DOC_ORIGEN_COD = '0000001350';
 const DOC_ORIGEN_NOMBRE = 'Nota de pago';
 
-export const LIBROS_CONTABLES_DIARIO_MATRIX_ROWS: LibroDiarioMatrixRow[] = [
+const DIARIO_MATRIX_ROWS_BASE: LibroDiarioMatrixRow[] = [
   { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '01', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000001', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Deudora', montoDebe: 1000, montoHaber: 0 },
   { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '0101', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000002', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Deudora', montoDebe: 1000, montoHaber: 0 },
   { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '0102', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000003', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Deudora', montoDebe: 1000, montoHaber: 0 },
@@ -211,6 +699,31 @@ export const LIBROS_CONTABLES_DIARIO_MATRIX_ROWS: LibroDiarioMatrixRow[] = [
   { ejercicio: 2026, cuentaMayor: '8401', descMayor: 'ASIGNACIONES COMPROMETIDAS', cuentaSubCta: '01', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000005', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Haber', naturaleza: 'Acreedora', montoDebe: 0, montoHaber: 1000 },
   { ejercicio: 2026, cuentaMayor: '8401', descMayor: 'ASIGNACIONES COMPROMETIDAS', cuentaSubCta: '02', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000006', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Acreedora', montoDebe: 1000, montoHaber: 0 },
 ];
+
+/** Una fila matricial por partida de los asientos generados (a partir del segundo asiento). */
+export const LIBROS_CONTABLES_DIARIO_MATRIX_ROWS: LibroDiarioMatrixRow[] = [
+  ...DIARIO_MATRIX_ROWS_BASE,
+  ...HDM_OPERACIONES.slice(1).flatMap((op) =>
+    op.partidas.map((partida) => ({
+      ejercicio: 2026,
+      cuentaMayor: partida.mayor[0],
+      descMayor: partida.mayor[1],
+      cuentaSubCta: (partida.det ?? partida.sub)[0].split('.')[1],
+      fecha: op.fecha,
+      tipoRegistro: op.tipoRegistro,
+      tipoDocumento: op.tipoDocumento,
+      nroDocContable: op.nroDocContable,
+      codDocOrigen: op.codDocOrigen,
+      documentoOrigen: op.documento,
+      nroDocumentoOrigen: '',
+      nroAsiento: op.codCuenta,
+      tipoDH: partida.lado === 'D' ? ('Debe' as const) : ('Haber' as const),
+      naturaleza: partida.mayor[2],
+      montoDebe: partida.lado === 'D' ? partida.monto : 0,
+      montoHaber: partida.lado === 'H' ? partida.monto : 0,
+    })),
+  ),
+].map((row, index) => ({ ...row, nroDocumentoOrigen: `DOC-${String(index + 1).padStart(10, '0')}` }));
 
 export type LibroMayorResultRow = {
   fecha: string;
@@ -234,21 +747,55 @@ export type LibroMayorResultGroup = {
   movimientos: LibroMayorResultRow[];
 };
 
+/**
+ * Movimientos del Libro Mayor de una cuenta, tomados de los asientos del Libro Diario de la UE
+ * (una fila por asiento y lado, sumando sus sub-cuentas).
+ */
+function movimientosMayor(cuenta: CuentaMayorRef): LibroMayorResultRow[] {
+  return HDM_OPERACIONES.flatMap((op, index) =>
+    (['D', 'H'] as const).flatMap((lado) => {
+      const monto = round2(op.partidas.filter((p) => p.lado === lado && p.mayor[0] === cuenta[0]).reduce((t, p) => t + p.monto, 0));
+      if (!monto) {
+        return [];
+      }
+      return [{
+        fecha: op.fecha,
+        docCaRegNota: `R${String(4050 + index).padStart(10, '0')}`,
+        nroDocContable: op.nroDocContable,
+        tipo: op.tipoRegistro,
+        documento: op.documento,
+        nroDocumento: op.codDocOrigen,
+        nroAsiento: op.codCuenta,
+        debe: lado === 'D' ? monto : 0,
+        haber: lado === 'H' ? monto : 0,
+      }];
+    }),
+  );
+}
+
+const mayorGroup = (cuenta: CuentaMayorRef, saldoInicial: number, previos: LibroMayorResultRow[] = []): LibroMayorResultGroup => ({
+  id: `mayor-${cuenta[0]}`,
+  codCuenta: cuenta[0],
+  nombreCuenta: cuenta[1],
+  saldoInicial,
+  movimientos: [...previos, ...movimientosMayor(cuenta)],
+});
+
+// Cuentas de naturaleza deudora (el saldo se acumula como Debe − Haber).
 export const LIBROS_CONTABLES_MAYOR_RESULT_GROUPS: LibroMayorResultGroup[] = [
-  {
-    id: 'mayor-1101',
-    codCuenta: '1101',
-    nombreCuenta: 'CAJA Y BANCOS',
-    saldoInicial: 3609854.68,
-    movimientos: [
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004025', nroDocContable: '938-2026-5396', tipo: 'Asiento de ajuste', documento: 'Nota de pago', nroDocumento: '0000001350', nroAsiento: '938-2026-5396.1.1', debe: 73.13, haber: 0 },
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004025', nroDocContable: '938-2026-5393', tipo: 'Serv. de contabilización', documento: 'Rendición de cuenta', nroDocumento: '0000001181', nroAsiento: '938-2026-5393.1.2', debe: 0, haber: 73.13 },
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004031', nroDocContable: '938-2026-5401', tipo: 'Serv. de contabilización', documento: 'Nota de pago', nroDocumento: '0000001344', nroAsiento: '938-2026-5401.2.1', debe: 73.20, haber: 0 },
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004031', nroDocContable: '938-2026-5398', tipo: 'Serv. de contabilización', documento: 'Rendición de cuenta', nroDocumento: '0000001346', nroAsiento: '938-2026-5398.2.2', debe: 0, haber: 73.20 },
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004044', nroDocContable: '938-2026-5409', tipo: 'Asiento de ajuste', documento: 'Rendición de cuenta', nroDocumento: '0000001347', nroAsiento: '938-2026-5409.3.1', debe: 0, haber: 864.19 },
-      { fecha: '03/06/2024', docCaRegNota: 'R0000004044', nroDocContable: '938-2026-5412', tipo: 'Asiento de ajuste', documento: 'Rendición de cuenta', nroDocumento: '0000001348', nroAsiento: '938-2026-5412.3.2', debe: 0, haber: 145.00 },
-    ],
-  },
+  mayorGroup(CTA.cajaBancos, 3609854.68, [
+    { fecha: '03/06/2024', docCaRegNota: 'R0000004025', nroDocContable: '938-2026-5396', tipo: 'Asiento de ajuste', documento: 'Nota de pago', nroDocumento: '0000001350', nroAsiento: '938-2026-5396.1.1', debe: 73.13, haber: 0 },
+    { fecha: '03/06/2024', docCaRegNota: 'R0000004025', nroDocContable: '938-2026-5393', tipo: 'Serv. de contabilización', documento: 'Rendición de cuenta', nroDocumento: '0000001181', nroAsiento: '938-2026-5393.1.2', debe: 0, haber: 73.13 },
+    { fecha: '03/06/2024', docCaRegNota: 'R0000004031', nroDocContable: '938-2026-5401', tipo: 'Serv. de contabilización', documento: 'Nota de pago', nroDocumento: '0000001344', nroAsiento: '938-2026-5401.2.1', debe: 73.20, haber: 0 },
+    { fecha: '03/06/2024', docCaRegNota: 'R0000004031', nroDocContable: '938-2026-5398', tipo: 'Serv. de contabilización', documento: 'Rendición de cuenta', nroDocumento: '0000001346', nroAsiento: '938-2026-5398.2.2', debe: 0, haber: 73.20 },
+    { fecha: '03/06/2024', docCaRegNota: 'R0000004044', nroDocContable: '938-2026-5409', tipo: 'Asiento de ajuste', documento: 'Rendición de cuenta', nroDocumento: '0000001347', nroAsiento: '938-2026-5409.3.1', debe: 0, haber: 864.19 },
+    { fecha: '03/06/2024', docCaRegNota: 'R0000004044', nroDocContable: '938-2026-5412', tipo: 'Asiento de ajuste', documento: 'Rendición de cuenta', nroDocumento: '0000001348', nroAsiento: '938-2026-5412.3.2', debe: 0, haber: 145.00 },
+  ]),
+  mayorGroup(CTA.anticipos, 4500),
+  mayorGroup(CTA.personal, 681196.75),
+  mayorGroup(CTA.compraBienes, 104170),
+  mayorGroup(CTA.estimaciones, 53479.25),
+  mayorGroup(CTA.presupuestoGastos, 1250000),
 ];
 
 // Resultado del Libro Diario para el usuario visualizador de tipo PLIEGO
@@ -301,6 +848,29 @@ export type LibroPliegoMayorGroup = {
   detalles: LibroPliegoMayorRow[];
 };
 
+const USE = {
+  u01: ['000056', 'USE 01 San Juan de Miraflores'],
+  u02: ['000057', 'USE 02 San Martin de Porras'],
+  u03: ['000058', 'USE 03 Cercado'],
+  u04: ['000059', 'USE 04 Comas'],
+  u05: ['000060', 'USE 05 San Juan de Lurigancho'],
+  u06: ['000061', 'USE 06 Vitarte'],
+  u07: ['000062', 'USE 07 San Borja'],
+  u08: ['000063', 'USE 08 Surquillo'],
+} as const satisfies Record<string, CuentaRef>;
+
+/** Detalle por USE con el saldo calculado: Saldo inicial + Debe − Haber. */
+const det = ([minen, nombre]: CuentaRef, saldoInicial: number, debeMonto: number, haberMonto: number): LibroPliegoMayorRow => ({
+  minen,
+  nombre,
+  saldoInicial,
+  debe: debeMonto,
+  haber: haberMonto,
+  saldo: round2(saldoInicial + debeMonto - haberMonto),
+});
+
+const CORTE = '30/06/2026';
+
 export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
   {
     id: 'pliego-mayor-1101',
@@ -308,10 +878,58 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
     codigo: '1101',
     cuenta: 'CAJA Y BANCOS',
     detalles: [
-      { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', saldoInicial: 5922.53, debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
-      { minen: '000057', nombre: 'USE 02 San Martin de Porras', saldoInicial: 15625.30, debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
-      { minen: '000058', nombre: 'USE 03 Cercado', saldoInicial: 2128.74, debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
-      { minen: '000059', nombre: 'USE 04 Comas', saldoInicial: 8089.15, debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
+      det(USE.u01, 5922.53, 425922.53, 352644.98),
+      det(USE.u02, 15625.30, 815625.30, 490366.99),
+      det(USE.u03, 2128.74, 2722128.74, 1498990.63),
+      det(USE.u04, 8089.15, 538089.15, 316528.44),
+    ],
+  },
+  {
+    id: 'pliego-mayor-1205',
+    fecha: CORTE,
+    codigo: '1205',
+    cuenta: 'SERVICIOS Y OTROS PAGADOS POR ANTICIPADO',
+    detalles: [
+      det(USE.u01, 2500, 3500, 3200),
+      det(USE.u02, 1800, 4200, 2950.4),
+      det(USE.u03, 6250.75, 12800, 9435.2),
+      det(USE.u04, 0, 2600, 1150),
+    ],
+  },
+  {
+    id: 'pliego-mayor-5201',
+    fecha: CORTE,
+    codigo: '5201',
+    cuenta: 'PERSONAL Y OBLIGACIONES SOCIALES',
+    detalles: [
+      det(USE.u01, 927150, 185430, 0),
+      det(USE.u02, 1061902.5, 212380.5, 0),
+      det(USE.u03, 1993203.75, 398640.75, 0),
+      det(USE.u04, 882601.5, 176520.3, 0),
+      det(USE.u05, 716052.25, 143210.45, 0),
+    ],
+  },
+  {
+    id: 'pliego-mayor-5301',
+    fecha: CORTE,
+    codigo: '5301',
+    cuenta: 'COMPRA DE BIENES',
+    detalles: [
+      det(USE.u01, 62250, 12450, 0),
+      det(USE.u02, 119377, 23875.4, 0),
+      det(USE.u03, 206150.75, 41230.15, 1250),
+      det(USE.u04, 49351.25, 9870.25, 0),
+    ],
+  },
+  {
+    id: 'pliego-mayor-5801',
+    fecha: CORTE,
+    codigo: '5801',
+    cuenta: 'ESTIMACIONES Y PROVISIONES DEL EJERCICIO',
+    detalles: [
+      det(USE.u01, 10540.2, 2108.04, 0),
+      det(USE.u03, 27315.6, 5463.12, 0),
+      det(USE.u05, 8120.45, 1624.09, 0),
     ],
   },
 ];
@@ -328,10 +946,43 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS: LibroPliegoMayorGroup[] = 
     codigo: '1101.01',
     cuenta: 'Recursos Ordinarios',
     detalles: [
-      { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', saldoInicial: 309854.68, debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
-      { minen: '000057', nombre: 'USE 02 San Martin de Porras', saldoInicial: 315625.30, debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
-      { minen: '000058', nombre: 'USE 03 Cercado', saldoInicial: 2128.74, debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
-      { minen: '000059', nombre: 'USE 04 Comas', saldoInicial: 38089.15, debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
+      det(USE.u01, 309854.68, 425922.53, 352644.98),
+      det(USE.u02, 315625.30, 815625.30, 490366.99),
+      det(USE.u03, 2128.74, 2722128.74, 1498990.63),
+      det(USE.u04, 38089.15, 538089.15, 316528.44),
+    ],
+  },
+  {
+    id: 'mayor-ext-1101-03',
+    fecha: CORTE,
+    codigo: '1101.03',
+    cuenta: 'Bancos',
+    detalles: [
+      det(USE.u01, 184320.5, 12380, 21950),
+      det(USE.u02, 95410.25, 8640, 12370.8),
+      det(USE.u03, 412875.9, 31250.4, 45120),
+    ],
+  },
+  {
+    id: 'mayor-ext-5201-01',
+    fecha: CORTE,
+    codigo: '5201.01',
+    cuenta: 'Retribuciones y complementos en efectivo',
+    detalles: [
+      det(USE.u01, 431602.5, 86320.5, 0),
+      det(USE.u02, 520415, 104083, 0),
+      det(USE.u03, 918760.25, 183752.05, 0),
+    ],
+  },
+  {
+    id: 'mayor-ext-5301-08',
+    fecha: CORTE,
+    codigo: '5301.08',
+    cuenta: 'Suministros médicos',
+    detalles: [
+      det(USE.u01, 92250, 18450, 0),
+      det(USE.u02, 48200, 9640, 0),
+      det(USE.u04, 31575.5, 6315.1, 0),
     ],
   },
 ];
@@ -358,10 +1009,10 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS: LibroMayorExtendidoUeGr
         codigo: '1101.01',
         cuenta: 'Recursos Ordinarios',
         detalles: [
-          { minen: '000056', nombre: 'USE 01 San Juan de Miraflores', saldoInicial: 5922.53, debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
-          { minen: '000057', nombre: 'USE 02 San Martin de Porras', saldoInicial: 5625.30, debe: 815625.30, haber: 490366.99, saldo: 325258.31 },
-          { minen: '000058', nombre: 'USE 03 Cercado', saldoInicial: 2128.74, debe: 2722128.74, haber: 1498990.63, saldo: 1223138.11 },
-          { minen: '000059', nombre: 'USE 04 Comas', saldoInicial: 8089.15, debe: 538089.15, haber: 316528.44, saldo: 221560.71 },
+          det(USE.u01, 5922.53, 425922.53, 352644.98),
+          det(USE.u02, 5625.30, 815625.30, 490366.99),
+          det(USE.u03, 2128.74, 2722128.74, 1498990.63),
+          det(USE.u04, 8089.15, 538089.15, 316528.44),
         ],
       },
       {
@@ -370,8 +1021,18 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS: LibroMayorExtendidoUeGr
         codigo: '1101.02',
         cuenta: 'Ordenes de Servicio Aprobadas',
         detalles: [
-          { minen: '000060', nombre: 'USE 05 San Juan de Lurigancho', saldoInicial: 1075.91, debe: 8075.91, haber: 0, saldo: 8075.91 },
-          { minen: '000061', nombre: 'USE 06 Vitarte', saldoInicial: 87.50, debe: 87.50, haber: 0, saldo: 87.50 },
+          det(USE.u05, 1075.91, 8075.91, 0),
+          det(USE.u06, 87.50, 87.50, 0),
+        ],
+      },
+      {
+        id: 'mayor-ext-hdm-5301-08',
+        fecha: CORTE,
+        codigo: '5301.08',
+        cuenta: 'Suministros médicos',
+        detalles: [
+          det(USE.u01, 92250, 18450, 0),
+          det(USE.u03, 60120.4, 12024.08, 0),
         ],
       },
     ],
@@ -386,8 +1047,53 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS: LibroMayorExtendidoUeGr
         codigo: '1102.01',
         cuenta: 'Recursos Ordinarios',
         detalles: [
-          { minen: '000062', nombre: 'USE 07 San Borja', saldoInicial: 2375.37, debe: 12375.37, haber: 0, saldo: 12375.37 },
-          { minen: '000063', nombre: 'USE 08 Surquillo', saldoInicial: 53411.95, debe: 653862.05, haber: 120450.10, saldo: 533411.95 },
+          det(USE.u07, 2375.37, 12375.37, 0),
+          det(USE.u08, 53411.95, 653862.05, 120450.10),
+        ],
+      },
+      {
+        id: 'mayor-ext-hma-5301-08',
+        fecha: CORTE,
+        codigo: '5301.08',
+        cuenta: 'Suministros médicos',
+        detalles: [
+          det(USE.u07, 48200, 9640, 0),
+          det(USE.u08, 15320.6, 3064.12, 0),
+        ],
+      },
+      {
+        id: 'mayor-ext-hma-5801-02',
+        fecha: CORTE,
+        codigo: '5801.02',
+        cuenta: 'Depreciación de vehículos, maquinaria y otros',
+        detalles: [
+          det(USE.u07, 14352, 2870.4, 0),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'mayor-ext-ue-insn',
+    unidadEjecutora: 'Instituto Nacional de Salud del Niño',
+    cuentas: [
+      {
+        id: 'mayor-ext-insn-1101-03',
+        fecha: CORTE,
+        codigo: '1101.03',
+        cuenta: 'Bancos',
+        detalles: [
+          det(USE.u01, 245680.3, 25760, 0),
+          det(USE.u02, 118940.75, 14210.5, 8750),
+        ],
+      },
+      {
+        id: 'mayor-ext-insn-5201-01',
+        fecha: CORTE,
+        codigo: '5201.01',
+        cuenta: 'Retribuciones y complementos en efectivo',
+        detalles: [
+          det(USE.u01, 711900, 142380, 0),
+          det(USE.u02, 356120.5, 71224.1, 0),
         ],
       },
     ],
@@ -410,11 +1116,30 @@ export type LibroMayorDetalladoRow = {
   saldo: number;
 };
 
+const detallado = (fecha: string, codigo: string, descripcion: string, saldoInicial: number, debeMonto: number, haberMonto: number): LibroMayorDetalladoRow => ({
+  fecha,
+  codigo,
+  descripcion,
+  saldoInicial,
+  debe: debeMonto,
+  haber: haberMonto,
+  saldo: round2(saldoInicial + debeMonto - haberMonto),
+});
+
 export const LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS: LibroMayorDetalladoRow[] = [
-  { fecha: '03/06/2024', codigo: '1101.01', descripcion: 'Caja y bancos 01', saldoInicial: 309854.68, debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
-  { fecha: '03/06/2024', codigo: '1101.02', descripcion: 'Caja y bancos 02', saldoInicial: 104454.11, debe: 59922.53, haber: 52644.98, saldo: 83777.43 },
-  { fecha: '03/06/2024', codigo: '1101.03', descripcion: 'Caja y bancos 03', saldoInicial: 99854.68, debe: 925922.53, haber: 952644.98, saldo: 93277.55 },
-  { fecha: '03/06/2024', codigo: '1101.04', descripcion: 'Caja y bancos 04', saldoInicial: 39854.68, debe: 625922.53, haber: 352644.98, saldo: 23277.55 },
+  detallado('03/06/2024', '1101.01', 'Caja y bancos 01', 309854.68, 425922.53, 352644.98),
+  detallado('03/06/2024', '1101.02', 'Caja y bancos 02', 104454.11, 59922.53, 52644.98),
+  detallado('03/06/2024', '1101.03', 'Caja y bancos 03', 99854.68, 925922.53, 952644.98),
+  detallado('03/06/2024', '1101.04', 'Caja y bancos 04', 39854.68, 625922.53, 352644.98),
+  detallado(CORTE, '1205.03', 'Entregas a rendir cuenta', 4500, 3500, 2980),
+  detallado(CORTE, '5201.01', 'Retribuciones y complementos en efectivo', 431602.5, 86320.5, 0),
+  detallado(CORTE, '5201.03', 'Contribuciones a EsSalud', 38844.25, 7768.85, 0),
+  detallado(CORTE, '5201.05', 'Contrato Administrativo de Servicios', 210750, 42150, 0),
+  detallado(CORTE, '5301.02', 'Materiales y útiles', 11920, 2980, 0),
+  detallado(CORTE, '5301.08', 'Suministros médicos', 92250, 25775.4, 0),
+  detallado(CORTE, '5801.01', 'Depreciación de edificios y estructuras', 32401.25, 6480.25, 0),
+  detallado(CORTE, '5801.02', 'Depreciación de vehículos, maquinaria y otros', 21078, 4215.6, 0),
+  detallado(CORTE, '8301.01', 'Presupuesto de gastos - Recursos Ordinarios', 1250000, 113789.35, 0),
 ];
 
 export const LIBROS_CONTABLES_PLIEGO_VIENEN_DEBE = 119251876641.44;
@@ -425,8 +1150,18 @@ export const LIBROS_CONTABLES_PLIEGO_VAN_HABER = 119251876641.44;
 export const LIBROS_CONTABLES_RESULT_VIENEN_DEBE = 29810868889.70;
 export const LIBROS_CONTABLES_RESULT_VIENEN_HABER = 29810868889.70;
 
-export const LIBROS_CONTABLES_RESULT_TOTAL_DEBE = 29810874908.22;
-export const LIBROS_CONTABLES_RESULT_TOTAL_HABER = 29810874908.22;
+/** Suma los importes de las cuentas mayores (nivel 1) de los asientos. */
+const sumaNivel1 = (operaciones: LibroContableOperacionGroup[], lado: 'debe' | 'haber') =>
+  operaciones.flatMap((op) => op.cuentas).filter((cuenta) => cuenta.nivel === 1).reduce((total, cuenta) => total + cuenta[lado], 0);
+
+/** Van = Vienen + movimientos del periodo (Libro Diario de la Unidad Ejecutora). */
+export const LIBROS_CONTABLES_RESULT_TOTAL_DEBE = round2(LIBROS_CONTABLES_RESULT_VIENEN_DEBE + sumaNivel1(LIBROS_CONTABLES_RESULT_GROUPS, 'debe'));
+export const LIBROS_CONTABLES_RESULT_TOTAL_HABER = round2(LIBROS_CONTABLES_RESULT_VIENEN_HABER + sumaNivel1(LIBROS_CONTABLES_RESULT_GROUPS, 'haber'));
+
+/** Van del Libro Diario integrado a nivel pliego: incluye los asientos de todas las unidades ejecutoras. */
+const PLIEGO_DIARIO_UE_OPERACIONES = LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS.flatMap((ue) => ue.operaciones);
+export const LIBROS_CONTABLES_PLIEGO_DIARIO_UE_VAN_DEBE = round2(LIBROS_CONTABLES_RESULT_VIENEN_DEBE + sumaNivel1(PLIEGO_DIARIO_UE_OPERACIONES, 'debe'));
+export const LIBROS_CONTABLES_PLIEGO_DIARIO_UE_VAN_HABER = round2(LIBROS_CONTABLES_RESULT_VIENEN_HABER + sumaNivel1(PLIEGO_DIARIO_UE_OPERACIONES, 'haber'));
 
 export const ACCOUNTING_BOOKS_CUENTAS: TextFieldOption[] = [
   { label: '1.1.3.1.1.1 - Venta de bienes por cobrar', value: '1.1.3.1.1.1' },

@@ -19,14 +19,28 @@ export type CurrentUser = {
   visualizadorTipo?: VisualizadorTipo;
 };
 
+const STORAGE_KEY = 'siaf-current-user';
+
+// Valores mock hasta que la autenticación real provea el perfil del usuario.
+const DEFAULT_USER: CurrentUser = {
+  name: 'Usuario rol Visualizador',
+  office: VISUALIZADOR_TIPO_LABELS.pliego,
+  visualizadorTipo: 'pliego',
+};
+
+/** Recupera el usuario de la sesión del navegador para conservar su vista al recargar. */
+function readStoredUser(): CurrentUser {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    return stored ? (JSON.parse(stored) as CurrentUser) : DEFAULT_USER;
+  } catch {
+    return DEFAULT_USER;
+  }
+}
+
 @Injectable({ providedIn: 'root' })
 export class CurrentUserService {
-  // Valores mock hasta que la autenticación real provea el perfil del usuario.
-  private readonly _user = signal<CurrentUser>({
-    name: 'Usuario rol Visualizador',
-    office: VISUALIZADOR_TIPO_LABELS.pliego,
-    visualizadorTipo: 'pliego',
-  });
+  private readonly _user = signal<CurrentUser>(readStoredUser());
 
   readonly user = this._user.asReadonly();
 
@@ -35,6 +49,7 @@ export class CurrentUserService {
 
   setUser(user: CurrentUser): void {
     this._user.set(user);
+    this.persist();
   }
 
   /** Cambia el tipo de visualizador y sincroniza la oficina mostrada con su etiqueta. */
@@ -44,6 +59,15 @@ export class CurrentUserService {
       visualizadorTipo: tipo,
       office: VISUALIZADOR_TIPO_LABELS[tipo],
     }));
+    this.persist();
+  }
+
+  private persist(): void {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(this._user()));
+    } catch {
+      // Sin almacenamiento disponible: el usuario vive solo en memoria.
+    }
   }
 
   get name(): string {
