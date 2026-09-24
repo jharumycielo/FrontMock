@@ -394,6 +394,29 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS: LibroMayorExtendidoUeGr
   },
 ];
 
+/**
+ * Libro Mayor Detallado (tabla plana): una fila por cuenta con su saldo inicial, debe,
+ * haber y saldo. Aplica al visualizador Unidad Ejecutora, al Pliego con entidad
+ * "Programa nacional de becas" y al Ente Rector (DGCP) con una unidad ejecutora concreta,
+ * siempre con la variante "Libro mayor detallado".
+ */
+export type LibroMayorDetalladoRow = {
+  fecha: string;
+  codigo: string;
+  descripcion: string;
+  saldoInicial: number;
+  debe: number;
+  haber: number;
+  saldo: number;
+};
+
+export const LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS: LibroMayorDetalladoRow[] = [
+  { fecha: '03/06/2024', codigo: '1101.01', descripcion: 'Caja y bancos 01', saldoInicial: 309854.68, debe: 425922.53, haber: 352644.98, saldo: 73277.55 },
+  { fecha: '03/06/2024', codigo: '1101.02', descripcion: 'Caja y bancos 02', saldoInicial: 104454.11, debe: 59922.53, haber: 52644.98, saldo: 83777.43 },
+  { fecha: '03/06/2024', codigo: '1101.03', descripcion: 'Caja y bancos 03', saldoInicial: 99854.68, debe: 925922.53, haber: 952644.98, saldo: 93277.55 },
+  { fecha: '03/06/2024', codigo: '1101.04', descripcion: 'Caja y bancos 04', saldoInicial: 39854.68, debe: 625922.53, haber: 352644.98, saldo: 23277.55 },
+];
+
 export const LIBROS_CONTABLES_PLIEGO_VIENEN_DEBE = 119251876641.44;
 export const LIBROS_CONTABLES_PLIEGO_VIENEN_HABER = 119251876641.44;
 export const LIBROS_CONTABLES_PLIEGO_VAN_DEBE = 119251876641.44;

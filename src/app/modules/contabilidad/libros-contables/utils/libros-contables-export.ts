@@ -2,6 +2,7 @@ import { Workbook, Worksheet } from 'exceljs';
 
 import {
   LibroDiarioMatrixRow,
+  LibroMayorDetalladoRow,
   LibroMayorExtendidoUeGroup,
   LibroMayorResultGroup,
   LibroPliegoDiarioUeGroup,
@@ -38,6 +39,10 @@ export type LibroPliegoMayorExportInput = BaseInput & {
 
 export type LibroMayorExtendidoUeExportInput = BaseInput & {
   ueGroups: LibroMayorExtendidoUeGroup[];
+};
+
+export type LibroMayorDetalladoExportInput = BaseInput & {
+  rows: LibroMayorDetalladoRow[];
 };
 
 /** Devuelve el importe como número para Excel, o cadena vacía cuando es cero/sin valor. */
@@ -191,6 +196,28 @@ export function buildLibroMayorExtendidoUeMatrix(input: LibroMayorExtendidoUeExp
         ]);
       }
     }
+  }
+
+  return matrix;
+}
+
+/**
+ * Libro Mayor Detallado (tabla plana): matriz matricial con una fila por cuenta
+ * (código + descripción) y sus importes de saldo inicial, debe, haber y saldo.
+ */
+export function buildLibroMayorDetalladoMatrix(input: LibroMayorDetalladoExportInput): ExportMatrix {
+  const matrix: ExportMatrix = [];
+  matrix.push([
+    'Ejercicio', 'Cod_Entidad', 'Fecha', 'Codigo', 'Descripcion', 'Saldo inicial', 'Debe', 'Haber', 'Saldo',
+  ]);
+
+  const codEntidad = entidadCodigo(input.entity.entidad);
+
+  for (const row of input.rows) {
+    matrix.push([
+      EJERCICIO, codEntidad, row.fecha, row.codigo, row.descripcion,
+      row.saldoInicial, amount(row.debe), amount(row.haber), row.saldo,
+    ]);
   }
 
   return matrix;

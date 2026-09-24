@@ -10,6 +10,7 @@ import {
   LIBROS_CONTABLES_ANIO_OPTIONS,
   LIBROS_CONTABLES_DIARIO_MATRIX_ROWS,
   LIBROS_CONTABLES_ENTIDAD_PLIEGO_OPTIONS,
+  LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS,
   LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS,
   LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS,
   LIBROS_CONTABLES_MAYOR_RESULT_GROUPS,
@@ -39,11 +40,12 @@ import {
 } from '../../../config/accounting-books.mock';
 import { LibrosContablesSearchCriteria } from '../search-panel/libros-contables-search-panel.component';
 import { computeAmountSlots } from '../../utils/libros-contables-amount-slots';
-import { generateLibrosContablesMayorExtendidoUePdfReport, generateLibrosContablesMayorPdfReport, generateLibrosContablesPdfReport, generateLibrosContablesPliegoDiarioPdfReport, generateLibrosContablesPliegoMayorPdfReport } from '../../utils/libros-contables-pdf-report';
+import { generateLibrosContablesMayorDetalladoPdfReport, generateLibrosContablesMayorExtendidoUePdfReport, generateLibrosContablesMayorPdfReport, generateLibrosContablesPdfReport, generateLibrosContablesPliegoDiarioPdfReport, generateLibrosContablesPliegoMayorPdfReport } from '../../utils/libros-contables-pdf-report';
 import {
   ExportMatrix,
   ReportMeta,
   buildLibroDiarioMatrix,
+  buildLibroMayorDetalladoMatrix,
   buildLibroMayorExtendidoUeMatrix,
   buildLibroMayorMatrix,
   buildLibroPliegoDiarioMatrix,
@@ -190,7 +192,7 @@ function formatFechaHora(date: Date): string {
             <label class="inline-flex items-center gap-siaf-xs">
               <input class="size-4 border-border text-brand-primary focus:ring-brand-primary" type="checkbox" aria-label="Seleccionar todo" [checked]="allSelected()" (change)="toggleSelectAll()" />
             </label>
-            <siaf-pagination navigation="Activate" position="Top" [page]="groupsPage()" [pageSize]="groupsPageSize()" [totalItems]="isPliegoDiario() ? pliegoDiarioUeTotalRows() : isMayorExtendidoUe() ? mayorExtendidoUeTotalRows() : (isPliegoMayor() || isMayorExtendido()) ? mayorConsolidadoTotalRows() : isMayor() ? mayorTotalRows() : filteredGroups().length" [totalPages]="1" (previous)="previousGroupsPage()" (next)="nextGroupsPage()" />
+            <siaf-pagination navigation="Activate" position="Top" [page]="groupsPage()" [pageSize]="groupsPageSize()" [totalItems]="isPliegoDiario() ? pliegoDiarioUeTotalRows() : isMayorExtendidoUe() ? mayorExtendidoUeTotalRows() : isMayorExtendido() ? mayorDetalladoTotalRows() : isPliegoMayor() ? mayorConsolidadoTotalRows() : isMayor() ? mayorTotalRows() : filteredGroups().length" [totalPages]="1" (previous)="previousGroupsPage()" (next)="nextGroupsPage()" />
           </div>
 
           @if (isPliegoDiario()) {
@@ -345,7 +347,46 @@ function formatFechaHora(date: Date): string {
               </tbody>
             </table>
           </div>
-          } @else if (isPliegoMayor() || isMayorExtendido()) {
+          } @else if (isMayorExtendido()) {
+          <div class="siaf-table-shell">
+            <table class="siaf-table w-full min-w-[1000px]">
+              <thead>
+                <tr class="siaf-table-head-row">
+                  <th class="siaf-table-th whitespace-nowrap">Ejercicio</th>
+                  <th class="siaf-table-th whitespace-nowrap">Entidad</th>
+                  <th class="siaf-table-th">Fecha</th>
+                  <th class="siaf-table-th">Código</th>
+                  <th class="siaf-table-th">Descripción</th>
+                  <th class="siaf-table-th whitespace-nowrap text-right">Saldo inicial</th>
+                  <th class="siaf-table-th text-right">Debe</th>
+                  <th class="siaf-table-th text-right">Haber</th>
+                  <th class="siaf-table-th text-right">Saldo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of mayorDetalladoRows(); track row.codigo) {
+                  <tr class="siaf-table-row">
+                    <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio }}</td>
+                    <td class="siaf-table-td whitespace-nowrap">{{ reportEntidadCodigo }}</td>
+                    <td class="siaf-table-td whitespace-nowrap">{{ row.fecha }}</td>
+                    <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.codigo }}</td>
+                    <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.descripcion }}</td>
+                    <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.saldoInicial) }}</td>
+                    <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.debe) }}</td>
+                    <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.haber) }}</td>
+                    <td class="siaf-table-td whitespace-nowrap text-right">{{ formatImporte(row.saldo) }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="9" class="px-siaf-md py-siaf-xl text-center text-sm text-[var(--sys-color-text-neutral-medium)]">
+                      No se encontraron operaciones para el criterio de búsqueda.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          } @else if (isPliegoMayor()) {
           <div class="siaf-table-shell">
             <table class="siaf-table w-full [&_th]:border [&_th]:border-[var(--sys-color-divider-strong)]">
               <thead>
@@ -572,7 +613,7 @@ function formatFechaHora(date: Date): string {
           </div>
           }
 
-          <siaf-pagination navigation="Activate" position="Bottom" [rowPage]="true" [page]="1" [pageSize]="rowsPerPage()" [rowsPerPage]="rowsPerPage()" [totalItems]="isPliegoDiario() ? pliegoDiarioUeTotalRows() : isMayorExtendidoUe() ? mayorExtendidoUeTotalRows() : (isPliegoMayor() || isMayorExtendido()) ? mayorConsolidadoTotalRows() : isMayor() ? mayorTotalRows() : displayRows().length" [totalPages]="1" (rowsPerPageChange)="rowsPerPage.set($event)" />
+          <siaf-pagination navigation="Activate" position="Bottom" [rowPage]="true" [page]="1" [pageSize]="rowsPerPage()" [rowsPerPage]="rowsPerPage()" [totalItems]="isPliegoDiario() ? pliegoDiarioUeTotalRows() : isMayorExtendidoUe() ? mayorExtendidoUeTotalRows() : isMayorExtendido() ? mayorDetalladoTotalRows() : isPliegoMayor() ? mayorConsolidadoTotalRows() : isMayor() ? mayorTotalRows() : displayRows().length" [totalPages]="1" (rowsPerPageChange)="rowsPerPage.set($event)" />
         </div>
       </div>
     </div>
@@ -903,6 +944,25 @@ export class LibrosContablesSearchResultsComponent {
   );
 
   /**
+   * Libro Mayor Detallado (tabla plana): una fila por cuenta con saldo inicial, debe, haber y
+   * saldo. Sustituye la vista anidada por USE cuando el detallado no consolida varias unidades
+   * (Unidad Ejecutora, Pliego · Programa nacional de becas, o Ente Rector con una UE concreta).
+   */
+  readonly mayorDetalladoRows = computed(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+
+    if (!term) {
+      return LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS;
+    }
+
+    return LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS.filter((row) =>
+      row.codigo.toLowerCase().includes(term) || row.descripcion.toLowerCase().includes(term)
+    );
+  });
+
+  readonly mayorDetalladoTotalRows = computed(() => this.mayorDetalladoRows().length);
+
+  /**
    * Libro Mayor extendido con acordeones por unidad ejecutora (cada uno agrupa sus sub-cuentas
    * 1101.01, 1101.02, …). Aplica cuando la vista consolida varias unidades ejecutoras:
    *  - ENTE RECTOR con Unidad Ejecutora = "Todos";
@@ -1179,7 +1239,11 @@ export class LibrosContablesSearchResultsComponent {
       return buildLibroMayorExtendidoUeMatrix({ correlativo, title, entity: this.reportEntity(), ueGroups: this.mayorExtendidoUeGroups() });
     }
 
-    if (this.isPliegoMayor() || this.isMayorExtendido()) {
+    if (this.isMayorExtendido()) {
+      return buildLibroMayorDetalladoMatrix({ correlativo, title, entity: this.reportEntity(), rows: this.mayorDetalladoRows() });
+    }
+
+    if (this.isPliegoMayor()) {
       return buildLibroPliegoMayorMatrix({ correlativo, title, entity: this.reportEntity(), groups: this.mayorConsolidadoGroups() });
     }
 
@@ -1208,7 +1272,12 @@ export class LibrosContablesSearchResultsComponent {
       return;
     }
 
-    if (this.isPliegoMayor() || this.isMayorExtendido()) {
+    if (this.isMayorExtendido()) {
+      generateLibrosContablesMayorDetalladoPdfReport({ correlativo, title, sectionTitle, entity: this.reportEntity(), usuario, rows: this.mayorDetalladoRows() });
+      return;
+    }
+
+    if (this.isPliegoMayor()) {
       generateLibrosContablesPliegoMayorPdfReport({ correlativo, title, sectionTitle, entity: this.reportEntity(), usuario, groups: this.mayorConsolidadoGroups() });
       return;
     }

@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable, { CellDef, RowInput } from 'jspdf-autotable';
 
-import { LibroContableOperacionGroup, LibroMayorExtendidoUeGroup, LibroMayorResultGroup, LibroPliegoDiarioUeGroup, LibroPliegoMayorGroup } from '../../config/accounting-books.mock';
+import { LibroContableOperacionGroup, LibroMayorDetalladoRow, LibroMayorExtendidoUeGroup, LibroMayorResultGroup, LibroPliegoDiarioUeGroup, LibroPliegoMayorGroup } from '../../config/accounting-books.mock';
 import { computeAmountSlots } from './libros-contables-amount-slots';
 
 const SIAF_BLUE: [number, number, number] = [1, 72, 153];
@@ -121,6 +121,16 @@ export type LibrosContablesMayorExtendidoUePdfReportInput = {
   /** Encabezado de la sección de la tabla (mismo título del buscador en pantalla). */
   sectionTitle: string;
   ueGroups: LibroMayorExtendidoUeGroup[];
+};
+
+export type LibrosContablesMayorDetalladoPdfReportInput = {
+  correlativo: string;
+  title: string;
+  entity: ReportEntity;
+  usuario: string;
+  /** Encabezado de la sección de la tabla (mismo título del buscador en pantalla). */
+  sectionTitle: string;
+  rows: LibroMayorDetalladoRow[];
 };
 
 function formatImporte(value: number): string {
@@ -751,6 +761,72 @@ export async function generateLibrosContablesMayorExtendidoUePdfReport(input: Li
       7: { cellWidth: 80, halign: 'right' },
       8: { cellWidth: 80, halign: 'right' },
       9: { cellWidth: 80, halign: 'right' },
+    },
+    didDrawPage: (data) => drawPageFooter(doc, data.pageNumber, fecha, hora),
+  });
+
+  applyTotalPages(doc);
+
+  const fileName = `${input.correlativo} - REPORTE DE ${input.title.toUpperCase()}.pdf`;
+  doc.save(fileName);
+}
+
+/** Filas de la tabla plana del Libro Mayor Detallado: una fila por cuenta con sus importes. */
+function buildMayorDetalladoRows(rows: LibroMayorDetalladoRow[], codEntidad: number | string): RowInput[] {
+  return rows.map((row) => [
+    EJERCICIO,
+    codEntidad,
+    row.fecha,
+    { content: row.codigo, styles: { fontStyle: 'bold' as const } },
+    { content: row.descripcion, styles: { fontStyle: 'bold' as const } },
+    { content: formatImporte(row.saldoInicial), styles: { halign: 'right' as const } },
+    { content: formatImporte(row.debe), styles: { halign: 'right' as const } },
+    { content: formatImporte(row.haber), styles: { halign: 'right' as const } },
+    { content: formatImporte(row.saldo), styles: { halign: 'right' as const } },
+  ]);
+}
+
+export async function generateLibrosContablesMayorDetalladoPdfReport(input: LibrosContablesMayorDetalladoPdfReportInput): Promise<void> {
+  const doc = createLandscapeDoc();
+  const now = new Date();
+  const fecha = now.toLocaleDateString('es-PE');
+  const hora = now.toLocaleTimeString('es-PE', { hour12: false });
+
+  const logoPng = await loadSiafLogoPng();
+
+  const startY = drawReportHeader(doc, input.title, input.entity, fecha, hora, input.usuario, logoPng, input.sectionTitle);
+
+  const headStyles = { fillColor: SIAF_BLUE, textColor: [255, 255, 255] as [number, number, number], fontStyle: 'bold' as const, halign: 'center' as const, valign: 'middle' as const, lineColor: [255, 255, 255] as [number, number, number], lineWidth: 0.5 };
+
+  autoTable(doc, {
+    startY,
+    margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
+    head: [
+      [
+        { content: 'EJERCICIO', styles: headStyles },
+        { content: 'ENTIDAD', styles: headStyles },
+        { content: 'FECHA', styles: headStyles },
+        { content: 'CÓDIGO', styles: headStyles },
+        { content: 'DESCRIPCIÓN', styles: headStyles },
+        { content: 'SALDO INICIAL', styles: { ...headStyles, halign: 'right' as const } },
+        { content: 'DEBE', styles: { ...headStyles, halign: 'right' as const } },
+        { content: 'HABER', styles: { ...headStyles, halign: 'right' as const } },
+        { content: 'SALDO', styles: { ...headStyles, halign: 'right' as const } },
+      ],
+    ],
+    body: buildMayorDetalladoRows(input.rows, entidadCodigo(input.entity.entidad)),
+    theme: 'plain',
+    styles: TABLE_BODY_STYLES,
+    columnStyles: {
+      0: { cellWidth: 48 },
+      1: { cellWidth: 44 },
+      2: { cellWidth: 62 },
+      3: { cellWidth: 62 },
+      4: { cellWidth: 'auto' },
+      5: { cellWidth: 90, halign: 'right' },
+      6: { cellWidth: 90, halign: 'right' },
+      7: { cellWidth: 90, halign: 'right' },
+      8: { cellWidth: 90, halign: 'right' },
     },
     didDrawPage: (data) => drawPageFooter(doc, data.pageNumber, fecha, hora),
   });
