@@ -63,6 +63,8 @@ type ReportEntity = {
   unidadEjecutora?: string;
   // Fecha/hora de generación; el PDF ya la muestra en su cabecera, así que no se usa aquí.
   fecha?: string;
+  /** Ejercicio contable consultado (primera columna de cada libro). */
+  ejercicio?: number;
 };
 
 export type LibrosContablesPdfReportInput = {
@@ -289,12 +291,12 @@ function buildSummaryRow(label: string, debe: number, haber: number, labelColSpa
   ];
 }
 
-function buildRows(groups: LibroContableOperacionGroup[], vienenDebe: number, vienenHaber: number, codEntidad: number | string): RowInput[] {
+function buildRows(groups: LibroContableOperacionGroup[], vienenDebe: number, vienenHaber: number, codEntidad: number | string, ejercicio: number = EJERCICIO): RowInput[] {
   const rows: RowInput[] = [buildSummaryRow('-Vienen-', vienenDebe, vienenHaber, 9)];
 
   for (const group of groups) {
     rows.push([
-      { content: EJERCICIO, styles: { fontStyle: 'bold' } },
+      { content: ejercicio, styles: { fontStyle: 'bold' } },
       { content: codEntidad, styles: { fontStyle: 'bold' } },
       { content: group.tipoRegistro, styles: { fontStyle: 'bold' } },
       { content: group.nroDocContable, styles: { fontStyle: 'bold' } },
@@ -342,7 +344,7 @@ export async function generateLibrosContablesPdfReport(input: LibrosContablesPdf
     startY,
     margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
     head: [['EJERCICIO', 'ENTIDAD', 'TIPO REGISTRO', 'NRO REG. CONTABLE', 'NRO. ASIENTO CONTABLE', 'FECHA', 'TIPO DOC ORIGEN', 'NRO DOC ORIGEN', 'DOCUMENTO ORIGEN', 'DEBE', 'HABER']],
-    body: buildRows(input.groups, input.vienenDebe, input.vienenHaber, entidadCodigo(input.entity.entidad)),
+    body: buildRows(input.groups, input.vienenDebe, input.vienenHaber, entidadCodigo(input.entity.entidad), input.entity.ejercicio),
     foot: [buildSummaryRow('-Van-', input.totalDebe, input.totalHaber, 9)],
     theme: 'plain',
     styles: TABLE_BODY_STYLES,
@@ -384,7 +386,7 @@ function buildSaldoRow(label: string, monto: number): RowInput {
   ];
 }
 
-function buildMayorRows(groups: LibroMayorResultGroup[], codEntidad: number | string): RowInput[] {
+function buildMayorRows(groups: LibroMayorResultGroup[], codEntidad: number | string, ejercicio: number = EJERCICIO): RowInput[] {
   const rows: RowInput[] = [];
 
   for (const group of groups) {
@@ -400,7 +402,7 @@ function buildMayorRows(groups: LibroMayorResultGroup[], codEntidad: number | st
       saldo = saldo + mov.debe - mov.haber;
 
       rows.push([
-        EJERCICIO,
+        ejercicio,
         codEntidad,
         mov.fecha,
         mov.nroDocContable,
@@ -434,7 +436,7 @@ export async function generateLibrosContablesMayorPdfReport(input: LibrosContabl
     startY,
     margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
     head: [['EJERCICIO', 'ENTIDAD', 'FECHA', 'NRO REG. CONTABLE', 'NRO. ASIENTO', 'TIPO REGISTRO', 'DOCUMENTO ORIGEN', 'NRO DOC ORIGEN', 'DEBE', 'HABER', 'SALDO']],
-    body: buildMayorRows(input.groups, entidadCodigo(input.entity.entidad)),
+    body: buildMayorRows(input.groups, entidadCodigo(input.entity.entidad), input.entity.ejercicio),
     theme: 'plain',
     // valign middle + minCellHeight: filas de alto uniforme con texto centrado verticalmente.
     styles: { ...TABLE_BODY_STYLES, valign: 'middle', minCellHeight: 22 },
@@ -478,7 +480,7 @@ const PLIEGO_UE_ROW_STYLES = { fontStyle: 'bold' as const };
  * igual que el diario estándar. Columnas: Tipo Registro · Nro Reg. Contable · Nro. Asiento ·
  * Fecha · Tipo doc origen · Nro doc origen · Documento origen · Debe · Haber.
  */
-function buildPliegoDiarioUeRows(ueGroups: LibroPliegoDiarioUeGroup[], vienenDebe: number, vienenHaber: number, codEntidad: number | string): RowInput[] {
+function buildPliegoDiarioUeRows(ueGroups: LibroPliegoDiarioUeGroup[], vienenDebe: number, vienenHaber: number, codEntidad: number | string, ejercicio: number = EJERCICIO): RowInput[] {
   const rows: RowInput[] = [buildSummaryRow('-Vienen-', vienenDebe, vienenHaber, 9)];
 
   for (const ue of ueGroups) {
@@ -486,7 +488,7 @@ function buildPliegoDiarioUeRows(ueGroups: LibroPliegoDiarioUeGroup[], vienenDeb
 
     for (const group of ue.operaciones) {
       rows.push([
-        EJERCICIO,
+        ejercicio,
         codEntidad,
         group.tipoRegistro,
         group.nroDocContable,
@@ -530,7 +532,7 @@ export async function generateLibrosContablesPliegoDiarioPdfReport(input: Libros
     startY,
     margin: { left: PAGE_MARGIN, right: PAGE_MARGIN },
     head: [['EJERCICIO', 'ENTIDAD', 'TIPO REGISTRO', 'NRO REG. CONTABLE', 'NRO. ASIENTO CONTABLE', 'FECHA', 'TIPO DOC ORIGEN', 'NRO DOC ORIGEN', 'DOCUMENTO ORIGEN', 'DEBE', 'HABER']],
-    body: buildPliegoDiarioUeRows(input.ueGroups, input.vienenDebe, input.vienenHaber, entidadCodigo(input.entity.entidad)),
+    body: buildPliegoDiarioUeRows(input.ueGroups, input.vienenDebe, input.vienenHaber, entidadCodigo(input.entity.entidad), input.entity.ejercicio),
     foot: [buildSummaryRow('-Van-', input.vanDebe, input.vanHaber, 9)],
     theme: 'plain',
     styles: TABLE_BODY_STYLES,
@@ -558,7 +560,7 @@ export async function generateLibrosContablesPliegoDiarioPdfReport(input: Libros
   doc.save(fileName);
 }
 
-function buildPliegoMayorRows(groups: LibroPliegoMayorGroup[], codEntidad: number | string): RowInput[] {
+function buildPliegoMayorRows(groups: LibroPliegoMayorGroup[], codEntidad: number | string, ejercicio: number = EJERCICIO): RowInput[] {
   const body: RowInput[] = [];
 
   for (const group of groups) {
@@ -567,7 +569,7 @@ function buildPliegoMayorRows(groups: LibroPliegoMayorGroup[], codEntidad: numbe
     ]);
 
     body.push([
-      EJERCICIO,
+      ejercicio,
       codEntidad,
       group.fecha,
       { content: group.codigo, styles: { fontStyle: 'bold' } },
@@ -646,7 +648,7 @@ export async function generateLibrosContablesPliegoMayorPdfReport(input: LibrosC
       ],
       [{ content: 'NOMBRE - UNIDAD EJECUTORA', styles: headStyles }],
     ],
-    body: buildPliegoMayorRows(input.groups, entidadCodigo(input.entity.entidad)),
+    body: buildPliegoMayorRows(input.groups, entidadCodigo(input.entity.entidad), input.entity.ejercicio),
     theme: 'plain',
     styles: TABLE_BODY_STYLES,
     columnStyles: {
@@ -671,7 +673,7 @@ export async function generateLibrosContablesPliegoMayorPdfReport(input: LibrosC
 }
 
 /** Filas del Libro Mayor Extendido consolidado: cabecera por Unidad Ejecutora + sub-cuentas y detalle. */
-function buildMayorExtendidoUeRows(ueGroups: LibroMayorExtendidoUeGroup[], codEntidad: number | string): RowInput[] {
+function buildMayorExtendidoUeRows(ueGroups: LibroMayorExtendidoUeGroup[], codEntidad: number | string, ejercicio: number = EJERCICIO): RowInput[] {
   const body: RowInput[] = [];
 
   for (const ue of ueGroups) {
@@ -683,7 +685,7 @@ function buildMayorExtendidoUeRows(ueGroups: LibroMayorExtendidoUeGroup[], codEn
     for (const group of ue.cuentas) {
       // Sub-cuenta: código y denominación resaltados (semibold aproximado con negrita de Helvetica).
       body.push([
-        EJERCICIO,
+        ejercicio,
         codEntidad,
         group.fecha,
         { content: group.codigo, styles: { fontStyle: 'bold' } },
@@ -747,7 +749,7 @@ export async function generateLibrosContablesMayorExtendidoUePdfReport(input: Li
       ],
       [{ content: 'NOMBRE - UNIDAD EJECUTORA', styles: headStyles }],
     ],
-    body: buildMayorExtendidoUeRows(input.ueGroups, entidadCodigo(input.entity.entidad)),
+    body: buildMayorExtendidoUeRows(input.ueGroups, entidadCodigo(input.entity.entidad), input.entity.ejercicio),
     theme: 'plain',
     styles: TABLE_BODY_STYLES,
     columnStyles: {
@@ -772,9 +774,9 @@ export async function generateLibrosContablesMayorExtendidoUePdfReport(input: Li
 }
 
 /** Filas de la tabla plana del Libro Mayor Detallado: una fila por cuenta con sus importes. */
-function buildMayorDetalladoRows(rows: LibroMayorDetalladoRow[], codEntidad: number | string): RowInput[] {
+function buildMayorDetalladoRows(rows: LibroMayorDetalladoRow[], codEntidad: number | string, ejercicio: number = EJERCICIO): RowInput[] {
   return rows.map((row) => [
-    EJERCICIO,
+    ejercicio,
     codEntidad,
     row.fecha,
     { content: row.codigo, styles: { fontStyle: 'bold' as const } },
@@ -814,7 +816,7 @@ export async function generateLibrosContablesMayorDetalladoPdfReport(input: Libr
         { content: 'SALDO', styles: { ...headStyles, halign: 'right' as const } },
       ],
     ],
-    body: buildMayorDetalladoRows(input.rows, entidadCodigo(input.entity.entidad)),
+    body: buildMayorDetalladoRows(input.rows, entidadCodigo(input.entity.entidad), input.entity.ejercicio),
     theme: 'plain',
     styles: TABLE_BODY_STYLES,
     columnStyles: {

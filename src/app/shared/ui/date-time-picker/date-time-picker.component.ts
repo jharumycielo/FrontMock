@@ -51,10 +51,10 @@ type CalendarDay = {
           >
             <header class="flex w-full items-center justify-between py-siaf-xs">
               <div class="flex items-center gap-siaf-xxs">
-                <button class="inline-flex size-5 items-center justify-center rounded-siaf-sm hover:bg-surface-muted" type="button" aria-label="Año anterior" (click)="moveYear(-1, $event)">
+                <button class="inline-flex size-5 items-center justify-center rounded-siaf-sm hover:bg-surface-muted" type="button" aria-label="Año anterior" [disabled]="!canMoveTo(viewYear - 1, viewMonth)" [class.opacity-40]="!canMoveTo(viewYear - 1, viewMonth)" (click)="moveYear(-1, $event)">
                   <siaf-icon name="keyboard_double_arrow_left" [size]="20" />
                 </button>
-                <button class="inline-flex size-5 items-center justify-center rounded-siaf-sm hover:bg-surface-muted" type="button" aria-label="Mes anterior" (click)="moveMonth(-1, $event)">
+                <button class="inline-flex size-5 items-center justify-center rounded-siaf-sm hover:bg-surface-muted" type="button" aria-label="Mes anterior" [disabled]="!canMoveTo(viewYear, viewMonth - 1)" [class.opacity-40]="!canMoveTo(viewYear, viewMonth - 1)" (click)="moveMonth(-1, $event)">
                   <siaf-icon name="keyboard_arrow_left" [size]="20" />
                 </button>
               </div>
@@ -65,10 +65,10 @@ type CalendarDay = {
               </strong>
 
               <div class="flex items-center gap-siaf-xxs">
-                <button class="inline-flex size-5 items-center justify-center rounded-siaf-sm hover:bg-surface-muted" type="button" aria-label="Mes siguiente" (click)="moveMonth(1, $event)">
+                <button class="inline-flex size-5 items-center justify-center rounded-siaf-sm hover:bg-surface-muted" type="button" aria-label="Mes siguiente" [disabled]="!canMoveTo(viewYear, viewMonth + 1)" [class.opacity-40]="!canMoveTo(viewYear, viewMonth + 1)" (click)="moveMonth(1, $event)">
                   <siaf-icon name="keyboard_arrow_right" [size]="20" />
                 </button>
-                <button class="inline-flex size-5 items-center justify-center rounded-siaf-sm hover:bg-surface-muted" type="button" aria-label="Año siguiente" (click)="moveYear(1, $event)">
+                <button class="inline-flex size-5 items-center justify-center rounded-siaf-sm hover:bg-surface-muted" type="button" aria-label="Año siguiente" [disabled]="!canMoveTo(viewYear + 1, viewMonth)" [class.opacity-40]="!canMoveTo(viewYear + 1, viewMonth)" (click)="moveYear(1, $event)">
                   <siaf-icon name="keyboard_double_arrow_right" [size]="20" />
                 </button>
               </div>
@@ -142,6 +142,10 @@ export class DateTimePickerComponent implements OnChanges, OnInit {
   @Input() defaultToToday = true;
   @Input() required = false;
   @Input() fullWidth = false;
+  /** Fecha mínima seleccionable (YYYY-MM-DD). Los días anteriores quedan deshabilitados. */
+  @Input() minDate = '';
+  /** Fecha máxima seleccionable (YYYY-MM-DD). Los días posteriores quedan deshabilitados. */
+  @Input() maxDate = '';
 
   @Output() valueChange = new EventEmitter<string>();
 
@@ -160,6 +164,8 @@ export class DateTimePickerComponent implements OnChanges, OnInit {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['value']) {
       this.setSelectedDate(this.value || (this.defaultToToday ? this.todayValue : ''));
+    } else if (changes['minDate'] || changes['maxDate']) {
+      this.syncViewToSelection();
     }
   }
 
@@ -209,9 +215,11 @@ export class DateTimePickerComponent implements OnChanges, OnInit {
     }
 
     for (let day = 1; day <= daysInMonth; day += 1) {
+      const value = this.toDateValue(this.viewYear, this.viewMonth, day);
       calendarDays.push({
         label: this.pad(day),
-        value: this.toDateValue(this.viewYear, this.viewMonth, day)
+        value,
+        disabled: !this.isWithinRange(value)
       });
     }
 
@@ -302,15 +310,26 @@ export class DateTimePickerComponent implements OnChanges, OnInit {
   acceptDate(event?: Event): void {
     event?.stopPropagation();
     if (!this.selectedDate) {
-      this.selectedDate = this.toDateValue(this.viewYear, this.viewMonth, 1);
+      this.selectedDate = this.clampToRange(this.toDateValue(this.viewYear, this.viewMonth, 1));
       this.valueChange.emit(this.selectedDate);
     }
 
     this.closePicker();
   }
 
+  /** Indica si se puede navegar al mes indicado sin salir del rango minDate/maxDate. */
+  canMoveTo(year: number, month: number): boolean {
+    const target = new Date(year, month, 1);
+    const firstOfMonth = this.toDateValue(target.getFullYear(), target.getMonth(), 1);
+    const lastOfMonth = this.toDateValue(target.getFullYear(), target.getMonth() + 1, 0);
+    return (!this.maxDate || firstOfMonth <= this.maxDate) && (!this.minDate || lastOfMonth >= this.minDate);
+  }
+
   moveMonth(offset: number, event?: Event): void {
     event?.stopPropagation();
+    if (!this.canMoveTo(this.viewYear, this.viewMonth + offset)) {
+      return;
+    }
     const nextDate = new Date(this.viewYear, this.viewMonth + offset, 1);
     this.viewYear = nextDate.getFullYear();
     this.viewMonth = nextDate.getMonth();
@@ -318,6 +337,9 @@ export class DateTimePickerComponent implements OnChanges, OnInit {
 
   moveYear(offset: number, event?: Event): void {
     event?.stopPropagation();
+    if (!this.canMoveTo(this.viewYear + offset, this.viewMonth)) {
+      return;
+    }
     this.viewYear += offset;
   }
 
@@ -327,9 +349,24 @@ export class DateTimePickerComponent implements OnChanges, OnInit {
   }
 
   private syncViewToSelection(): void {
-    const selected = this.parseDateValue(this.selectedDate) || this.currentDate;
+    // Sin selección, el calendario se abre en hoy o, si hoy está fuera del rango, en el límite más cercano.
+    const selected = this.parseDateValue(this.selectedDate) || this.parseDateValue(this.clampToRange(this.todayValue)) || this.currentDate;
     this.viewYear = selected.getFullYear();
     this.viewMonth = selected.getMonth();
+  }
+
+  private isWithinRange(value: string): boolean {
+    return (!this.minDate || value >= this.minDate) && (!this.maxDate || value <= this.maxDate);
+  }
+
+  private clampToRange(value: string): string {
+    if (this.minDate && value < this.minDate) {
+      return this.minDate;
+    }
+    if (this.maxDate && value > this.maxDate) {
+      return this.maxDate;
+    }
+    return value;
   }
 
   private get currentDate(): Date {

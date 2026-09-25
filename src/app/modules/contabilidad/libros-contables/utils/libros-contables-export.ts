@@ -13,7 +13,7 @@ import { loadSiafLogoPng } from './libros-contables-pdf-report';
 /** Matriz de celdas (filas x columnas) que alimenta la hoja de resultados y el CSV. */
 export type ExportMatrix = (string | number)[][];
 
-type ReportEntity = { entidad: string; sector?: string; pliego?: string; unidadEjecutora?: string; fecha?: string };
+type ReportEntity = { entidad: string; sector?: string; pliego?: string; unidadEjecutora?: string; fecha?: string; ejercicio?: number };
 
 type BaseInput = {
   correlativo: string;
@@ -70,6 +70,9 @@ function entidadCodigo(entidad: string): number | string {
  * Libro Diario (Unidad Ejecutora): matriz plana/tabular, una fila por movimiento
  * con todas las dimensiones repetidas, para permitir tablas dinámicas en Excel/CSV.
  */
+/** Ejercicio por defecto cuando el reporte no indica uno. */
+const EJERCICIO = 2026;
+
 export function buildLibroDiarioMatrix(input: LibroDiarioExportInput): ExportMatrix {
   const matrix: ExportMatrix = [];
   matrix.push([
@@ -79,6 +82,7 @@ export function buildLibroDiarioMatrix(input: LibroDiarioExportInput): ExportMat
   ]);
 
   const codEntidad = entidadCodigo(input.entity.entidad);
+  const ejercicio = input.entity.ejercicio ?? EJERCICIO;
 
   for (const row of input.rows) {
     matrix.push([
@@ -92,7 +96,6 @@ export function buildLibroDiarioMatrix(input: LibroDiarioExportInput): ExportMat
   return matrix;
 }
 
-const EJERCICIO = 2026;
 
 /**
  * Libro Mayor (Unidad Ejecutora): matriz plana. Una fila por movimiento, con la
@@ -106,13 +109,14 @@ export function buildLibroMayorMatrix(input: LibroMayorExportInput): ExportMatri
   ]);
 
   const codEntidad = entidadCodigo(input.entity.entidad);
+  const ejercicio = input.entity.ejercicio ?? EJERCICIO;
 
   for (const group of input.groups) {
     let saldo = group.saldoInicial;
     for (const mov of group.movimientos) {
       saldo = round2(saldo + mov.debe - mov.haber);
       matrix.push([
-        EJERCICIO, codEntidad, group.codCuenta, group.nombreCuenta, mov.fecha, mov.nroDocContable,
+        ejercicio, codEntidad, group.codCuenta, group.nombreCuenta, mov.fecha, mov.nroDocContable,
         mov.nroAsiento, mov.tipo, mov.documento, mov.nroDocumento, amount(mov.debe), amount(mov.haber), saldo,
       ]);
     }
@@ -133,12 +137,13 @@ export function buildLibroPliegoDiarioMatrix(input: LibroPliegoDiarioExportInput
   ]);
 
   const codEntidad = entidadCodigo(input.entity.entidad);
+  const ejercicio = input.entity.ejercicio ?? EJERCICIO;
 
   for (const ue of input.ueGroups) {
     for (const group of ue.operaciones) {
       for (const cuenta of group.cuentas) {
         matrix.push([
-          EJERCICIO, codEntidad, ue.unidadEjecutora, group.tipoRegistro, group.nroDocContable, group.codCuenta, group.fecha,
+          ejercicio, codEntidad, ue.unidadEjecutora, group.tipoRegistro, group.nroDocContable, group.codCuenta, group.fecha,
           group.tipoDocumento, group.codDocOrigen, group.documento, cuenta.codigo, cuenta.nombre,
           amount(cuenta.debe), amount(cuenta.haber),
         ]);
@@ -161,11 +166,12 @@ export function buildLibroPliegoMayorMatrix(input: LibroPliegoMayorExportInput):
   ]);
 
   const codEntidad = entidadCodigo(input.entity.entidad);
+  const ejercicio = input.entity.ejercicio ?? EJERCICIO;
 
   for (const group of input.groups) {
     for (const det of group.detalles) {
       matrix.push([
-        EJERCICIO, codEntidad, group.fecha, group.codigo, group.cuenta, det.minen,
+        ejercicio, codEntidad, group.fecha, group.codigo, group.cuenta, det.minen,
         det.nombre, det.saldoInicial, amount(det.debe), amount(det.haber), det.saldo,
       ]);
     }
@@ -186,12 +192,13 @@ export function buildLibroMayorExtendidoUeMatrix(input: LibroMayorExtendidoUeExp
   ]);
 
   const codEntidad = entidadCodigo(input.entity.entidad);
+  const ejercicio = input.entity.ejercicio ?? EJERCICIO;
 
   for (const ue of input.ueGroups) {
     for (const group of ue.cuentas) {
       for (const det of group.detalles) {
         matrix.push([
-          EJERCICIO, codEntidad, ue.unidadEjecutora, group.fecha, group.codigo, group.cuenta,
+          ejercicio, codEntidad, ue.unidadEjecutora, group.fecha, group.codigo, group.cuenta,
           det.minen, det.nombre, det.saldoInicial, amount(det.debe), amount(det.haber), det.saldo,
         ]);
       }
@@ -212,10 +219,11 @@ export function buildLibroMayorDetalladoMatrix(input: LibroMayorDetalladoExportI
   ]);
 
   const codEntidad = entidadCodigo(input.entity.entidad);
+  const ejercicio = input.entity.ejercicio ?? EJERCICIO;
 
   for (const row of input.rows) {
     matrix.push([
-      EJERCICIO, codEntidad, row.fecha, row.codigo, row.descripcion,
+      ejercicio, codEntidad, row.fecha, row.codigo, row.descripcion,
       row.saldoInicial, amount(row.debe), amount(row.haber), row.saldo,
     ]);
   }

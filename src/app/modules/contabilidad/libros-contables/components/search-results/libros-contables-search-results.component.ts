@@ -42,6 +42,17 @@ import {
 } from '../../../config/accounting-books.mock';
 import { LibrosContablesSearchCriteria } from '../search-panel/libros-contables-search-panel.component';
 import { computeAmountSlots } from '../../utils/libros-contables-amount-slots';
+import {
+  mayorDetalladoEnPeriodo,
+  mayorEnPeriodo,
+  mayorExtendidoUeEnPeriodo,
+  matrizDiarioEnPeriodo,
+  operacionesEnPeriodo,
+  pliegoDiarioRowsEnPeriodo,
+  pliegoDiarioUeEnPeriodo,
+  pliegoMayorEnPeriodo,
+  resolverPeriodo,
+} from '../../utils/libros-contables-periodo';
 import { generateLibrosContablesMayorDetalladoPdfReport, generateLibrosContablesMayorExtendidoUePdfReport, generateLibrosContablesMayorPdfReport, generateLibrosContablesPdfReport, generateLibrosContablesPliegoDiarioPdfReport, generateLibrosContablesPliegoMayorPdfReport } from '../../utils/libros-contables-pdf-report';
 import {
   ExportMatrix,
@@ -237,7 +248,7 @@ function formatFechaHora(date: Date): string {
                       <td class="siaf-table-td">
                         <input class="size-4 border-border text-brand-primary focus:ring-brand-primary" type="checkbox" [attr.aria-label]="'Seleccionar ' + row.codCuenta" [checked]="isSelected(row.groupId)" (change)="toggleSelected(row.groupId)" />
                       </td>
-                      <td class="siaf-table-td whitespace-nowrap font-medium">{{ reportEjercicio }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-medium">{{ reportEjercicio() }}</td>
                       <td class="siaf-table-td whitespace-nowrap font-medium">{{ reportEntidadCodigo }}</td>
                       <td class="siaf-table-td whitespace-nowrap font-medium">{{ row.tipoRegistro }}</td>
                       <td class="siaf-table-td whitespace-nowrap font-medium">{{ row.nroDocContable }}</td>
@@ -314,7 +325,7 @@ function formatFechaHora(date: Date): string {
                     </tr>
                   } @else if (row.type === 'group') {
                     <tr class="siaf-table-row">
-                      <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio() }}</td>
                       <td class="siaf-table-td whitespace-nowrap">{{ reportEntidadCodigo }}</td>
                       <td class="siaf-table-td whitespace-nowrap">{{ row.group.fecha }}</td>
                       <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.group.codigo }}</td>
@@ -368,7 +379,7 @@ function formatFechaHora(date: Date): string {
               <tbody>
                 @for (row of mayorDetalladoRows(); track row.codigo) {
                   <tr class="siaf-table-row">
-                    <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio }}</td>
+                    <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio() }}</td>
                     <td class="siaf-table-td whitespace-nowrap">{{ reportEntidadCodigo }}</td>
                     <td class="siaf-table-td whitespace-nowrap">{{ row.fecha }}</td>
                     <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.codigo }}</td>
@@ -414,7 +425,7 @@ function formatFechaHora(date: Date): string {
               <tbody>
                 @for (group of mayorConsolidadoGroups(); track group.id) {
                   <tr class="siaf-table-row">
-                    <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio }}</td>
+                    <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio() }}</td>
                     <td class="siaf-table-td whitespace-nowrap">{{ reportEntidadCodigo }}</td>
                     <td class="siaf-table-td whitespace-nowrap">{{ group.fecha }}</td>
                     <td class="siaf-table-td whitespace-nowrap font-bold">{{ group.codigo }}</td>
@@ -502,7 +513,7 @@ function formatFechaHora(date: Date): string {
                       <td class="siaf-table-td">
                         <input class="size-4 border-border text-brand-primary focus:ring-brand-primary" type="checkbox" [attr.aria-label]="'Seleccionar movimiento ' + mov.nroAsiento" [checked]="isMayorRowSelected(group.id + '-' + $index)" (change)="toggleMayorRow(group.id + '-' + $index)" />
                       </td>
-                      <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio }}</td>
+                      <td class="siaf-table-td whitespace-nowrap">{{ reportEjercicio() }}</td>
                       <td class="siaf-table-td whitespace-nowrap">{{ reportEntidadCodigo }}</td>
                       <td class="siaf-table-td whitespace-nowrap">{{ mov.fecha }}</td>
                       <td class="siaf-table-td whitespace-nowrap">{{ mov.nroDocContable }}</td>
@@ -570,7 +581,7 @@ function formatFechaHora(date: Date): string {
                           </button>
                         </div>
                       </td>
-                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ reportEjercicio }}</td>
+                      <td class="siaf-table-td whitespace-nowrap font-bold">{{ reportEjercicio() }}</td>
                       <td class="siaf-table-td whitespace-nowrap font-bold">{{ reportEntidadCodigo }}</td>
                       <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.tipoRegistro }}</td>
                       <td class="siaf-table-td whitespace-nowrap font-bold">{{ row.nroDocContable }}</td>
@@ -626,21 +637,40 @@ export class LibrosContablesSearchResultsComponent {
   /** Fecha/hora real de generación del resultado; se refresca en cada búsqueda aplicada. */
   readonly reportFechaHora = signal(formatFechaHora(new Date()));
 
-  private _criteria!: LibrosContablesSearchCriteria;
+  private readonly _criteria = signal<LibrosContablesSearchCriteria>(null!);
   @Input({ required: true })
   get criteria(): LibrosContablesSearchCriteria {
-    return this._criteria;
+    return this._criteria();
   }
   set criteria(value: LibrosContablesSearchCriteria) {
-    this._criteria = value;
+    this._criteria.set(value);
     this.reportFechaHora.set(formatFechaHora(new Date()));
   }
 
   @Output() quitarFiltros = new EventEmitter<void>();
 
   readonly entity = LIBROS_CONTABLES_RESULT_ENTITY;
+  /** Periodo consultado (ejercicio y fechas) según los filtros aplicados. */
+  private readonly periodo = computed(() => resolverPeriodo(this.criteria));
+
   /** Ejercicio contable y código de entidad, mostrados como primeras columnas en cada libro. */
-  readonly reportEjercicio = 2026;
+  readonly reportEjercicio = computed(() => this.periodo().ejercicio);
+
+  /** Datos de los libros con las fechas ubicadas dentro del periodo filtrado. */
+  private readonly librosEnPeriodo = computed(() => {
+    const p = this.periodo();
+    return {
+      resultGroups: operacionesEnPeriodo(LIBROS_CONTABLES_RESULT_GROUPS, p),
+      pliegoDiarioUeGroups: pliegoDiarioUeEnPeriodo(LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS, p),
+      diarioMatrixRows: matrizDiarioEnPeriodo(LIBROS_CONTABLES_DIARIO_MATRIX_ROWS, p),
+      mayorResultGroups: mayorEnPeriodo(LIBROS_CONTABLES_MAYOR_RESULT_GROUPS, p),
+      pliegoDiarioRows: pliegoDiarioRowsEnPeriodo(LIBROS_CONTABLES_PLIEGO_DIARIO_ROWS, p),
+      pliegoMayorGroups: pliegoMayorEnPeriodo(LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS, p),
+      mayorExtendidoGroups: pliegoMayorEnPeriodo(LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS, p),
+      mayorExtendidoUeGroups: mayorExtendidoUeEnPeriodo(LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS, p),
+      mayorDetalladoRows: mayorDetalladoEnPeriodo(LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS, p),
+    };
+  });
   readonly reportEntidadCodigo = Number(LIBROS_CONTABLES_RESULT_ENTITY.entidad.match(/\d+/)?.[0] ?? 0);
   readonly vienenDebe = LIBROS_CONTABLES_RESULT_VIENEN_DEBE;
   readonly vienenHaber = LIBROS_CONTABLES_RESULT_VIENEN_HABER;
@@ -761,10 +791,10 @@ export class LibrosContablesSearchResultsComponent {
     const term = this.searchTerm().trim().toLowerCase();
 
     if (!term) {
-      return LIBROS_CONTABLES_RESULT_GROUPS;
+      return this.librosEnPeriodo().resultGroups;
     }
 
-    return LIBROS_CONTABLES_RESULT_GROUPS.filter((group) =>
+    return this.librosEnPeriodo().resultGroups.filter((group) =>
       group.documento.toLowerCase().includes(term) || group.codCuenta.toLowerCase().includes(term)
     );
   });
@@ -791,9 +821,9 @@ export class LibrosContablesSearchResultsComponent {
   readonly pliegoDiarioUeGroups = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
     if (!term) {
-      return LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS;
+      return this.librosEnPeriodo().pliegoDiarioUeGroups;
     }
-    return LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS.map((ue) => ({
+    return this.librosEnPeriodo().pliegoDiarioUeGroups.map((ue) => ({
       ...ue,
       operaciones: ue.operaciones.filter(
         (group) => group.documento.toLowerCase().includes(term) || group.codCuenta.toLowerCase().includes(term),
@@ -894,10 +924,10 @@ export class LibrosContablesSearchResultsComponent {
     const term = this.searchTerm().trim().toLowerCase();
 
     if (!term) {
-      return LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS;
+      return this.librosEnPeriodo().pliegoMayorGroups;
     }
 
-    return LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS.map((group) => ({
+    return this.librosEnPeriodo().pliegoMayorGroups.map((group) => ({
       ...group,
       detalles: group.detalles.filter((det) =>
         det.nombre.toLowerCase().includes(term) || det.minen.toLowerCase().includes(term)
@@ -927,10 +957,10 @@ export class LibrosContablesSearchResultsComponent {
     const term = this.searchTerm().trim().toLowerCase();
 
     if (!term) {
-      return LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS;
+      return this.librosEnPeriodo().mayorExtendidoGroups;
     }
 
-    return LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS.map((group) => ({
+    return this.librosEnPeriodo().mayorExtendidoGroups.map((group) => ({
       ...group,
       detalles: group.detalles.filter((det) =>
         det.nombre.toLowerCase().includes(term) || det.minen.toLowerCase().includes(term)
@@ -956,10 +986,10 @@ export class LibrosContablesSearchResultsComponent {
     const term = this.searchTerm().trim().toLowerCase();
 
     if (!term) {
-      return LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS;
+      return this.librosEnPeriodo().mayorDetalladoRows;
     }
 
-    return LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS.filter((row) =>
+    return this.librosEnPeriodo().mayorDetalladoRows.filter((row) =>
       row.codigo.toLowerCase().includes(term) || row.descripcion.toLowerCase().includes(term)
     );
   });
@@ -980,10 +1010,10 @@ export class LibrosContablesSearchResultsComponent {
     const term = this.searchTerm().trim().toLowerCase();
 
     if (!term) {
-      return LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS;
+      return this.librosEnPeriodo().mayorExtendidoUeGroups;
     }
 
-    return LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS.map((ue) => ({
+    return this.librosEnPeriodo().mayorExtendidoUeGroups.map((ue) => ({
       ...ue,
       cuentas: ue.cuentas
         .map((group) => ({
@@ -1035,10 +1065,10 @@ export class LibrosContablesSearchResultsComponent {
     const term = this.searchTerm().trim().toLowerCase();
 
     if (!term) {
-      return LIBROS_CONTABLES_PLIEGO_DIARIO_ROWS;
+      return this.librosEnPeriodo().pliegoDiarioRows;
     }
 
-    return LIBROS_CONTABLES_PLIEGO_DIARIO_ROWS.filter((row) =>
+    return this.librosEnPeriodo().pliegoDiarioRows.filter((row) =>
       row.subCuenta.toLowerCase().includes(term) ||
       row.nombre.toLowerCase().includes(term) ||
       row.mnen.toLowerCase().includes(term) ||
@@ -1050,10 +1080,10 @@ export class LibrosContablesSearchResultsComponent {
     const term = this.searchTerm().trim().toLowerCase();
 
     if (!term) {
-      return LIBROS_CONTABLES_MAYOR_RESULT_GROUPS;
+      return this.librosEnPeriodo().mayorResultGroups;
     }
 
-    return LIBROS_CONTABLES_MAYOR_RESULT_GROUPS.map((group) => ({
+    return this.librosEnPeriodo().mayorResultGroups.map((group) => ({
       ...group,
       movimientos: group.movimientos.filter((mov) =>
         mov.documento.toLowerCase().includes(term) ||
@@ -1195,7 +1225,7 @@ export class LibrosContablesSearchResultsComponent {
     if (this.isMayor()) {
       return this.mayorTotalRows();
     }
-    return LIBROS_CONTABLES_DIARIO_MATRIX_ROWS.length;
+    return this.librosEnPeriodo().diarioMatrixRows.length;
   }
 
   /**
@@ -1204,7 +1234,11 @@ export class LibrosContablesSearchResultsComponent {
    *  - Entidad · Pliego                       (Pliego · Integrado a nivel pliego · Libro Diario)
    *  - Entidad · Sector                       (resto)
    */
-  private reportEntity(): { entidad: string; sector?: string; pliego?: string; unidadEjecutora?: string; fecha?: string } {
+  private reportEntity(): { entidad: string; sector?: string; pliego?: string; unidadEjecutora?: string; fecha?: string; ejercicio: number } {
+    return { ...this.reportEntityBase(), ejercicio: this.reportEjercicio() };
+  }
+
+  private reportEntityBase(): { entidad: string; sector?: string; pliego?: string; unidadEjecutora?: string; fecha?: string } {
     const fecha = this.reportFechaHora();
     // Ente Rector: solo Entidad (el Pliego ya está en los filtros).
     if (this.esEnteRector()) {
@@ -1260,7 +1294,7 @@ export class LibrosContablesSearchResultsComponent {
     }
 
     return buildLibroDiarioMatrix({
-      correlativo, title, entity: this.reportEntity(), rows: LIBROS_CONTABLES_DIARIO_MATRIX_ROWS,
+      correlativo, title, entity: this.reportEntity(), rows: this.librosEnPeriodo().diarioMatrixRows,
     });
   }
 

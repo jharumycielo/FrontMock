@@ -93,23 +93,23 @@ export type LibrosContablesSearchCriteria = {
                 </div>
               }
               @if (esEnteRector()) {
-                <siaf-input label="Ejercicio contable" type="select" [clearable]="true" [options]="anioOptions" [value]="anioCuenta()" (valueChange)="anioCuenta.set(asString($event))" />
-                <siaf-input label="Mes" type="select" [clearable]="true" [options]="mesOptions" [value]="mes()" (valueChange)="mes.set(asString($event))" />
+                <siaf-input label="Ejercicio contable" type="select" [clearable]="true" [options]="anioOptions" [value]="anioCuenta()" (valueChange)="anioCuenta.set(asString($event)); ajustarFechasAlPeriodo()" />
+                <siaf-input label="Mes" type="select" [clearable]="true" [options]="mesOptions" [value]="mes()" (valueChange)="mes.set(asString($event)); ajustarFechasAlPeriodo()" />
                 <siaf-input label="Pliego" type="select" [clearable]="true" [options]="pliegoOptions" [value]="pliego()" (valueChange)="pliego.set(asString($event))" />
                 <siaf-input label="Unidad Ejecutora" type="select" [clearable]="true" [options]="unidadEjecutoraOptions" [value]="unidadEjecutora()" (valueChange)="unidadEjecutora.set(asString($event))" />
-                <siaf-date-time-picker placeholder="Fecha desde" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaDesde()" (valueChange)="fechaDesde.set($event)" />
-                <siaf-date-time-picker placeholder="Fecha hasta" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaHasta()" (valueChange)="fechaHasta.set($event)" />
+                <siaf-date-time-picker placeholder="Fecha desde" variant="date" [defaultToToday]="false" [fullWidth]="true" [minDate]="fechaMin()" [maxDate]="fechaHasta() || fechaMax()" [value]="fechaDesde()" (valueChange)="fechaDesde.set($event)" />
+                <siaf-date-time-picker placeholder="Fecha hasta" variant="date" [defaultToToday]="false" [fullWidth]="true" [minDate]="fechaDesde() || fechaMin()" [maxDate]="fechaMax()" [value]="fechaHasta()" (valueChange)="fechaHasta.set($event)" />
               } @else if (usaFiltrosPliego()) {
                 <siaf-input label="Entidad" type="select" [clearable]="true" [options]="entidadOptions" [value]="entidad()" (valueChange)="entidad.set(asString($event))" />
-                <siaf-input label="Ejercicio contable" type="select" [clearable]="true" [options]="anioOptions" [value]="anioCuenta()" (valueChange)="anioCuenta.set(asString($event))" />
-                <siaf-input label="Mes" type="select" [clearable]="true" [options]="mesOptions" [value]="mes()" (valueChange)="mes.set(asString($event))" />
-                <siaf-date-time-picker placeholder="Fecha desde" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaDesde()" (valueChange)="fechaDesde.set($event)" />
-                <siaf-date-time-picker placeholder="Fecha hasta" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaHasta()" (valueChange)="fechaHasta.set($event)" />
+                <siaf-input label="Ejercicio contable" type="select" [clearable]="true" [options]="anioOptions" [value]="anioCuenta()" (valueChange)="anioCuenta.set(asString($event)); ajustarFechasAlPeriodo()" />
+                <siaf-input label="Mes" type="select" [clearable]="true" [options]="mesOptions" [value]="mes()" (valueChange)="mes.set(asString($event)); ajustarFechasAlPeriodo()" />
+                <siaf-date-time-picker placeholder="Fecha desde" variant="date" [defaultToToday]="false" [fullWidth]="true" [minDate]="fechaMin()" [maxDate]="fechaHasta() || fechaMax()" [value]="fechaDesde()" (valueChange)="fechaDesde.set($event)" />
+                <siaf-date-time-picker placeholder="Fecha hasta" variant="date" [defaultToToday]="false" [fullWidth]="true" [minDate]="fechaDesde() || fechaMin()" [maxDate]="fechaMax()" [value]="fechaHasta()" (valueChange)="fechaHasta.set($event)" />
               } @else {
-                <siaf-input label="Ejercicio contable" type="select" [clearable]="true" [options]="anioOptions" [value]="anioCuenta()" (valueChange)="anioCuenta.set(asString($event))" />
-                <siaf-input label="Mes" type="select" [clearable]="true" [options]="mesOptions" [value]="mes()" (valueChange)="mes.set(asString($event))" />
-                <siaf-date-time-picker placeholder="Fecha desde" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaDesde()" (valueChange)="fechaDesde.set($event)" />
-                <siaf-date-time-picker placeholder="Fecha hasta" variant="date" [defaultToToday]="false" [fullWidth]="true" [value]="fechaHasta()" (valueChange)="fechaHasta.set($event)" />
+                <siaf-input label="Ejercicio contable" type="select" [clearable]="true" [options]="anioOptions" [value]="anioCuenta()" (valueChange)="anioCuenta.set(asString($event)); ajustarFechasAlPeriodo()" />
+                <siaf-input label="Mes" type="select" [clearable]="true" [options]="mesOptions" [value]="mes()" (valueChange)="mes.set(asString($event)); ajustarFechasAlPeriodo()" />
+                <siaf-date-time-picker placeholder="Fecha desde" variant="date" [defaultToToday]="false" [fullWidth]="true" [minDate]="fechaMin()" [maxDate]="fechaHasta() || fechaMax()" [value]="fechaDesde()" (valueChange)="fechaDesde.set($event)" />
+                <siaf-date-time-picker placeholder="Fecha hasta" variant="date" [defaultToToday]="false" [fullWidth]="true" [minDate]="fechaDesde() || fechaMin()" [maxDate]="fechaMax()" [value]="fechaHasta()" (valueChange)="fechaHasta.set($event)" />
               }
 
               @if (esLibroMayor()) {
@@ -180,6 +180,39 @@ export class LibrosContablesSearchPanelComponent {
   readonly cuentaContable = signal('');
   readonly rangoCuentaDesde = signal('');
   readonly rangoCuentaHasta = signal('');
+
+  /**
+   * Periodo permitido para "Fecha desde" / "Fecha hasta" (YYYY-MM-DD). Con Mes elegido se limita a
+   * ese mes del Ejercicio contable (o del año en curso si no se eligió ejercicio); solo con Ejercicio,
+   * a ese año; sin ninguno, no hay límite.
+   */
+  private readonly periodo = computed(() => {
+    const mes = this.mes();
+    const anio = this.anioCuenta() || (mes ? String(new Date().getFullYear()) : '');
+    if (!anio) {
+      return { min: '', max: '' };
+    }
+    if (!mes) {
+      return { min: `${anio}-01-01`, max: `${anio}-12-31` };
+    }
+    const ultimoDia = new Date(Number(anio), Number(mes), 0).getDate();
+    return { min: `${anio}-${mes}-01`, max: `${anio}-${mes}-${String(ultimoDia).padStart(2, '0')}` };
+  });
+
+  readonly fechaMin = computed(() => this.periodo().min);
+  readonly fechaMax = computed(() => this.periodo().max);
+
+  /** Al cambiar Mes o Ejercicio, descarta las fechas que quedan fuera del nuevo periodo. */
+  ajustarFechasAlPeriodo(): void {
+    const { min, max } = this.periodo();
+    const fueraDePeriodo = (fecha: string) => Boolean(fecha) && ((min && fecha < min) || (max && fecha > max));
+    if (fueraDePeriodo(this.fechaDesde())) {
+      this.fechaDesde.set('');
+    }
+    if (fueraDePeriodo(this.fechaHasta())) {
+      this.fechaHasta.set('');
+    }
+  }
 
   readonly hasCriteria = computed(() =>
     Boolean(this.scope() || this.tipoLibro() || this.entidad() || this.mes() || this.anioCuenta() || this.fechaDesde() || this.fechaHasta() || this.pliego() || this.cuentaContable() || this.rangoCuentaDesde() || this.rangoCuentaHasta())
