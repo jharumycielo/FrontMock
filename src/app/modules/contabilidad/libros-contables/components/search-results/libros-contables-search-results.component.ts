@@ -39,6 +39,7 @@ import {
   LibroPliegoDiarioRow,
   LibroPliegoMayorGroup,
   LibroPliegoMayorRow,
+  aplicarMovimiento,
 } from '../../../config/accounting-books.mock';
 import { LibrosContablesSearchCriteria } from '../search-panel/libros-contables-search-panel.component';
 import { computeAmountSlots } from '../../utils/libros-contables-amount-slots';
@@ -1096,12 +1097,12 @@ export class LibrosContablesSearchResultsComponent {
 
   readonly mayorTotalRows = computed(() => this.mayorGroups().reduce((total, group) => total + group.movimientos.length, 0));
 
-  /** Grupos del Libro Mayor con el saldo acumulado calculado por cada movimiento. */
+  /** Grupos del Libro Mayor con el saldo acumulado por movimiento, según la naturaleza de la cuenta. */
   readonly mayorGroupsView = computed(() =>
     this.mayorGroups().map((group) => {
       let saldo = group.saldoInicial;
       const movimientos = group.movimientos.map((mov) => {
-        saldo = Math.round((saldo + mov.debe - mov.haber + Number.EPSILON) * 100) / 100;
+        saldo = aplicarMovimiento(group.naturaleza, saldo, mov.debe, mov.haber);
         return { ...mov, saldo };
       });
       return { ...group, movimientos, saldoFinal: saldo };

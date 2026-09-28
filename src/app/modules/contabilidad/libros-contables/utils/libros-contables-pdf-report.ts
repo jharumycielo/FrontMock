@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable, { CellDef, RowInput } from 'jspdf-autotable';
 
-import { LibroContableOperacionGroup, LibroMayorDetalladoRow, LibroMayorExtendidoUeGroup, LibroMayorResultGroup, LibroPliegoDiarioUeGroup, LibroPliegoMayorGroup } from '../../config/accounting-books.mock';
+import { aplicarMovimiento, LibroContableOperacionGroup, LibroMayorDetalladoRow, LibroMayorExtendidoUeGroup, LibroMayorResultGroup, LibroPliegoDiarioUeGroup, LibroPliegoMayorGroup } from '../../config/accounting-books.mock';
 import { computeAmountSlots } from './libros-contables-amount-slots';
 
 const SIAF_BLUE: [number, number, number] = [1, 72, 153];
@@ -399,7 +399,7 @@ function buildMayorRows(groups: LibroMayorResultGroup[], codEntidad: number | st
     let saldo = group.saldoInicial;
 
     for (const mov of group.movimientos) {
-      saldo = saldo + mov.debe - mov.haber;
+      saldo = aplicarMovimiento(group.naturaleza, saldo, mov.debe, mov.haber);
 
       rows.push([
         ejercicio,

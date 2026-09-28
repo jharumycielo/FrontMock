@@ -159,16 +159,16 @@ type OperacionMock = Omit<LibroContableOperacionGroup, 'nroDocContable' | 'cuent
  * Arma las filas jerárquicas del asiento (mayor → sub-cuenta → divisionaria) agrupando por
  * cuenta mayor y lado, y valida la partida doble.
  */
-function operacion(op: OperacionMock): OperacionConPartidas {
-  const totalDebe = round2(op.partidas.filter((p) => p.lado === 'D').reduce((t, p) => t + p.monto, 0));
-  const totalHaber = round2(op.partidas.filter((p) => p.lado === 'H').reduce((t, p) => t + p.monto, 0));
+function filasAsiento(codCuenta: string, partidas: Partida[], referencia: CuentaRef): LibroContableAccountRow[] {
+  const totalDebe = round2(partidas.filter((p) => p.lado === 'D').reduce((t, p) => t + p.monto, 0));
+  const totalHaber = round2(partidas.filter((p) => p.lado === 'H').reduce((t, p) => t + p.monto, 0));
   if (totalDebe !== totalHaber) {
-    throw new Error(`Asiento ${op.codCuenta} descuadrado: Debe ${totalDebe} ≠ Haber ${totalHaber}`);
+    throw new Error(`Asiento ${codCuenta} descuadrado: Debe ${totalDebe} ≠ Haber ${totalHaber}`);
   }
 
   const cuentas: LibroContableAccountRow[] = [];
   const grupos = new Map<string, Partida[]>();
-  for (const partida of op.partidas) {
+  for (const partida of partidas) {
     const key = `${partida.lado}-${partida.mayor[0]}`;
     grupos.set(key, [...(grupos.get(key) ?? []), partida]);
   }
@@ -185,10 +185,13 @@ function operacion(op: OperacionMock): OperacionConPartidas {
       }
     }
   }
-  cuentas.push({ codigo: op.referencia[0], nombre: op.referencia[1], nivel: 1, debe: 0, haber: 0 });
+  cuentas.push({ codigo: referencia[0], nombre: referencia[1], nivel: 1, debe: 0, haber: 0 });
+  return cuentas;
+}
 
-  const { referencia: _referencia, ...rest } = op;
-  return { ...rest, nroDocContable: op.codCuenta.split('.')[0], cuentas };
+function operacion(op: OperacionMock): OperacionConPartidas {
+  const { referencia, ...rest } = op;
+  return { ...rest, nroDocContable: op.codCuenta.split('.')[0], cuentas: filasAsiento(op.codCuenta, op.partidas, referencia) };
 }
 
 // Sub-cuentas y divisionarias usadas por los asientos.
@@ -240,7 +243,7 @@ const HDM_OPERACIONES: OperacionConPartidas[] = [
     tipoDocumento: 'Factura',
     nroDocContable: '938-2026-5396',
     codCuenta: '938-2026-5396.1.1',
-    fecha: '03/06/2024',
+    fecha: '03/06/2026',
     codDocOrigen: '0000001350',
     documento: 'Nota de pago',
     cuentas: [
@@ -362,7 +365,7 @@ const HDM_OPERACIONES: OperacionConPartidas[] = [
     tipoRegistro: 'Serv. de contabilización',
     tipoDocumento: 'Recibo de ingreso',
     codCuenta: '938-2026-5427.1.1',
-    fecha: '02/06/2026',
+    fecha: '03/06/2026',
     codDocOrigen: '0000001398',
     documento: 'Recibo de ingreso',
     partidas: [
@@ -517,9 +520,158 @@ const fechaOrden = (fecha: string) => fecha.split('/').reverse().join('');
 // Orden cronológico: así se presentan los asientos en el Diario y los movimientos en el Mayor.
 HDM_OPERACIONES.sort((a, b) => fechaOrden(a.fecha).localeCompare(fechaOrden(b.fecha)));
 
+
+// ---------------------------------------------------------------------------
+// Libro Diario con el Plan Contable Gubernamental (PCGU) 2026.
+// Formato de código del Figma: los tres primeros dígitos van juntos (1.1.5 → 115) y el resto
+// con punto (1.1.5.1.2 → 115.1.2). La cuenta 5.11 tiene dos dígitos en su segundo nivel y se
+// conserva con punto para no confundirla con 5.1.1 (511).
+// Los asientos conservan en `partidas` el plan anterior, del que se sigue derivando el Libro Mayor.
+// ---------------------------------------------------------------------------
+
+const PCGU = {
+  efectivo: ['111', 'EFECTIVO Y EQUIVALENTES AL EFECTIVO', 'Deudora'],
+  inventarios: ['115', 'INVENTARIOS', 'Deudora'],
+  ppe: ['123', 'PROPIEDADES, PLANTA Y EQUIPO', 'Deudora'],
+  beneficiosPorPagar: ['211', 'BENEFICIOS A LOS EMPLEADOS Y PENSIONISTAS POR PAGAR', 'Acreedora'],
+  proveedores: ['213', 'CUENTAS POR PAGAR A PROVEEDORES O CONTRATISTAS A CORTO PLAZO', 'Acreedora'],
+  ventaBienesServicios: ['421', 'VENTA DE BIENES Y SERVICIOS', 'Acreedora'],
+  beneficiosEmpleados: ['511', 'BENEFICIOS A LOS EMPLEADOS', 'Deudora'],
+  aportacionesEmpleador: ['512', 'APORTACIONES A CARGO DEL EMPLEADOR', 'Deudora'],
+  depreciacion: ['5.11', 'DEPRECIACIÓN, AMORTIZACIÓN Y DETERIORO DE ACTIVOS', 'Deudora'],
+} as const satisfies Record<string, CuentaMayorRef>;
+
+const PCGU_SUB = {
+  depositos: ['111.3', 'Depósitos en Instituciones Financieras'],
+  bancoCut: ['111.3.1.1', 'Banco CUT - Tesoro en M/N'],
+  bancoRecaudados: ['111.3.2.1', 'Banco Fondos Recaudados - Entidades M/N'],
+  bienes: ['115.1', 'Bienes'],
+  medicamentos: ['115.1.1', 'Medicamentos'],
+  materialesMedicos: ['115.1.2', 'Materiales médicos, quirúrgicos, odontológicos y de laboratorio'],
+  ppeDepAcumulada: ['123.5', 'Propiedades, planta y equipo - Depreciación acumulada'],
+  edificiosDepAcumulada: ['123.5.1', 'Edificios - Depreciación acumulada'],
+  beneficiosPorPagar: ['211.1', 'Beneficios a los empleados por pagar'],
+  remuneracionesPorPagar: ['211.1.1', 'Remuneraciones por pagar'],
+  aportacionesPorPagar: ['211.3', 'Aportaciones a cargo del Empleador por pagar'],
+  saludPorPagar: ['211.3.1', 'Régimen de Prestaciones de Salud por pagar'],
+  cxpCortoPlazo: ['213.1', 'Cuentas por Pagar a corto plazo a Proveedores o Contratistas a corto plazo'],
+  cxpInventarios: ['213.1.1', 'Cuentas por Pagar por Adquisición de Inventarios a corto plazo'],
+  ventaServicios: ['421.2', 'Venta de Servicios'],
+  serviciosMedicos: ['421.2.2', 'Venta de Servicios médicos'],
+  plazoIndeterminado: ['511.1', 'Beneficios a los empleados a plazo indeterminado'],
+  remuneracionesIndeterminado: ['511.1.1', 'Remuneraciones'],
+  plazoTemporal: ['511.2', 'Beneficios a los empleados a plazo temporal'],
+  remuneracionesTemporal: ['511.2.1', 'Remuneraciones'],
+  saludIndeterminado: ['512.1', 'Régimen de Prestaciones de Salud a los empleados a plazo indeterminado'],
+  depYAmortizacion: ['5.11.1', 'DEPRECIACIÓN Y AMORTIZACIÓN'],
+  depEdificios: ['5.11.1.1', 'Depreciación de Edificios'],
+} as const satisfies Record<string, CuentaRef>;
+
+type AsientoPcgu = { partidas: Partida[]; referencia: CuentaRef };
+
+/** Recaudación de ingresos propios del hospital: Banco Fondos Recaudados contra Venta de Servicios médicos. */
+const recaudacion = (monto: number, referencia: CuentaRef): AsientoPcgu => ({
+  partidas: [
+    debe(PCGU.efectivo, PCGU_SUB.depositos, PCGU_SUB.bancoRecaudados, monto),
+    haber(PCGU.ventaBienesServicios, PCGU_SUB.ventaServicios, PCGU_SUB.serviciosMedicos, monto),
+  ],
+  referencia,
+});
+
+/** Ingreso a almacén de bienes con obligación con el proveedor. */
+const compraInventario = (inventario: CuentaRef, monto: number, referencia: CuentaRef): AsientoPcgu => ({
+  partidas: [
+    debe(PCGU.inventarios, PCGU_SUB.bienes, inventario, monto),
+    haber(PCGU.proveedores, PCGU_SUB.cxpCortoPlazo, PCGU_SUB.cxpInventarios, monto),
+  ],
+  referencia,
+});
+
+/** Pago al proveedor con recursos de la CUT: se cancela la obligación, no se reconoce de nuevo el inventario. */
+const pagoProveedor = (monto: number, referencia: CuentaRef): AsientoPcgu => ({
+  partidas: [
+    debe(PCGU.proveedores, PCGU_SUB.cxpCortoPlazo, PCGU_SUB.cxpInventarios, monto),
+    haber(PCGU.efectivo, PCGU_SUB.depositos, PCGU_SUB.bancoCut, monto),
+  ],
+  referencia,
+});
+
+/** Planilla de personal a plazo indeterminado con su aporte a EsSalud. */
+const planilla = (remuneraciones: number, essalud: number, referencia: CuentaRef): AsientoPcgu => ({
+  partidas: [
+    debe(PCGU.beneficiosEmpleados, PCGU_SUB.plazoIndeterminado, PCGU_SUB.remuneracionesIndeterminado, remuneraciones),
+    debe(PCGU.aportacionesEmpleador, PCGU_SUB.saludIndeterminado, undefined, essalud),
+    haber(PCGU.beneficiosPorPagar, PCGU_SUB.beneficiosPorPagar, PCGU_SUB.remuneracionesPorPagar, remuneraciones),
+    haber(PCGU.beneficiosPorPagar, PCGU_SUB.aportacionesPorPagar, PCGU_SUB.saludPorPagar, essalud),
+  ],
+  referencia,
+});
+
+/** Asientos del Libro Diario en PCGU 2026, por id de operación. Las operaciones sin equivalencia no se muestran. */
+const ASIENTOS_PCGU: Record<string, AsientoPcgu> = {
+  // Asiento del Figma (A.1-RV-17-Usuario-UE).
+  op1: compraInventario(PCGU_SUB.materialesMedicos, 1000, ['OT2026-INT-004449', 'ADQUISICIÓN DE MATERIALES MÉDICOS PARA ATENCIÓN HOSPITALARIA']),
+  op9: recaudacion(8640, ['RI-2026-003201', 'RECAUDACIÓN POR SERVICIOS MÉDICOS DE EMERGENCIA']),
+  op10: compraInventario(PCGU_SUB.materialesMedicos, 7325.4, ['OC-2026-000409', 'ADQUISICIÓN DE MATERIAL MÉDICO DESCARTABLE PARA ALMACÉN HOSPITALARIO']),
+  op2: compraInventario(PCGU_SUB.medicamentos, 18450, ['OC-2026-000412', 'ADQUISICIÓN DE MEDICAMENTOS PARA FARMACIA CENTRAL']),
+  op11: pagoProveedor(7325.4, ['CP-2026-001198', 'PAGO A PROVEEDOR POR ADQUISICIÓN DE MATERIAL MÉDICO DESCARTABLE']),
+  op3: pagoProveedor(18450, ['CP-2026-001205', 'PAGO A PROVEEDOR POR ADQUISICIÓN DE MEDICAMENTOS']),
+  op4: planilla(86320.5, 7768.85, ['PLL-2026-06', 'PLANILLA DE REMUNERACIONES JUNIO 2026']),
+  op12: recaudacion(15920.6, ['RI-2026-003264', 'RECAUDACIÓN POR SERVICIOS MÉDICOS DE LABORATORIO']),
+  op13: {
+    partidas: [
+      debe(PCGU.beneficiosEmpleados, PCGU_SUB.plazoTemporal, PCGU_SUB.remuneracionesTemporal, 42150),
+      haber(PCGU.beneficiosPorPagar, PCGU_SUB.beneficiosPorPagar, PCGU_SUB.remuneracionesPorPagar, 42150),
+    ],
+    referencia: ['PLL-CAS-2026-06', 'PLANILLA CAS – PERSONAL A PLAZO TEMPORAL – JUNIO 2026'],
+  },
+  op14: {
+    partidas: [
+      debe(PCGU.beneficiosPorPagar, PCGU_SUB.beneficiosPorPagar, PCGU_SUB.remuneracionesPorPagar, 86320.5),
+      haber(PCGU.efectivo, PCGU_SUB.depositos, PCGU_SUB.bancoCut, 86320.5),
+    ],
+    referencia: ['CP-2026-001241', 'PAGO DE REMUNERACIONES AL PERSONAL ADMINISTRATIVO Y ASISTENCIAL – JUNIO 2026'],
+  },
+  op15: {
+    partidas: [
+      debe(PCGU.depreciacion, PCGU_SUB.depYAmortizacion, PCGU_SUB.depEdificios, 6480.25),
+      haber(PCGU.ppe, PCGU_SUB.ppeDepAcumulada, PCGU_SUB.edificiosDepAcumulada, 6480.25),
+    ],
+    referencia: ['NC-2026-000085', 'DEPRECIACIÓN MENSUAL DE EDIFICIOS – JUNIO 2026'],
+  },
+  op6: recaudacion(12380, ['RI-2026-003318', 'RECAUDACIÓN POR SERVICIOS MÉDICOS DE CONSULTA EXTERNA']),
+  op17: recaudacion(9870, ['RI-2026-003355', 'RECAUDACIÓN POR SERVICIOS MÉDICOS DE IMAGENOLOGÍA']),
+  // Hospital María Auxiliadora (serie 939).
+  'ue-mau-op2': compraInventario(PCGU_SUB.materialesMedicos, 9640, ['OC-2026-000188', 'ADQUISICIÓN DE MATERIAL MÉDICO DESCARTABLE PARA ALMACÉN HOSPITALARIO']),
+  'ue-mau-op3': pagoProveedor(9640, ['CP-2026-000731', 'PAGO A PROVEEDOR POR ADQUISICIÓN DE MATERIAL MÉDICO DESCARTABLE']),
+  // Instituto Nacional de Salud del Niño (serie 940).
+  'ue-insn-op1': recaudacion(25760, ['RI-2026-001044', 'RECAUDACIÓN POR SERVICIOS MÉDICOS DE HOSPITALIZACIÓN']),
+  'ue-insn-op2': planilla(142380, 12814.2, ['PLL-2026-06', 'PLANILLA DE REMUNERACIONES JUNIO 2026']),
+};
+
+/**
+ * Operaciones del Libro Diario: solo las que tienen asiento PCGU, con sus filas y partidas en el
+ * nuevo plan. Valida que cada asiento PCGU conserve el importe de la operación original.
+ */
+function diarioPcgu(operaciones: OperacionConPartidas[]): OperacionConPartidas[] {
+  return operaciones.flatMap((op) => {
+    const asiento = ASIENTOS_PCGU[op.id];
+    if (!asiento) {
+      return [];
+    }
+    const total = (partidas: Partida[]) => round2(partidas.filter((p) => p.lado === 'D').reduce((t, p) => t + p.monto, 0));
+    if (total(asiento.partidas) !== total(op.partidas)) {
+      throw new Error(`Asiento PCGU ${op.codCuenta}: importe ${total(asiento.partidas)} ≠ ${total(op.partidas)}`);
+    }
+    return [{ ...op, partidas: asiento.partidas, cuentas: filasAsiento(op.codCuenta, asiento.partidas, asiento.referencia) }];
+  });
+}
+
+const HDM_DIARIO = diarioPcgu(HDM_OPERACIONES);
+
 const sinPartidas = ({ partidas: _partidas, ...group }: OperacionConPartidas): LibroContableOperacionGroup => group;
 
-export const LIBROS_CONTABLES_RESULT_GROUPS: LibroContableOperacionGroup[] = HDM_OPERACIONES.map(sinPartidas);
+export const LIBROS_CONTABLES_RESULT_GROUPS: LibroContableOperacionGroup[] = HDM_DIARIO.map(sinPartidas);
 
 // Libro Diario para el visualizador PLIEGO con Entidad "Integrado a nivel pliego":
 // la misma vista del diario estándar, agrupada por Unidad Ejecutora en acordeones.
@@ -658,8 +810,8 @@ const INSN_OPERACIONES: OperacionConPartidas[] = [
 
 export const LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS: LibroPliegoDiarioUeGroup[] = [
   { id: 'ue-hospital-dos-de-mayo', unidadEjecutora: 'Hospital Dos de Mayo', operaciones: pliegoDiarioUeOperaciones('ue-hdm', LIBROS_CONTABLES_RESULT_GROUPS) },
-  { id: 'ue-maria-auxiliadora', unidadEjecutora: 'Hospital María Auxiliadora', operaciones: HMA_OPERACIONES.map(sinPartidas) },
-  { id: 'ue-insn', unidadEjecutora: 'Instituto Nacional de Salud del Niño', operaciones: INSN_OPERACIONES.map(sinPartidas) },
+  { id: 'ue-maria-auxiliadora', unidadEjecutora: 'Hospital María Auxiliadora', operaciones: diarioPcgu(HMA_OPERACIONES).map(sinPartidas) },
+  { id: 'ue-insn', unidadEjecutora: 'Instituto Nacional de Salud del Niño', operaciones: diarioPcgu(INSN_OPERACIONES).map(sinPartidas) },
 ];
 
 // Vista matricial (tabular) del Libro Diario para Unidad Ejecutora: una fila plana
@@ -688,27 +840,15 @@ export type LibroDiarioMatrixRow = {
   montoHaber: number;
 };
 
-const DOC_ORIGEN_COD = '0000001350';
-const DOC_ORIGEN_NOMBRE = 'Nota de pago';
-
-const DIARIO_MATRIX_ROWS_BASE: LibroDiarioMatrixRow[] = [
-  { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '01', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000001', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Deudora', montoDebe: 1000, montoHaber: 0 },
-  { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '0101', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000002', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Deudora', montoDebe: 1000, montoHaber: 0 },
-  { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '0102', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000003', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Deudora', montoDebe: 1000, montoHaber: 0 },
-  { ejercicio: 2026, cuentaMayor: '8301', descMayor: 'PRESUPUESTOS DE GASTOS', cuentaSubCta: '0103', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000004', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Haber', naturaleza: 'Deudora', montoDebe: 0, montoHaber: 3000 },
-  { ejercicio: 2026, cuentaMayor: '8401', descMayor: 'ASIGNACIONES COMPROMETIDAS', cuentaSubCta: '01', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000005', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Haber', naturaleza: 'Acreedora', montoDebe: 0, montoHaber: 1000 },
-  { ejercicio: 2026, cuentaMayor: '8401', descMayor: 'ASIGNACIONES COMPROMETIDAS', cuentaSubCta: '02', fecha: '03/06/2024', tipoRegistro: 'Asiento de ajuste', tipoDocumento: 'Factura', nroDocContable: '938-2026-5396', codDocOrigen: DOC_ORIGEN_COD, documentoOrigen: DOC_ORIGEN_NOMBRE, nroDocumentoOrigen: 'DOC-0000000006', nroAsiento: '938-2026-5396.1.1', tipoDH: 'Debe', naturaleza: 'Acreedora', montoDebe: 1000, montoHaber: 0 },
-];
-
-/** Una fila matricial por partida de los asientos generados (a partir del segundo asiento). */
+/** Una fila matricial por partida de los asientos del Libro Diario (PCGU 2026). */
 export const LIBROS_CONTABLES_DIARIO_MATRIX_ROWS: LibroDiarioMatrixRow[] = [
-  ...DIARIO_MATRIX_ROWS_BASE,
-  ...HDM_OPERACIONES.slice(1).flatMap((op) =>
+  ...HDM_DIARIO.flatMap((op) =>
     op.partidas.map((partida) => ({
       ejercicio: 2026,
       cuentaMayor: partida.mayor[0],
       descMayor: partida.mayor[1],
-      cuentaSubCta: (partida.det ?? partida.sub)[0].split('.')[1],
+      // Código de la sub-cuenta/divisionaria sin el prefijo de la cuenta mayor (115.1.2 → 1.2).
+      cuentaSubCta: (partida.det ?? partida.sub)[0].slice(partida.mayor[0].length + 1),
       fecha: op.fecha,
       tipoRegistro: op.tipoRegistro,
       tipoDocumento: op.tipoDocumento,
@@ -743,16 +883,63 @@ export type LibroMayorResultGroup = {
   id: string;
   codCuenta: string;
   nombreCuenta: string;
+  /** Deudora: el saldo crece con el Debe; Acreedora: crece con el Haber. */
+  naturaleza: Naturaleza;
   saldoInicial: number;
   movimientos: LibroMayorResultRow[];
 };
 
+export type { Naturaleza };
+
+/** Saldo tras un movimiento, según la naturaleza de la cuenta (Deudora: +Debe −Haber; Acreedora: +Haber −Debe). */
+export function aplicarMovimiento(naturaleza: Naturaleza, saldo: number, debeMonto: number, haberMonto: number): number {
+  const delta = naturaleza === 'Acreedora' ? haberMonto - debeMonto : debeMonto - haberMonto;
+  return round2(saldo + delta);
+}
+
 /**
- * Movimientos del Libro Mayor de una cuenta, tomados de los asientos del Libro Diario de la UE
+ * Saldos iniciales (cierre del mes anterior) de Hospital Dos de Mayo por divisionaria PCGU 2026.
+ * El saldo inicial de cada cuenta mayor es la suma de sus divisionarias.
+ */
+const SALDOS_INICIALES_PCGU: Record<string, number> = {
+  '111.3.1.1': 2950000,
+  '111.3.2.1': 659854.68,
+  '115.1.1': 92250,
+  '115.1.2': 48615.3,
+  '123.5.1': 388815,
+  '211.1.1': 0,
+  '211.3.1': 7512.4,
+  '213.1.1': 25480,
+  '421.2.2': 245380.5,
+  '511.1.1': 431602.5,
+  '511.2.1': 210750,
+  '512.1': 38844.25,
+  '5.11.1.1': 32401.25,
+};
+
+/**
+ * Divisionarias de contra-activo (depreciación acumulada): pertenecen a una cuenta de activo pero
+ * su saldo es acreedor. Si una cuenta mayor solo se mueve por ellas, su Mayor se lleva como acreedora.
+ */
+const CONTRA_ACTIVO = new Set(['123.5.1']);
+
+const naturalezaDivisionaria = (partida: Partida): Naturaleza =>
+  CONTRA_ACTIVO.has((partida.det ?? partida.sub)[0]) ? 'Acreedora' : partida.mayor[2];
+
+function naturalezaMayor(cuenta: CuentaMayorRef): Naturaleza {
+  const partidas = HDM_DIARIO.flatMap((op) => op.partidas).filter((p) => p.mayor[0] === cuenta[0]);
+  return partidas.length > 0 && partidas.every((p) => naturalezaDivisionaria(p) === 'Acreedora') ? 'Acreedora' : cuenta[2];
+}
+
+const saldoInicialMayor = (mayor: string) =>
+  round2(Object.entries(SALDOS_INICIALES_PCGU).filter(([codigo]) => codigo.startsWith(`${mayor}.`)).reduce((t, [, monto]) => t + monto, 0));
+
+/**
+ * Movimientos del Libro Mayor de una cuenta, tomados de los asientos PCGU del Libro Diario de la UE
  * (una fila por asiento y lado, sumando sus sub-cuentas).
  */
 function movimientosMayor(cuenta: CuentaMayorRef): LibroMayorResultRow[] {
-  return HDM_OPERACIONES.flatMap((op, index) =>
+  return HDM_DIARIO.flatMap((op, index) =>
     (['D', 'H'] as const).flatMap((lado) => {
       const monto = round2(op.partidas.filter((p) => p.lado === lado && p.mayor[0] === cuenta[0]).reduce((t, p) => t + p.monto, 0));
       if (!monto) {
@@ -773,30 +960,30 @@ function movimientosMayor(cuenta: CuentaMayorRef): LibroMayorResultRow[] {
   );
 }
 
-const mayorGroup = (cuenta: CuentaMayorRef, saldoInicial: number, previos: LibroMayorResultRow[] = []): LibroMayorResultGroup => ({
+const mayorGroup = (cuenta: CuentaMayorRef): LibroMayorResultGroup => ({
   id: `mayor-${cuenta[0]}`,
   codCuenta: cuenta[0],
   nombreCuenta: cuenta[1],
-  saldoInicial,
-  movimientos: [...previos, ...movimientosMayor(cuenta)],
+  naturaleza: naturalezaMayor(cuenta),
+  saldoInicial: saldoInicialMayor(cuenta[0]),
+  movimientos: movimientosMayor(cuenta),
 });
 
-// Cuentas de naturaleza deudora (el saldo se acumula como Debe − Haber).
-export const LIBROS_CONTABLES_MAYOR_RESULT_GROUPS: LibroMayorResultGroup[] = [
-  mayorGroup(CTA.cajaBancos, 3609854.68, [
-    { fecha: '03/06/2024', docCaRegNota: 'R0000004025', nroDocContable: '938-2026-5396', tipo: 'Asiento de ajuste', documento: 'Nota de pago', nroDocumento: '0000001350', nroAsiento: '938-2026-5396.1.1', debe: 73.13, haber: 0 },
-    { fecha: '03/06/2024', docCaRegNota: 'R0000004025', nroDocContable: '938-2026-5393', tipo: 'Serv. de contabilización', documento: 'Rendición de cuenta', nroDocumento: '0000001181', nroAsiento: '938-2026-5393.1.2', debe: 0, haber: 73.13 },
-    { fecha: '03/06/2024', docCaRegNota: 'R0000004031', nroDocContable: '938-2026-5401', tipo: 'Serv. de contabilización', documento: 'Nota de pago', nroDocumento: '0000001344', nroAsiento: '938-2026-5401.2.1', debe: 73.20, haber: 0 },
-    { fecha: '03/06/2024', docCaRegNota: 'R0000004031', nroDocContable: '938-2026-5398', tipo: 'Serv. de contabilización', documento: 'Rendición de cuenta', nroDocumento: '0000001346', nroAsiento: '938-2026-5398.2.2', debe: 0, haber: 73.20 },
-    { fecha: '03/06/2024', docCaRegNota: 'R0000004044', nroDocContable: '938-2026-5409', tipo: 'Asiento de ajuste', documento: 'Rendición de cuenta', nroDocumento: '0000001347', nroAsiento: '938-2026-5409.3.1', debe: 0, haber: 864.19 },
-    { fecha: '03/06/2024', docCaRegNota: 'R0000004044', nroDocContable: '938-2026-5412', tipo: 'Asiento de ajuste', documento: 'Rendición de cuenta', nroDocumento: '0000001348', nroAsiento: '938-2026-5412.3.2', debe: 0, haber: 145.00 },
-  ]),
-  mayorGroup(CTA.anticipos, 4500),
-  mayorGroup(CTA.personal, 681196.75),
-  mayorGroup(CTA.compraBienes, 104170),
-  mayorGroup(CTA.estimaciones, 53479.25),
-  mayorGroup(CTA.presupuestoGastos, 1250000),
+/** Cuentas mayores PCGU 2026 del Libro Mayor, en el orden del plan (activo, pasivo, ingresos, gastos). */
+const MAYORES_PCGU: CuentaMayorRef[] = [
+  PCGU.efectivo,
+  PCGU.inventarios,
+  PCGU.ppe,
+  PCGU.beneficiosPorPagar,
+  PCGU.proveedores,
+  PCGU.ventaBienesServicios,
+  PCGU.beneficiosEmpleados,
+  PCGU.aportacionesEmpleador,
+  PCGU.depreciacion,
 ];
+
+/** Libro Mayor de la UE: una cuenta mayor PCGU 2026 por cada cuenta usada en el Libro Diario. */
+export const LIBROS_CONTABLES_MAYOR_RESULT_GROUPS: LibroMayorResultGroup[] = MAYORES_PCGU.map(mayorGroup);
 
 // Resultado del Libro Diario para el usuario visualizador de tipo PLIEGO
 // (filtro Entidad: Integrado a nivel pliego). Estructura jerárquica por asiento,
@@ -859,24 +1046,28 @@ const USE = {
   u08: ['000063', 'USE 08 Surquillo'],
 } as const satisfies Record<string, CuentaRef>;
 
-/** Detalle por USE con el saldo calculado: Saldo inicial + Debe − Haber. */
-const det = ([minen, nombre]: CuentaRef, saldoInicial: number, debeMonto: number, haberMonto: number): LibroPliegoMayorRow => ({
+/** Detalle por USE con el saldo según la naturaleza de la cuenta (por defecto, deudora). */
+const det = ([minen, nombre]: CuentaRef, saldoInicial: number, debeMonto: number, haberMonto: number, naturaleza: Naturaleza = 'Deudora'): LibroPliegoMayorRow => ({
   minen,
   nombre,
   saldoInicial,
   debe: debeMonto,
   haber: haberMonto,
-  saldo: round2(saldoInicial + debeMonto - haberMonto),
+  saldo: aplicarMovimiento(naturaleza, saldoInicial, debeMonto, haberMonto),
 });
+
+/** Detalle por USE de una cuenta acreedora (Saldo inicial + Haber − Debe). */
+const detA = (use: CuentaRef, saldoInicial: number, debeMonto: number, haberMonto: number) => det(use, saldoInicial, debeMonto, haberMonto, 'Acreedora');
 
 const CORTE = '30/06/2026';
 
+/** Libro Mayor integrado a nivel pliego: cuentas mayores PCGU 2026 con el detalle por USE. */
 export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
   {
-    id: 'pliego-mayor-1101',
-    fecha: '03/06/2024',
-    codigo: '1101',
-    cuenta: 'CAJA Y BANCOS',
+    id: 'pliego-mayor-111',
+    fecha: CORTE,
+    codigo: PCGU.efectivo[0],
+    cuenta: PCGU.efectivo[1],
     detalles: [
       det(USE.u01, 5922.53, 425922.53, 352644.98),
       det(USE.u02, 15625.30, 815625.30, 490366.99),
@@ -885,22 +1076,46 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
     ],
   },
   {
-    id: 'pliego-mayor-1205',
+    id: 'pliego-mayor-115',
     fecha: CORTE,
-    codigo: '1205',
-    cuenta: 'SERVICIOS Y OTROS PAGADOS POR ANTICIPADO',
+    codigo: PCGU.inventarios[0],
+    cuenta: PCGU.inventarios[1],
     detalles: [
-      det(USE.u01, 2500, 3500, 3200),
-      det(USE.u02, 1800, 4200, 2950.4),
-      det(USE.u03, 6250.75, 12800, 9435.2),
-      det(USE.u04, 0, 2600, 1150),
+      det(USE.u01, 62250, 12450, 0),
+      det(USE.u02, 119377, 23875.4, 0),
+      det(USE.u03, 206150.75, 41230.15, 1250),
+      det(USE.u04, 49351.25, 9870.25, 0),
     ],
   },
   {
-    id: 'pliego-mayor-5201',
+    id: 'pliego-mayor-213',
     fecha: CORTE,
-    codigo: '5201',
-    cuenta: 'PERSONAL Y OBLIGACIONES SOCIALES',
+    codigo: PCGU.proveedores[0],
+    cuenta: PCGU.proveedores[1],
+    detalles: [
+      detA(USE.u01, 18420, 12450, 15870.2),
+      detA(USE.u02, 9310.5, 23875.4, 26210),
+      detA(USE.u03, 41200.75, 41230.15, 39880),
+      detA(USE.u04, 5120, 9870.25, 11240.6),
+    ],
+  },
+  {
+    id: 'pliego-mayor-421',
+    fecha: CORTE,
+    codigo: PCGU.ventaBienesServicios[0],
+    cuenta: PCGU.ventaBienesServicios[1],
+    detalles: [
+      detA(USE.u01, 245380.5, 0, 36810.6),
+      detA(USE.u02, 118940.75, 0, 21450),
+      detA(USE.u03, 402315.2, 0, 58230.9),
+      detA(USE.u04, 96880.4, 0, 14120.35),
+    ],
+  },
+  {
+    id: 'pliego-mayor-511',
+    fecha: CORTE,
+    codigo: PCGU.beneficiosEmpleados[0],
+    cuenta: PCGU.beneficiosEmpleados[1],
     detalles: [
       det(USE.u01, 927150, 185430, 0),
       det(USE.u02, 1061902.5, 212380.5, 0),
@@ -910,22 +1125,10 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
     ],
   },
   {
-    id: 'pliego-mayor-5301',
+    id: 'pliego-mayor-5-11',
     fecha: CORTE,
-    codigo: '5301',
-    cuenta: 'COMPRA DE BIENES',
-    detalles: [
-      det(USE.u01, 62250, 12450, 0),
-      det(USE.u02, 119377, 23875.4, 0),
-      det(USE.u03, 206150.75, 41230.15, 1250),
-      det(USE.u04, 49351.25, 9870.25, 0),
-    ],
-  },
-  {
-    id: 'pliego-mayor-5801',
-    fecha: CORTE,
-    codigo: '5801',
-    cuenta: 'ESTIMACIONES Y PROVISIONES DEL EJERCICIO',
+    codigo: PCGU.depreciacion[0],
+    cuenta: PCGU.depreciacion[1],
     detalles: [
       det(USE.u01, 10540.2, 2108.04, 0),
       det(USE.u03, 27315.6, 5463.12, 0),
@@ -937,14 +1140,14 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
 /**
  * Libro Mayor Extendido (visualizador Unidad Ejecutora, variante "Libro mayor extendido").
  * Reutiliza la estructura consolidada por unidad ejecutora del Libro Mayor integrado a pliego,
- * pero el código de cuenta se muestra a nivel sub-cuenta (1101.01 en vez de 1101).
+ * pero el código de cuenta se muestra a nivel sub-cuenta PCGU (111.3 en vez de 111).
  */
 export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS: LibroPliegoMayorGroup[] = [
   {
-    id: 'mayor-ext-1101-01',
-    fecha: '03/06/2024',
-    codigo: '1101.01',
-    cuenta: 'Recursos Ordinarios',
+    id: 'mayor-ext-111-3',
+    fecha: CORTE,
+    codigo: PCGU_SUB.depositos[0],
+    cuenta: PCGU_SUB.depositos[1],
     detalles: [
       det(USE.u01, 309854.68, 425922.53, 352644.98),
       det(USE.u02, 315625.30, 815625.30, 490366.99),
@@ -953,36 +1156,36 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS: LibroPliegoMayorGroup[] = 
     ],
   },
   {
-    id: 'mayor-ext-1101-03',
+    id: 'mayor-ext-115-1',
     fecha: CORTE,
-    codigo: '1101.03',
-    cuenta: 'Bancos',
-    detalles: [
-      det(USE.u01, 184320.5, 12380, 21950),
-      det(USE.u02, 95410.25, 8640, 12370.8),
-      det(USE.u03, 412875.9, 31250.4, 45120),
-    ],
-  },
-  {
-    id: 'mayor-ext-5201-01',
-    fecha: CORTE,
-    codigo: '5201.01',
-    cuenta: 'Retribuciones y complementos en efectivo',
-    detalles: [
-      det(USE.u01, 431602.5, 86320.5, 0),
-      det(USE.u02, 520415, 104083, 0),
-      det(USE.u03, 918760.25, 183752.05, 0),
-    ],
-  },
-  {
-    id: 'mayor-ext-5301-08',
-    fecha: CORTE,
-    codigo: '5301.08',
-    cuenta: 'Suministros médicos',
+    codigo: PCGU_SUB.bienes[0],
+    cuenta: PCGU_SUB.bienes[1],
     detalles: [
       det(USE.u01, 92250, 18450, 0),
       det(USE.u02, 48200, 9640, 0),
       det(USE.u04, 31575.5, 6315.1, 0),
+    ],
+  },
+  {
+    id: 'mayor-ext-421-2',
+    fecha: CORTE,
+    codigo: PCGU_SUB.ventaServicios[0],
+    cuenta: PCGU_SUB.ventaServicios[1],
+    detalles: [
+      detA(USE.u01, 184320.5, 0, 46810.6),
+      detA(USE.u02, 95410.25, 0, 21450),
+      detA(USE.u03, 412875.9, 0, 58230.9),
+    ],
+  },
+  {
+    id: 'mayor-ext-511-1',
+    fecha: CORTE,
+    codigo: PCGU_SUB.plazoIndeterminado[0],
+    cuenta: PCGU_SUB.plazoIndeterminado[1],
+    detalles: [
+      det(USE.u01, 431602.5, 86320.5, 0),
+      det(USE.u02, 520415, 104083, 0),
+      det(USE.u03, 918760.25, 183752.05, 0),
     ],
   },
 ];
@@ -990,7 +1193,7 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS: LibroPliegoMayorGroup[] = 
 /**
  * Libro Mayor Extendido consolidado por Unidad Ejecutora (visualizador ENTE RECTOR,
  * variante "Libro mayor extendido" con Unidad Ejecutora = "Todos"). Cada unidad ejecutora
- * es un acordeón que agrupa sus sub-cuentas (1101.01, 1101.02, …) con el detalle por USE.
+ * es un acordeón que agrupa sus sub-cuentas PCGU (111.3, 115.1, …) con el detalle por USE.
  */
 export type LibroMayorExtendidoUeGroup = {
   id: string;
@@ -998,111 +1201,71 @@ export type LibroMayorExtendidoUeGroup = {
   cuentas: LibroPliegoMayorGroup[];
 };
 
+const cuentaExtendida = (id: string, sub: CuentaRef, detalles: LibroPliegoMayorRow[]): LibroPliegoMayorGroup => ({
+  id,
+  fecha: CORTE,
+  codigo: sub[0],
+  cuenta: sub[1],
+  detalles,
+});
+
 export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS: LibroMayorExtendidoUeGroup[] = [
   {
     id: 'mayor-ext-ue-hdm',
     unidadEjecutora: 'Hospital Dos de Mayo',
     cuentas: [
-      {
-        id: 'mayor-ext-hdm-1101-01',
-        fecha: '03/06/2024',
-        codigo: '1101.01',
-        cuenta: 'Recursos Ordinarios',
-        detalles: [
-          det(USE.u01, 5922.53, 425922.53, 352644.98),
-          det(USE.u02, 5625.30, 815625.30, 490366.99),
-          det(USE.u03, 2128.74, 2722128.74, 1498990.63),
-          det(USE.u04, 8089.15, 538089.15, 316528.44),
-        ],
-      },
-      {
-        id: 'mayor-ext-hdm-1101-02',
-        fecha: '03/06/2024',
-        codigo: '1101.02',
-        cuenta: 'Ordenes de Servicio Aprobadas',
-        detalles: [
-          det(USE.u05, 1075.91, 8075.91, 0),
-          det(USE.u06, 87.50, 87.50, 0),
-        ],
-      },
-      {
-        id: 'mayor-ext-hdm-5301-08',
-        fecha: CORTE,
-        codigo: '5301.08',
-        cuenta: 'Suministros médicos',
-        detalles: [
-          det(USE.u01, 92250, 18450, 0),
-          det(USE.u03, 60120.4, 12024.08, 0),
-        ],
-      },
+      cuentaExtendida('mayor-ext-hdm-111-3', PCGU_SUB.depositos, [
+        det(USE.u01, 5922.53, 425922.53, 352644.98),
+        det(USE.u02, 5625.30, 815625.30, 490366.99),
+        det(USE.u03, 2128.74, 2722128.74, 1498990.63),
+        det(USE.u04, 8089.15, 538089.15, 316528.44),
+      ]),
+      cuentaExtendida('mayor-ext-hdm-115-1', PCGU_SUB.bienes, [
+        det(USE.u01, 92250, 18450, 0),
+        det(USE.u03, 60120.4, 12024.08, 0),
+      ]),
+      cuentaExtendida('mayor-ext-hdm-213-1', PCGU_SUB.cxpCortoPlazo, [
+        detA(USE.u05, 1075.91, 8075.91, 9120),
+        detA(USE.u06, 87.5, 87.5, 350),
+      ]),
     ],
   },
   {
     id: 'mayor-ext-ue-hma',
     unidadEjecutora: 'Hospital María Auxiliadora',
     cuentas: [
-      {
-        id: 'mayor-ext-hma-1102-01',
-        fecha: '03/06/2024',
-        codigo: '1102.01',
-        cuenta: 'Recursos Ordinarios',
-        detalles: [
-          det(USE.u07, 2375.37, 12375.37, 0),
-          det(USE.u08, 53411.95, 653862.05, 120450.10),
-        ],
-      },
-      {
-        id: 'mayor-ext-hma-5301-08',
-        fecha: CORTE,
-        codigo: '5301.08',
-        cuenta: 'Suministros médicos',
-        detalles: [
-          det(USE.u07, 48200, 9640, 0),
-          det(USE.u08, 15320.6, 3064.12, 0),
-        ],
-      },
-      {
-        id: 'mayor-ext-hma-5801-02',
-        fecha: CORTE,
-        codigo: '5801.02',
-        cuenta: 'Depreciación de vehículos, maquinaria y otros',
-        detalles: [
-          det(USE.u07, 14352, 2870.4, 0),
-        ],
-      },
+      cuentaExtendida('mayor-ext-hma-111-3', PCGU_SUB.depositos, [
+        det(USE.u07, 2375.37, 12375.37, 0),
+        det(USE.u08, 53411.95, 653862.05, 120450.10),
+      ]),
+      cuentaExtendida('mayor-ext-hma-115-1', PCGU_SUB.bienes, [
+        det(USE.u07, 48200, 9640, 0),
+        det(USE.u08, 15320.6, 3064.12, 0),
+      ]),
+      cuentaExtendida('mayor-ext-hma-5-11-1', PCGU_SUB.depYAmortizacion, [
+        det(USE.u07, 14352, 2870.4, 0),
+      ]),
     ],
   },
   {
     id: 'mayor-ext-ue-insn',
     unidadEjecutora: 'Instituto Nacional de Salud del Niño',
     cuentas: [
-      {
-        id: 'mayor-ext-insn-1101-03',
-        fecha: CORTE,
-        codigo: '1101.03',
-        cuenta: 'Bancos',
-        detalles: [
-          det(USE.u01, 245680.3, 25760, 0),
-          det(USE.u02, 118940.75, 14210.5, 8750),
-        ],
-      },
-      {
-        id: 'mayor-ext-insn-5201-01',
-        fecha: CORTE,
-        codigo: '5201.01',
-        cuenta: 'Retribuciones y complementos en efectivo',
-        detalles: [
-          det(USE.u01, 711900, 142380, 0),
-          det(USE.u02, 356120.5, 71224.1, 0),
-        ],
-      },
+      cuentaExtendida('mayor-ext-insn-111-3', PCGU_SUB.depositos, [
+        det(USE.u01, 245680.3, 25760, 0),
+        det(USE.u02, 118940.75, 14210.5, 8750),
+      ]),
+      cuentaExtendida('mayor-ext-insn-511-1', PCGU_SUB.plazoIndeterminado, [
+        det(USE.u01, 711900, 142380, 0),
+        det(USE.u02, 356120.5, 71224.1, 0),
+      ]),
     ],
   },
 ];
 
 /**
- * Libro Mayor Detallado (tabla plana): una fila por cuenta con su saldo inicial, debe,
- * haber y saldo. Aplica al visualizador Unidad Ejecutora, al Pliego con entidad
+ * Libro Mayor Detallado (tabla plana): una fila por divisionaria PCGU 2026 con su saldo inicial,
+ * debe, haber y saldo. Aplica al visualizador Unidad Ejecutora, al Pliego con entidad
  * "Programa nacional de becas" y al Ente Rector (DGCP) con una unidad ejecutora concreta,
  * siempre con la variante "Libro mayor detallado".
  */
@@ -1116,31 +1279,33 @@ export type LibroMayorDetalladoRow = {
   saldo: number;
 };
 
-const detallado = (fecha: string, codigo: string, descripcion: string, saldoInicial: number, debeMonto: number, haberMonto: number): LibroMayorDetalladoRow => ({
-  fecha,
-  codigo,
-  descripcion,
-  saldoInicial,
-  debe: debeMonto,
-  haber: haberMonto,
-  saldo: round2(saldoInicial + debeMonto - haberMonto),
-});
+/** Una fila por divisionaria usada en el Libro Diario de la UE, con los importes del periodo. */
+function mayorDetallado(): LibroMayorDetalladoRow[] {
+  const filas = new Map<string, { cuenta: CuentaRef; orden: number; naturaleza: Naturaleza; debe: number; haber: number }>();
+  for (const partida of HDM_DIARIO.flatMap((op) => op.partidas)) {
+    const cuenta = partida.det ?? partida.sub;
+    const orden = MAYORES_PCGU.findIndex((mayor) => mayor[0] === partida.mayor[0]);
+    const fila = filas.get(cuenta[0]) ?? { cuenta, orden, naturaleza: naturalezaDivisionaria(partida), debe: 0, haber: 0 };
+    fila[partida.lado === 'D' ? 'debe' : 'haber'] = round2(fila[partida.lado === 'D' ? 'debe' : 'haber'] + partida.monto);
+    filas.set(cuenta[0], fila);
+  }
+  return [...filas.values()]
+    .sort((a, b) => a.orden - b.orden || a.cuenta[0].localeCompare(b.cuenta[0], 'es', { numeric: true }))
+    .map(({ cuenta, naturaleza, debe: debeMonto, haber: haberMonto }) => {
+      const saldoInicial = SALDOS_INICIALES_PCGU[cuenta[0]] ?? 0;
+      return {
+        fecha: CORTE,
+        codigo: cuenta[0],
+        descripcion: cuenta[1],
+        saldoInicial,
+        debe: debeMonto,
+        haber: haberMonto,
+        saldo: aplicarMovimiento(naturaleza, saldoInicial, debeMonto, haberMonto),
+      };
+    });
+}
 
-export const LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS: LibroMayorDetalladoRow[] = [
-  detallado('03/06/2024', '1101.01', 'Caja y bancos 01', 309854.68, 425922.53, 352644.98),
-  detallado('03/06/2024', '1101.02', 'Caja y bancos 02', 104454.11, 59922.53, 52644.98),
-  detallado('03/06/2024', '1101.03', 'Caja y bancos 03', 99854.68, 925922.53, 952644.98),
-  detallado('03/06/2024', '1101.04', 'Caja y bancos 04', 39854.68, 625922.53, 352644.98),
-  detallado(CORTE, '1205.03', 'Entregas a rendir cuenta', 4500, 3500, 2980),
-  detallado(CORTE, '5201.01', 'Retribuciones y complementos en efectivo', 431602.5, 86320.5, 0),
-  detallado(CORTE, '5201.03', 'Contribuciones a EsSalud', 38844.25, 7768.85, 0),
-  detallado(CORTE, '5201.05', 'Contrato Administrativo de Servicios', 210750, 42150, 0),
-  detallado(CORTE, '5301.02', 'Materiales y útiles', 11920, 2980, 0),
-  detallado(CORTE, '5301.08', 'Suministros médicos', 92250, 25775.4, 0),
-  detallado(CORTE, '5801.01', 'Depreciación de edificios y estructuras', 32401.25, 6480.25, 0),
-  detallado(CORTE, '5801.02', 'Depreciación de vehículos, maquinaria y otros', 21078, 4215.6, 0),
-  detallado(CORTE, '8301.01', 'Presupuesto de gastos - Recursos Ordinarios', 1250000, 113789.35, 0),
-];
+export const LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS: LibroMayorDetalladoRow[] = mayorDetallado();
 
 export const LIBROS_CONTABLES_PLIEGO_VIENEN_DEBE = 119251876641.44;
 export const LIBROS_CONTABLES_PLIEGO_VIENEN_HABER = 119251876641.44;

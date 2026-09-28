@@ -1,6 +1,7 @@
 import { Workbook, Worksheet } from 'exceljs';
 
 import {
+  aplicarMovimiento,
   LibroDiarioMatrixRow,
   LibroMayorDetalladoRow,
   LibroMayorExtendidoUeGroup,
@@ -114,7 +115,7 @@ export function buildLibroMayorMatrix(input: LibroMayorExportInput): ExportMatri
   for (const group of input.groups) {
     let saldo = group.saldoInicial;
     for (const mov of group.movimientos) {
-      saldo = round2(saldo + mov.debe - mov.haber);
+      saldo = aplicarMovimiento(group.naturaleza, saldo, mov.debe, mov.haber);
       matrix.push([
         ejercicio, codEntidad, group.codCuenta, group.nombreCuenta, mov.fecha, mov.nroDocContable,
         mov.nroAsiento, mov.tipo, mov.documento, mov.nroDocumento, amount(mov.debe), amount(mov.haber), saldo,
