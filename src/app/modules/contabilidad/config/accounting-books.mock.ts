@@ -27,7 +27,7 @@ export const LIBROS_CONTABLES_TIPO_OPTIONS: TextFieldOption[] = [
 
 // Opciones de Entidad visibles para el usuario visualizador de tipo PLIEGO.
 export const LIBROS_CONTABLES_ENTIDAD_PLIEGO_OPTIONS: TextFieldOption[] = [
-  { label: 'Programa nacional de becas', value: 'pronabec' },
+  { label: 'Hospital Dos de Mayo', value: 'hdm' },
   { label: 'Integrado a nivel pliego', value: 'integrado-pliego' },
 ];
 
@@ -523,9 +523,8 @@ HDM_OPERACIONES.sort((a, b) => fechaOrden(a.fecha).localeCompare(fechaOrden(b.fe
 
 // ---------------------------------------------------------------------------
 // Libro Diario con el Plan Contable Gubernamental (PCGU) 2026.
-// Formato de código del Figma: los tres primeros dígitos van juntos (1.1.5 → 115) y el resto
-// con punto (1.1.5.1.2 → 115.1.2). La cuenta 5.11 tiene dos dígitos en su segundo nivel y se
-// conserva con punto para no confundirla con 5.1.1 (511).
+// En los libros los códigos se muestran sin puntos (1.1.5.1.2 → 11512); aquí se escriben con
+// punto por nivel para conservar la jerarquía (cuenta mayor → sub-cuenta → divisionaria).
 // Los asientos conservan en `partidas` el plan anterior, del que se sigue derivando el Libro Mayor.
 // ---------------------------------------------------------------------------
 
@@ -538,7 +537,7 @@ const PCGU = {
   ventaBienesServicios: ['421', 'VENTA DE BIENES Y SERVICIOS', 'Acreedora'],
   beneficiosEmpleados: ['511', 'BENEFICIOS A LOS EMPLEADOS', 'Deudora'],
   aportacionesEmpleador: ['512', 'APORTACIONES A CARGO DEL EMPLEADOR', 'Deudora'],
-  depreciacion: ['5.11', 'DEPRECIACIÓN, AMORTIZACIÓN Y DETERIORO DE ACTIVOS', 'Deudora'],
+  depreciacion: ['510', 'DEPRECIACIÓN, DETERIORO DE ACTIVOS Y PROVISIONES', 'Deudora'],
 } as const satisfies Record<string, CuentaMayorRef>;
 
 const PCGU_SUB = {
@@ -563,11 +562,17 @@ const PCGU_SUB = {
   plazoTemporal: ['511.2', 'Beneficios a los empleados a plazo temporal'],
   remuneracionesTemporal: ['511.2.1', 'Remuneraciones'],
   saludIndeterminado: ['512.1', 'Régimen de Prestaciones de Salud a los empleados a plazo indeterminado'],
-  depYAmortizacion: ['5.11.1', 'DEPRECIACIÓN Y AMORTIZACIÓN'],
-  depEdificios: ['5.11.1.1', 'Depreciación de Edificios'],
+  depYAmortizacion: ['510.1', 'DEPRECIACIÓN Y AMORTIZACIÓN'],
+  depEdificios: ['510.1.1', 'Depreciación de Edificios'],
 } as const satisfies Record<string, CuentaRef>;
 
 type AsientoPcgu = { partidas: Partida[]; referencia: CuentaRef };
+
+/**
+ * Código PCGU tal como se muestra en los libros: sin puntos de separación (115.1.2 → 11512).
+ * Internamente se conservan los puntos para mantener la jerarquía (cuenta mayor → sub-cuenta).
+ */
+const codigoPcgu = (codigo: string) => codigo.replace(/\./g, '');
 
 /** Recaudación de ingresos propios del hospital: Banco Fondos Recaudados contra Venta de Servicios médicos. */
 const recaudacion = (monto: number, referencia: CuentaRef): AsientoPcgu => ({
@@ -663,7 +668,11 @@ function diarioPcgu(operaciones: OperacionConPartidas[]): OperacionConPartidas[]
     if (total(asiento.partidas) !== total(op.partidas)) {
       throw new Error(`Asiento PCGU ${op.codCuenta}: importe ${total(asiento.partidas)} ≠ ${total(op.partidas)}`);
     }
-    return [{ ...op, partidas: asiento.partidas, cuentas: filasAsiento(op.codCuenta, asiento.partidas, asiento.referencia) }];
+    // Las filas con importe son cuentas PCGU (se muestran sin puntos); la última es la glosa.
+    const cuentas = filasAsiento(op.codCuenta, asiento.partidas, asiento.referencia).map((cuenta) =>
+      cuenta.debe || cuenta.haber ? { ...cuenta, codigo: codigoPcgu(cuenta.codigo) } : cuenta,
+    );
+    return [{ ...op, partidas: asiento.partidas, cuentas }];
   });
 }
 
@@ -845,10 +854,10 @@ export const LIBROS_CONTABLES_DIARIO_MATRIX_ROWS: LibroDiarioMatrixRow[] = [
   ...HDM_DIARIO.flatMap((op) =>
     op.partidas.map((partida) => ({
       ejercicio: 2026,
-      cuentaMayor: partida.mayor[0],
+      cuentaMayor: codigoPcgu(partida.mayor[0]),
       descMayor: partida.mayor[1],
-      // Código de la sub-cuenta/divisionaria sin el prefijo de la cuenta mayor (115.1.2 → 1.2).
-      cuentaSubCta: (partida.det ?? partida.sub)[0].slice(partida.mayor[0].length + 1),
+      // Código de la sub-cuenta/divisionaria sin el prefijo de la cuenta mayor (11512 → 12).
+      cuentaSubCta: codigoPcgu((partida.det ?? partida.sub)[0]).slice(codigoPcgu(partida.mayor[0]).length),
       fecha: op.fecha,
       tipoRegistro: op.tipoRegistro,
       tipoDocumento: op.tipoDocumento,
@@ -914,7 +923,7 @@ const SALDOS_INICIALES_PCGU: Record<string, number> = {
   '511.1.1': 431602.5,
   '511.2.1': 210750,
   '512.1': 38844.25,
-  '5.11.1.1': 32401.25,
+  '510.1.1': 32401.25,
 };
 
 /**
@@ -962,7 +971,7 @@ function movimientosMayor(cuenta: CuentaMayorRef): LibroMayorResultRow[] {
 
 const mayorGroup = (cuenta: CuentaMayorRef): LibroMayorResultGroup => ({
   id: `mayor-${cuenta[0]}`,
-  codCuenta: cuenta[0],
+  codCuenta: codigoPcgu(cuenta[0]),
   nombreCuenta: cuenta[1],
   naturaleza: naturalezaMayor(cuenta),
   saldoInicial: saldoInicialMayor(cuenta[0]),
@@ -977,10 +986,19 @@ const MAYORES_PCGU: CuentaMayorRef[] = [
   PCGU.beneficiosPorPagar,
   PCGU.proveedores,
   PCGU.ventaBienesServicios,
+  PCGU.depreciacion,
   PCGU.beneficiosEmpleados,
   PCGU.aportacionesEmpleador,
-  PCGU.depreciacion,
 ];
+
+/** Nombre de cuenta en formato oración (EFECTIVO Y EQUIVALENTES → Efectivo y equivalentes). */
+const nombreEnOracion = (nombre: string) => nombre.charAt(0) + nombre.slice(1).toLowerCase();
+
+/** Opciones del filtro "Cuenta contable": las cuentas mayores PCGU 2026 de los libros, sin puntos. */
+export const LIBROS_CONTABLES_CUENTA_OPTIONS: TextFieldOption[] = MAYORES_PCGU.map(([codigo, nombre]) => ({
+  label: `${codigoPcgu(codigo)} - ${nombreEnOracion(nombre)}`,
+  value: codigoPcgu(codigo),
+}));
 
 /** Libro Mayor de la UE: una cuenta mayor PCGU 2026 por cada cuenta usada en el Libro Diario. */
 export const LIBROS_CONTABLES_MAYOR_RESULT_GROUPS: LibroMayorResultGroup[] = MAYORES_PCGU.map(mayorGroup);
@@ -1066,7 +1084,7 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
   {
     id: 'pliego-mayor-111',
     fecha: CORTE,
-    codigo: PCGU.efectivo[0],
+    codigo: codigoPcgu(PCGU.efectivo[0]),
     cuenta: PCGU.efectivo[1],
     detalles: [
       det(USE.u01, 5922.53, 425922.53, 352644.98),
@@ -1078,7 +1096,7 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
   {
     id: 'pliego-mayor-115',
     fecha: CORTE,
-    codigo: PCGU.inventarios[0],
+    codigo: codigoPcgu(PCGU.inventarios[0]),
     cuenta: PCGU.inventarios[1],
     detalles: [
       det(USE.u01, 62250, 12450, 0),
@@ -1090,7 +1108,7 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
   {
     id: 'pliego-mayor-213',
     fecha: CORTE,
-    codigo: PCGU.proveedores[0],
+    codigo: codigoPcgu(PCGU.proveedores[0]),
     cuenta: PCGU.proveedores[1],
     detalles: [
       detA(USE.u01, 18420, 12450, 15870.2),
@@ -1102,7 +1120,7 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
   {
     id: 'pliego-mayor-421',
     fecha: CORTE,
-    codigo: PCGU.ventaBienesServicios[0],
+    codigo: codigoPcgu(PCGU.ventaBienesServicios[0]),
     cuenta: PCGU.ventaBienesServicios[1],
     detalles: [
       detA(USE.u01, 245380.5, 0, 36810.6),
@@ -1114,7 +1132,7 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
   {
     id: 'pliego-mayor-511',
     fecha: CORTE,
-    codigo: PCGU.beneficiosEmpleados[0],
+    codigo: codigoPcgu(PCGU.beneficiosEmpleados[0]),
     cuenta: PCGU.beneficiosEmpleados[1],
     detalles: [
       det(USE.u01, 927150, 185430, 0),
@@ -1127,7 +1145,7 @@ export const LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS: LibroPliegoMayorGroup[] = [
   {
     id: 'pliego-mayor-5-11',
     fecha: CORTE,
-    codigo: PCGU.depreciacion[0],
+    codigo: codigoPcgu(PCGU.depreciacion[0]),
     cuenta: PCGU.depreciacion[1],
     detalles: [
       det(USE.u01, 10540.2, 2108.04, 0),
@@ -1146,7 +1164,7 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS: LibroPliegoMayorGroup[] = 
   {
     id: 'mayor-ext-111-3',
     fecha: CORTE,
-    codigo: PCGU_SUB.depositos[0],
+    codigo: codigoPcgu(PCGU_SUB.depositos[0]),
     cuenta: PCGU_SUB.depositos[1],
     detalles: [
       det(USE.u01, 309854.68, 425922.53, 352644.98),
@@ -1158,7 +1176,7 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS: LibroPliegoMayorGroup[] = 
   {
     id: 'mayor-ext-115-1',
     fecha: CORTE,
-    codigo: PCGU_SUB.bienes[0],
+    codigo: codigoPcgu(PCGU_SUB.bienes[0]),
     cuenta: PCGU_SUB.bienes[1],
     detalles: [
       det(USE.u01, 92250, 18450, 0),
@@ -1169,7 +1187,7 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS: LibroPliegoMayorGroup[] = 
   {
     id: 'mayor-ext-421-2',
     fecha: CORTE,
-    codigo: PCGU_SUB.ventaServicios[0],
+    codigo: codigoPcgu(PCGU_SUB.ventaServicios[0]),
     cuenta: PCGU_SUB.ventaServicios[1],
     detalles: [
       detA(USE.u01, 184320.5, 0, 46810.6),
@@ -1180,7 +1198,7 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS: LibroPliegoMayorGroup[] = 
   {
     id: 'mayor-ext-511-1',
     fecha: CORTE,
-    codigo: PCGU_SUB.plazoIndeterminado[0],
+    codigo: codigoPcgu(PCGU_SUB.plazoIndeterminado[0]),
     cuenta: PCGU_SUB.plazoIndeterminado[1],
     detalles: [
       det(USE.u01, 431602.5, 86320.5, 0),
@@ -1204,7 +1222,7 @@ export type LibroMayorExtendidoUeGroup = {
 const cuentaExtendida = (id: string, sub: CuentaRef, detalles: LibroPliegoMayorRow[]): LibroPliegoMayorGroup => ({
   id,
   fecha: CORTE,
-  codigo: sub[0],
+  codigo: codigoPcgu(sub[0]),
   cuenta: sub[1],
   detalles,
 });
@@ -1266,7 +1284,7 @@ export const LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS: LibroMayorExtendidoUeGr
 /**
  * Libro Mayor Detallado (tabla plana): una fila por divisionaria PCGU 2026 con su saldo inicial,
  * debe, haber y saldo. Aplica al visualizador Unidad Ejecutora, al Pliego con entidad
- * "Programa nacional de becas" y al Ente Rector (DGCP) con una unidad ejecutora concreta,
+ * "Hospital Dos de Mayo" y al Ente Rector (DGCP) con una unidad ejecutora concreta,
  * siempre con la variante "Libro mayor detallado".
  */
 export type LibroMayorDetalladoRow = {
@@ -1295,7 +1313,7 @@ function mayorDetallado(): LibroMayorDetalladoRow[] {
       const saldoInicial = SALDOS_INICIALES_PCGU[cuenta[0]] ?? 0;
       return {
         fecha: CORTE,
-        codigo: cuenta[0],
+        codigo: codigoPcgu(cuenta[0]),
         descripcion: cuenta[1],
         saldoInicial,
         debe: debeMonto,

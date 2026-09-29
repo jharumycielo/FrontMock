@@ -6,8 +6,8 @@ import { DateTimePickerComponent } from '../../../../../shared/ui/date-time-pick
 import { IconComponent } from '../../../../../shared/ui/icon/icon.component';
 import { TextFieldComponent } from '../../../../../shared/ui/text-field/text-field.component';
 import {
-  ACCOUNTING_BOOKS_CUENTAS,
   LIBROS_CONTABLES_ANIO_OPTIONS,
+  LIBROS_CONTABLES_CUENTA_OPTIONS,
   LIBROS_CONTABLES_ENTIDAD_PLIEGO_OPTIONS,
   LIBROS_CONTABLES_MES_OPTIONS,
   LIBROS_CONTABLES_PLIEGO_OPTIONS,
@@ -145,7 +145,7 @@ export class LibrosContablesSearchPanelComponent {
   readonly anioOptions = LIBROS_CONTABLES_ANIO_OPTIONS;
   readonly pliegoOptions = LIBROS_CONTABLES_PLIEGO_OPTIONS;
   readonly unidadEjecutoraOptions = LIBROS_CONTABLES_UNIDAD_EJECUTORA_OPTIONS;
-  readonly cuentaContableOptions = ACCOUNTING_BOOKS_CUENTAS;
+  readonly cuentaContableOptions = LIBROS_CONTABLES_CUENTA_OPTIONS;
 
   /** Variantes disponibles cuando el Tipo de Libro es "Libro Mayor". */
   readonly mayorVarianteOptions = [

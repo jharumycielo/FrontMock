@@ -305,7 +305,7 @@ async function buildResumenSheet(ws: Worksheet, meta: ReportMeta, logoPng: strin
 
   let row: number;
   if (meta.entity.pliego && meta.entity.unidadEjecutora) {
-    // Unidad Ejecutora / Pliego + Programa nacional de becas: Entidad · Pliego · Unidad Ejecutora · Fecha.
+    // Unidad Ejecutora / Pliego + Hospital Dos de Mayo: Entidad · Pliego · Unidad Ejecutora · Fecha.
     ws.getCell('F11').value = 'Pliego:';
     ws.getCell('F11').font = labelFont;
     ws.getCell('F12').value = meta.entity.pliego;

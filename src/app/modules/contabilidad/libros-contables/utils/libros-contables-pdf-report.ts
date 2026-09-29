@@ -221,7 +221,7 @@ function drawReportHeader(doc: jsPDF, title: string, entity: ReportEntity, fecha
   cursorY += 18;
 
   // Layout de "Datos del reporte" según los campos presentes en la entidad:
-  //  - Entidad · Pliego · Unidad Ejecutora  (UE / Pliego + Programa nacional de becas)
+  //  - Entidad · Pliego · Unidad Ejecutora  (UE / Pliego + Hospital Dos de Mayo)
   //  - Entidad · Pliego                       (Pliego · Integrado a nivel pliego)
   //  - Entidad · Sector                       (resto)
   //  - Entidad                                (Ente Rector: el Pliego va en los filtros)

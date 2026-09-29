@@ -8,6 +8,7 @@ import { IconComponent } from '../../../../../shared/ui/icon/icon.component';
 import { TagComponent } from '../../../../../shared/ui/tag/tag.component';
 import {
   LIBROS_CONTABLES_ANIO_OPTIONS,
+  LIBROS_CONTABLES_CUENTA_OPTIONS,
   LIBROS_CONTABLES_DIARIO_MATRIX_ROWS,
   LIBROS_CONTABLES_ENTIDAD_PLIEGO_OPTIONS,
   LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS,
@@ -90,6 +91,11 @@ type MayorExtendidoUeDisplayRow =
 function formatFechaHora(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, '0');
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+/** Código de cuenta escrito por el usuario, sin puntos ni espacios (1.1.5 → 115). */
+function normalizarCodigoCuenta(value: string | undefined): string {
+  return (value ?? '').replace(/[.\s]/g, '');
 }
 
 @Component({
@@ -654,22 +660,47 @@ export class LibrosContablesSearchResultsComponent {
   /** Periodo consultado (ejercicio y fechas) según los filtros aplicados. */
   private readonly periodo = computed(() => resolverPeriodo(this.criteria));
 
+  /**
+   * Filtros de cuenta del Libro Mayor, sobre el código sin puntos:
+   *  - "Cuenta contable": la cuenta mayor y sus sub-cuentas/divisionarias (111 → 1113, 111311, …).
+   *  - "Rango de cuenta desde/hasta": el código, recortado a los dígitos de cada límite, debe quedar
+   *    entre ambos (inclusive). Así 115–213 incluye 11512 y 21311; un límite vacío deja el rango abierto.
+   */
+  private readonly filtroCuenta = computed(() => {
+    if (!this.isMayor()) {
+      return (_codigo: string) => true;
+    }
+    const cuenta = this.criteria.cuentaContable;
+    let desde = normalizarCodigoCuenta(this.criteria.rangoCuentaDesde);
+    let hasta = normalizarCodigoCuenta(this.criteria.rangoCuentaHasta);
+    if (desde && hasta && desde.length === hasta.length && desde > hasta) {
+      [desde, hasta] = [hasta, desde];
+    }
+    return (codigo: string) =>
+      (!cuenta || codigo.startsWith(cuenta)) &&
+      (!desde || codigo.slice(0, desde.length) >= desde) &&
+      (!hasta || codigo.slice(0, hasta.length) <= hasta);
+  });
+
   /** Ejercicio contable y código de entidad, mostrados como primeras columnas en cada libro. */
   readonly reportEjercicio = computed(() => this.periodo().ejercicio);
 
   /** Datos de los libros con las fechas ubicadas dentro del periodo filtrado. */
   private readonly librosEnPeriodo = computed(() => {
     const p = this.periodo();
+    const deLaCuenta = this.filtroCuenta();
     return {
       resultGroups: operacionesEnPeriodo(LIBROS_CONTABLES_RESULT_GROUPS, p),
       pliegoDiarioUeGroups: pliegoDiarioUeEnPeriodo(LIBROS_CONTABLES_PLIEGO_DIARIO_UE_GROUPS, p),
       diarioMatrixRows: matrizDiarioEnPeriodo(LIBROS_CONTABLES_DIARIO_MATRIX_ROWS, p),
-      mayorResultGroups: mayorEnPeriodo(LIBROS_CONTABLES_MAYOR_RESULT_GROUPS, p),
+      mayorResultGroups: mayorEnPeriodo(LIBROS_CONTABLES_MAYOR_RESULT_GROUPS, p).filter((group) => deLaCuenta(group.codCuenta)),
       pliegoDiarioRows: pliegoDiarioRowsEnPeriodo(LIBROS_CONTABLES_PLIEGO_DIARIO_ROWS, p),
-      pliegoMayorGroups: pliegoMayorEnPeriodo(LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS, p),
-      mayorExtendidoGroups: pliegoMayorEnPeriodo(LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS, p),
-      mayorExtendidoUeGroups: mayorExtendidoUeEnPeriodo(LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS, p),
-      mayorDetalladoRows: mayorDetalladoEnPeriodo(LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS, p),
+      pliegoMayorGroups: pliegoMayorEnPeriodo(LIBROS_CONTABLES_PLIEGO_MAYOR_GROUPS, p).filter((group) => deLaCuenta(group.codigo)),
+      mayorExtendidoGroups: pliegoMayorEnPeriodo(LIBROS_CONTABLES_MAYOR_EXTENDIDO_GROUPS, p).filter((group) => deLaCuenta(group.codigo)),
+      mayorExtendidoUeGroups: mayorExtendidoUeEnPeriodo(LIBROS_CONTABLES_MAYOR_EXTENDIDO_UE_GROUPS, p)
+        .map((ue) => ({ ...ue, cuentas: ue.cuentas.filter((group) => deLaCuenta(group.codigo)) }))
+        .filter((ue) => ue.cuentas.length > 0),
+      mayorDetalladoRows: mayorDetalladoEnPeriodo(LIBROS_CONTABLES_MAYOR_DETALLADO_ROWS, p).filter((row) => deLaCuenta(row.codigo)),
     };
   });
   readonly reportEntidadCodigo = Number(LIBROS_CONTABLES_RESULT_ENTITY.entidad.match(/\d+/)?.[0] ?? 0);
@@ -731,6 +762,9 @@ export class LibrosContablesSearchResultsComponent {
     const mesLabel = LIBROS_CONTABLES_MES_OPTIONS.find((option) => option.value === this.criteria.mes)?.label;
     const anioLabel = LIBROS_CONTABLES_ANIO_OPTIONS.find((option) => option.value === this.criteria.anioCuenta)?.label;
     const pliegoLabel = LIBROS_CONTABLES_PLIEGO_OPTIONS.find((option) => option.value === this.criteria.pliego)?.label;
+    const cuentaLabel = this.isMayor()
+      ? LIBROS_CONTABLES_CUENTA_OPTIONS.find((option) => option.value === this.criteria.cuentaContable)?.label
+      : undefined;
     // El filtro Unidad Ejecutora solo existe para el visualizador ENTE RECTOR.
     const unidadEjecutoraLabel = this.esEnteRector()
       ? LIBROS_CONTABLES_UNIDAD_EJECUTORA_OPTIONS.find((option) => option.value === this.criteria.unidadEjecutora)?.label
@@ -743,6 +777,11 @@ export class LibrosContablesSearchResultsComponent {
     if (mesLabel) chips.push(`Mes: ${mesLabel}`);
     if (pliegoLabel) chips.push(`Pliego: ${pliegoLabel}`);
     if (unidadEjecutoraLabel) chips.push(`Unidad ejecutora: ${unidadEjecutoraLabel}`);
+    if (cuentaLabel) chips.push(`Cuenta contable: ${cuentaLabel}`);
+    const rangoDesde = this.isMayor() ? normalizarCodigoCuenta(this.criteria.rangoCuentaDesde) : '';
+    const rangoHasta = this.isMayor() ? normalizarCodigoCuenta(this.criteria.rangoCuentaHasta) : '';
+    if (rangoDesde) chips.push(`Rango de cuenta desde: ${rangoDesde}`);
+    if (rangoHasta) chips.push(`Rango de cuenta hasta: ${rangoHasta}`);
     if (this.criteria.fechaDesde) chips.push(`Desde: ${this.criteria.fechaDesde}`);
     if (this.criteria.fechaHasta) chips.push(`Hasta: ${this.criteria.fechaHasta}`);
 
@@ -981,7 +1020,7 @@ export class LibrosContablesSearchResultsComponent {
   /**
    * Libro Mayor Detallado (tabla plana): una fila por cuenta con saldo inicial, debe, haber y
    * saldo. Sustituye la vista anidada por USE cuando el detallado no consolida varias unidades
-   * (Unidad Ejecutora, Pliego · Programa nacional de becas, o Ente Rector con una UE concreta).
+   * (Unidad Ejecutora, Pliego · Hospital Dos de Mayo, o Ente Rector con una UE concreta).
    */
   readonly mayorDetalladoRows = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
@@ -1231,7 +1270,7 @@ export class LibrosContablesSearchResultsComponent {
 
   /**
    * Entidad para el reporte (PDF/Excel/CSV):
-   *  - Entidad · Pliego · Unidad Ejecutora  (UE / Pliego + Programa nacional de becas)
+   *  - Entidad · Pliego · Unidad Ejecutora  (UE / Pliego + Hospital Dos de Mayo)
    *  - Entidad · Pliego                       (Pliego · Integrado a nivel pliego · Libro Diario)
    *  - Entidad · Sector                       (resto)
    */
